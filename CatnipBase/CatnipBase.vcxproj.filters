@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Modules">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Hooks">
+      <UniqueIdentifier>{1d069707-e064-4cbb-af28-fb61ca77d374}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Modules\ESP">
+      <UniqueIdentifier>{51662708-7221-4a28-92f2-e834d896ec59}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Hooks\Hooks.cpp">
+      <Filter>Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="Modules\Module.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Modules\ESP\ESP.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Base.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Hooks\Hooks.h">
+      <Filter>Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="Modules\Module.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="Modules\ESP\ESP.h" />
+    <ClInclude Include="SDK\SDK.h" />
+    <ClInclude Include="SDK\cdll_int.h" />
+    <ClInclude Include="SDK\basetypes.h" />
+    <ClInclude Include="SDK\commonmacros.h" />
+    <ClInclude Include="SDK\vector2d.h" />
+    <ClInclude Include="SDK\math_pfns.h" />
+    <ClInclude Include="SDK\platform.h" />
+    <ClInclude Include="SDK\wchartypes.h" />
+    <ClInclude Include="SDK\valve_minmax_on.h" />
+    <ClInclude Include="SDK\valve_minmax_off.h" />
+    <ClInclude Include="SDK\vector.h" />
+    <ClInclude Include="SDK\interface.h" />
+    <ClInclude Include="SDK\mathlib.h" />
+    <ClInclude Include="SDK\const.h" />
+    <ClInclude Include="SDK\checksum_crc.h" />
+    <ClInclude Include="SDK\bitbuf.h" />
+    <ClInclude Include="SDK\ButtonCode.h" />
+    <ClInclude Include="SDK\InputEnums.h" />
+    <ClInclude Include="SDK\annotations.h" />
+    <ClInclude Include="Base\Base.h" />
+  </ItemGroup>
+</Project>
