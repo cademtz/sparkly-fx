@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Windows.h>
+
 #define FATAL(Msg) __FUNCTION__ ": " Msg
 
 namespace Base
