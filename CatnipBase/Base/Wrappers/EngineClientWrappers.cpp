@@ -1,5 +1,7 @@
 #include "EngineClientWrappers.h"
 #include "SDK/cdll_int.h"
+#include <stdio.h>
+#include <cstdarg>
 
 int IEngineClientWrapper013::GetIntersectingSurfaces(const model_t* model, const Vector& vCenter, const float radius, const bool bOnlyVisibleSurfaces, SurfInfo* pInfos, const int nMaxInfos) {
 	return m_int->GetIntersectingSurfaces(model, vCenter, radius, bOnlyVisibleSurfaces, pInfos, nMaxInfos);
@@ -89,10 +91,24 @@ bool IEngineClientWrapper013::IsDrawingLoadingImage() {
 	return m_int->IsDrawingLoadingImage();
 }
 void IEngineClientWrapper013::Con_NPrintf(int pos, const char* fmt, ...) {
-	//return m_int->Con_NPrintf(pos, fmt, ...);
+	char buf[512];
+
+	va_list va;
+	va_start(va, fmt);
+	vsprintf_s(buf, fmt, va);
+	va_end(va);
+	
+	return m_int->Con_NPrintf(pos, buf);
 }
 void IEngineClientWrapper013::Con_NXPrintf(const con_nprint_s* info, const char* fmt, ...) {
-	//return m_int->Con_NXPrintf(info, fmt, ...);
+	char buf[512];
+
+	va_list va;
+	va_start(va, fmt);
+	vsprintf_s(buf, fmt, va);
+	va_end(va);
+
+	return m_int->Con_NXPrintf(info, buf);
 }
 int IEngineClientWrapper013::IsBoxVisible(const Vector& mins, const Vector& maxs) {
 	return m_int->IsBoxVisible(mins, maxs);
