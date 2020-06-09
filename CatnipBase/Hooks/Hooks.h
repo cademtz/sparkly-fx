@@ -1,23 +1,15 @@
 #pragma once
 #include <list>
-#include <typeinfo>
+#include "Base/Event.h"
 
 // - Use this to initialize CBaseHook
 #define BASEHOOK(Type) CBaseHook(#Type)
 #define GETHOOK(Type) CBaseHook::GetHook<Type>(#Type)
 
-enum class HookTypes
-{
-	PRE_CREATEMOVE,
-	POST_CREATEMOVE,
-	PRE_PAINTTRAVERSE,
-	POST_PAINTTRAVERSE
-};
-
-class CBaseHook
+class CBaseHook : public CEventManager
 {
 public:
-	// - Use BASEHOOK(my_class_type) to initialize a CBaseHook
+	// - Use BASEHOOK(your_custom_class_here) to initialize a CBaseHook
 	template<size_t N>
 	CBaseHook(const char(&Name)[N]) : m_name(Name) { m_hooks.push_back(this); }
 	virtual ~CBaseHook();
@@ -37,7 +29,7 @@ public:
 
 private:
 	const char* m_name;
-	static std::list<CBaseHook*> m_hooks;
+	inline static std::list<CBaseHook*> m_hooks;
 };
 
 class CVMTHook

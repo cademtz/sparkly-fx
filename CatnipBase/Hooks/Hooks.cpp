@@ -1,8 +1,6 @@
 #include "Hooks.h"
 #include <Windows.h>
 
-std::list<CBaseHook*> CBaseHook::m_hooks;
-
 void CVMTHook::Hook(void* Instance, bool AllInstances)
 {
 	m_inst = Instance;

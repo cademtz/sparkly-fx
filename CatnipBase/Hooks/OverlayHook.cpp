@@ -35,16 +35,21 @@ COverlayHook::COverlayHook() : BASEHOOK(COverlayHook)
 
 	*m_pPresent = &Hooked_Present;
 	*m_pReset = &Hooked_Reset;
+
+	RegisterEvent(EVENT_DX9PRESENT);
+	RegisterEvent(EVENT_DX9RESET);
 }
 
 HRESULT WINAPI COverlayHook::Hooked_Reset(IDirect3DDevice9* thisptr, D3DPRESENT_PARAMETERS* Params)
 {
 	auto hook = GETHOOK(COverlayHook);
+	hook->PushEvent(EVENT_DX9PRESENT, 0);
 	return hook->Reset()(thisptr, Params);
 }
 
 HRESULT WINAPI COverlayHook::Hooked_Present(IDirect3DDevice9* thisptr, const RECT* Src, const RECT* Dest, HWND Window, const RGNDATA* DirtyRegion)
 {
 	auto hook = GETHOOK(COverlayHook);
+	hook->PushEvent(EVENT_DX9RESET, 0);
 	return hook->Present()(thisptr, Src, Dest, Window, DirtyRegion);
 }

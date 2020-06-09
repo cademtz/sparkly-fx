@@ -168,6 +168,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Base\Base.cpp" />
+    <ClCompile Include="Base\Event.cpp" />
     <ClCompile Include="Base\imgui.cpp" />
     <ClCompile Include="Base\imgui_impl_dx9.cpp" />
     <ClCompile Include="Base\Sig.cpp" />
@@ -180,6 +181,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Base\Base.h" />
+    <ClInclude Include="Base\Event.h" />
     <ClInclude Include="Base\imgui_impl_win32.h" />
     <ClInclude Include="Base\Sig.h" />
     <ClInclude Include="Hooks\Hooks.h" />

@@ -1,45 +1,14 @@
 #pragma once
-
-#include <vector>
-#include <cassert>
-
-#include <CatnipBase\Hooks\Hooks.h>
-
-class CModule;
-class CModuleHandler
-{
-public:
-	void RegisterModule(CModule* Module)
-	{
-		ModuleList.push_back(Module);
-	}
-
-	void ExecuteModule(HookTypes Type)
-	{
-		for (auto Module : ModuleList)
-			Module->Callback(Type);
-	}
-
-protected:
-	std::vector<CModule*> ModuleList;
-};
-
-inline CModuleHandler gModuleHandler;
+#include <list>
+#include "Base/Event.h"
 
 class CModule
 {
 public:
-	CModule()
-	{
-		gModuleHandler.RegisterModule(this);
-	}
+	CModule() { m_modules.push_back(this); }
+	virtual ~CModule() { m_modules.remove(this); }
 
-	~CModule() {}
-
-	virtual void Callback(HookTypes Type)
-	{
-		assert("Unimplemented module callback! Type: %i", Type);
-	}
+private:
+	static inline std::list<CModule*> m_modules;
+	std::list<CEventCallback*> m_callbacks;
 };
-
-

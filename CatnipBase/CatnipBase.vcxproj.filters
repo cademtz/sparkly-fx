@@ -41,6 +41,9 @@
     <ClCompile Include="Base\imgui_impl_dx9.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="Base\Event.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Hooks\Hooks.h">
@@ -74,5 +77,6 @@
     <ClInclude Include="Hooks\OverlayHook.h" />
     <ClInclude Include="Hooks\WindowProc.h" />
     <ClInclude Include="Base\imgui_impl_win32.h" />
+    <ClInclude Include="Base\Event.h" />
   </ItemGroup>
 </Project>
