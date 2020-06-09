@@ -11,3 +11,9 @@ void CBaseEvent::Push(void* Data)
 	for (auto& callback : m_listeners)
 		callback->Func()(Data);
 }
+
+CEventManager::~CEventManager()
+{
+	for (auto event : m_events)
+		delete event;
+}

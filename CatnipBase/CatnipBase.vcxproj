@@ -177,6 +177,7 @@
     <ClCompile Include="Hooks\WindowProc.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Modules\ESP\ESP.cpp" />
+    <ClCompile Include="Modules\Menu\Menu.cpp" />
     <ClCompile Include="Modules\Module.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -188,6 +189,7 @@
     <ClInclude Include="Hooks\OverlayHook.h" />
     <ClInclude Include="Hooks\WindowProc.h" />
     <ClInclude Include="Modules\ESP\ESP.h" />
+    <ClInclude Include="Modules\Menu\Menu.h" />
     <ClInclude Include="Modules\Module.h" />
     <ClInclude Include="SDK\annotations.h" />
     <ClInclude Include="SDK\basetypes.h" />
