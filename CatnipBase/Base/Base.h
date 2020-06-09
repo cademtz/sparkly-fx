@@ -1,6 +1,7 @@
 #pragma once
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include "AsmTools.h"
 
 #define FATAL(...) Base::Fatal("Fatal error in " __FUNCTION__, __VA_ARGS__)
 

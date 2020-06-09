@@ -47,6 +47,15 @@
     <ClCompile Include="Modules\Menu\Menu.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="Base\Interfaces.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\AsmTools.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\EngineClientWrappers.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Hooks\Hooks.h">
@@ -82,5 +91,8 @@
     <ClInclude Include="Base\imgui_impl_win32.h" />
     <ClInclude Include="Base\Event.h" />
     <ClInclude Include="Modules\Menu\Menu.h" />
+    <ClInclude Include="Base\Interfaces.h" />
+    <ClInclude Include="Base\AsmTools.h" />
+    <ClInclude Include="Base\EngineClientWrappers.h" />
   </ItemGroup>
 </Project>

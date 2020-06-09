@@ -11,7 +11,7 @@
 #define OVERLAY_PRESENT_SIG "FF 15 ?? ?? ?? ?? 8B F8 85 DB"
 #endif
 
-COverlayHook::COverlayHook() : BASEHOOK(COverlayHook)
+COverlayHook::COverlayHook() : m_dev(nullptr), BASEHOOK(COverlayHook)
 {
 	UINT_PTR presentcall = Sig::FindPattern(OVERLAY_MODULE, OVERLAY_PRESENT_SIG);
 	UINT_PTR resetcall = Sig::FindPattern(OVERLAY_MODULE, OVERLAY_RESET_SIG);
@@ -19,16 +19,8 @@ COverlayHook::COverlayHook() : BASEHOOK(COverlayHook)
 	if (!presentcall || !resetcall)
 		FATAL("Failed to find signatures in " OVERLAY_MODULE);
 
-	DWORD present_off = *(DWORD*)(presentcall + 2);
-	DWORD reset_off = *(DWORD*)(resetcall + 2);
-
-#ifdef _WIN64
-	m_pPresent = (void**)(presentcall + present_off + 6);
-	m_pReset = (void**)(resetcall + reset_off + 6);
-#else
-	m_pPresent = (void**)present_off;
-	m_pReset = (void**)reset_off;
-#endif
+	m_pPresent = AsmTools::Relative<void**>(presentcall, 2);
+	m_pReset = AsmTools::Relative<void**>(resetcall, 2);
 
 	m_oldpresent = *m_pPresent;
 	m_oldreset = *m_pReset;

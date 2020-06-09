@@ -167,10 +167,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Base\AsmTools.cpp" />
     <ClCompile Include="Base\Base.cpp" />
+    <ClCompile Include="Base\EngineClientWrappers.cpp" />
     <ClCompile Include="Base\Event.cpp" />
     <ClCompile Include="Base\imgui.cpp" />
     <ClCompile Include="Base\imgui_impl_dx9.cpp" />
+    <ClCompile Include="Base\Interfaces.cpp" />
     <ClCompile Include="Base\Sig.cpp" />
     <ClCompile Include="Hooks\Hooks.cpp" />
     <ClCompile Include="Hooks\OverlayHook.cpp" />
@@ -181,9 +184,12 @@
     <ClCompile Include="Modules\Module.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Base\AsmTools.h" />
     <ClInclude Include="Base\Base.h" />
+    <ClInclude Include="Base\EngineClientWrappers.h" />
     <ClInclude Include="Base\Event.h" />
     <ClInclude Include="Base\imgui_impl_win32.h" />
+    <ClInclude Include="Base\Interfaces.h" />
     <ClInclude Include="Base\Sig.h" />
     <ClInclude Include="Hooks\Hooks.h" />
     <ClInclude Include="Hooks\OverlayHook.h" />
