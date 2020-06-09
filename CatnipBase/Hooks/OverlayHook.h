@@ -2,6 +2,9 @@
 #include "Hooks.h"
 #include <d3d9.h>
 
+#define EVENT_DX9PRESENT "Event_DX9Present"
+#define EVENT_DX9RESET "Event_DX9Reset"
+
 typedef HRESULT(WINAPI* D3D9Present_t)(IDirect3DDevice9*, const RECT*, const RECT*, HWND, const RGNDATA*);
 typedef HRESULT(WINAPI* D3D9Reset_t)(IDirect3DDevice9*, D3DPRESENT_PARAMETERS*);
 
@@ -10,10 +13,13 @@ class COverlayHook : public CBaseHook
 public:
 	COverlayHook();
 
+	inline IDirect3DDevice9* Device() const { return m_dev; }
 	inline D3D9Present_t Present() const { return (D3D9Present_t)m_oldpresent; }
 	inline D3D9Reset_t Reset() const { return (D3D9Reset_t)m_oldreset; }
 
 private:
+	IDirect3DDevice9* m_dev;
+
 	void** m_pPresent, ** m_pReset;
 	void* m_oldpresent, * m_oldreset;
 
