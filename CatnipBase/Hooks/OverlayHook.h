@@ -13,7 +13,9 @@ class COverlayHook : public CBaseHook
 public:
 	COverlayHook();
 
-	inline IDirect3DDevice9* Device() const { return m_dev; }
+	void Unhook() override;
+
+	inline IDirect3DDevice9*& Device() { return m_dev; }
 	inline D3D9Present_t Present() const { return (D3D9Present_t)m_oldpresent; }
 	inline D3D9Reset_t Reset() const { return (D3D9Reset_t)m_oldreset; }
 

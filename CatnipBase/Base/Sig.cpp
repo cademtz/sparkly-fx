@@ -62,9 +62,8 @@ UINT_PTR Sig::FindCave(const char* Module, size_t Len)
 UINT_PTR Sig::FindPattern(const char* Module, const char* Pattern)
 {
 	HMODULE hMod = Base::GetModule(Module);
-	PIMAGE_DOS_HEADER pDOSHeader = (PIMAGE_DOS_HEADER)hMod;
-	PIMAGE_NT_HEADERS pNTHeaders = (PIMAGE_NT_HEADERS)(((UINT_PTR)hMod) + pDOSHeader->e_lfanew);
-	return FindPattern(GetBaseOfCode(hMod), GetSizeOfCode(hMod), Pattern);
+	UINT_PTR base = GetBaseOfCode(hMod);
+	return FindPattern(base, base + GetSizeOfCode(hMod), Pattern);
 }
 
 UINT_PTR Sig::GetBaseOfCode(HMODULE Module)

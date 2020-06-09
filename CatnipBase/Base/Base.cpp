@@ -1,6 +1,9 @@
 #include "Base.h"
-#include <cassert>
 #include <stdio.h>
+
+#include "Hooks/WindowProc.h"
+#include "Hooks/OverlayHook.h"
+#include "Modules/Menu/Menu.h"
 
 void Base::OnAttach(HMODULE Module)
 {
@@ -8,8 +11,14 @@ void Base::OnAttach(HMODULE Module)
 	CreateThread(0, 0, &Base::HookThread, 0, 0, 0);
 }
 
-DWORD __stdcall Base::HookThread(LPVOID Args)
+DWORD WINAPI Base::HookThread(LPVOID Args)
 {
+	while (!(hWnd = FindWindowA("Valve001", 0)))
+		Sleep(100);
+
+	new CWindowHook(hWnd);
+	new COverlayHook;
+	new CMenu;
 
 	return 0;
 }
@@ -31,6 +40,6 @@ void Base::Fatal(const char* Title, const char* Format, ...)
 	vsprintf_s(buf, Format, va);
 	va_end(va);
 
-	MessageBoxA(0, Title, buf, MB_ICONERROR);
+	MessageBoxA(0, buf, Title, MB_ICONERROR);
 	TerminateProcess(GetCurrentProcess(), -1);
 }

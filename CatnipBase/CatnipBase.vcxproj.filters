@@ -44,6 +44,9 @@
     <ClCompile Include="Base\Event.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="Modules\Menu\Menu.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Hooks\Hooks.h">
@@ -78,5 +81,6 @@
     <ClInclude Include="Hooks\WindowProc.h" />
     <ClInclude Include="Base\imgui_impl_win32.h" />
     <ClInclude Include="Base\Event.h" />
+    <ClInclude Include="Modules\Menu\Menu.h" />
   </ItemGroup>
 </Project>

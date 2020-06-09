@@ -1,4 +1,5 @@
 #pragma once
+#include "Base.h"
 #include <list>
 #include <functional>
 
@@ -22,6 +23,7 @@ public:
 		for (auto event : m_events)
 			if (event->m_name == Name)
 				return event;
+		FATAL("'%s' was not a registered event", Name);
 		return nullptr;
 	}
 
@@ -30,6 +32,8 @@ protected:
 	inline void RemoveCallback(CEventCallback* Callback) { m_listeners.remove(Callback); }
 
 private:
+	CBaseEvent(CBaseEvent&&);
+
 	const char* m_name;
 	std::list<CEventCallback*> m_listeners;
 	inline static std::list<CBaseEvent*> m_events;
@@ -38,14 +42,16 @@ private:
 class CEventManager
 {
 public:
+	~CEventManager();
+
 	template<size_t N>
-	inline void RegisterEvent(const char(&Name)[N]) { m_events.push_back(CBaseEvent(Name)); }
+	inline void RegisterEvent(const char(&Name)[N]) { m_events.push_back(new CBaseEvent(Name)); }
 
 	template<size_t N>
 	inline void PushEvent(const char(&Name)[N], void* Data) { CBaseEvent::GetEvent(Name)->Push(Data); }
 
 private:
-	std::list<CBaseEvent> m_events;
+	std::list<CBaseEvent*> m_events;
 };
 
 class CEventCallback
