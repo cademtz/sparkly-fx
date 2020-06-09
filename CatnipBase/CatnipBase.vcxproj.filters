@@ -53,7 +53,7 @@
     <ClCompile Include="Base\AsmTools.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
-    <ClCompile Include="Base\EngineClientWrappers.cpp">
+    <ClCompile Include="Base\Wrappers\EngineClientWrappers.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
   </ItemGroup>
@@ -93,6 +93,6 @@
     <ClInclude Include="Modules\Menu\Menu.h" />
     <ClInclude Include="Base\Interfaces.h" />
     <ClInclude Include="Base\AsmTools.h" />
-    <ClInclude Include="Base\EngineClientWrappers.h" />
+    <ClInclude Include="Base\Wrappers\EngineClientWrappers.h" />
   </ItemGroup>
 </Project>

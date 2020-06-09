@@ -169,7 +169,7 @@
   <ItemGroup>
     <ClCompile Include="Base\AsmTools.cpp" />
     <ClCompile Include="Base\Base.cpp" />
-    <ClCompile Include="Base\EngineClientWrappers.cpp" />
+    <ClCompile Include="Base\Wrappers\EngineClientWrappers.cpp" />
     <ClCompile Include="Base\Event.cpp" />
     <ClCompile Include="Base\imgui.cpp" />
     <ClCompile Include="Base\imgui_impl_dx9.cpp" />
@@ -186,7 +186,7 @@
   <ItemGroup>
     <ClInclude Include="Base\AsmTools.h" />
     <ClInclude Include="Base\Base.h" />
-    <ClInclude Include="Base\EngineClientWrappers.h" />
+    <ClInclude Include="Base\Wrappers\EngineClientWrappers.h" />
     <ClInclude Include="Base\Event.h" />
     <ClInclude Include="Base\imgui_impl_win32.h" />
     <ClInclude Include="Base\Interfaces.h" />
