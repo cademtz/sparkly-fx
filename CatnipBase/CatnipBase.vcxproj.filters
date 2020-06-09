@@ -26,6 +26,21 @@
     <ClCompile Include="Base\Base.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="Base\Sig.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Hooks\WindowProc.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Hooks\OverlayHook.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\imgui.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\imgui_impl_dx9.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Hooks\Hooks.h">
@@ -55,5 +70,9 @@
     <ClInclude Include="SDK\InputEnums.h" />
     <ClInclude Include="SDK\annotations.h" />
     <ClInclude Include="Base\Base.h" />
+    <ClInclude Include="Base\Sig.h" />
+    <ClInclude Include="Hooks\OverlayHook.h" />
+    <ClInclude Include="Hooks\WindowProc.h" />
+    <ClInclude Include="Base\imgui_impl_win32.h" />
   </ItemGroup>
 </Project>
