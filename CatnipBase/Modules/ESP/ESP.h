@@ -1,6 +1,6 @@
 #pragma once
 
-#include <CatnipBase/Modules/Module.h>
+/*#include <CatnipBase/Modules/Module.h>
 
 class CESP : public CModule
 {
@@ -15,4 +15,4 @@ class CESP : public CModule
 	};
 };
 
-CESP* gESP = new CESP();
+CESP* gESP = new CESP();*/
