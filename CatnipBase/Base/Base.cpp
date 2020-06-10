@@ -1,9 +1,8 @@
 #include "Base.h"
-#include <stdio.h>
-
 #include "Hooks/WindowProc.h"
 #include "Hooks/OverlayHook.h"
 #include "Modules/Menu/Menu.h"
+#include "Interfaces.h"
 
 void Base::OnAttach(HMODULE Module)
 {
@@ -13,6 +12,8 @@ void Base::OnAttach(HMODULE Module)
 
 DWORD WINAPI Base::HookThread(LPVOID Args)
 {
+	Interfaces::CreateInterfaces();
+
 	while (!(hWnd = FindWindowA("Valve001", 0)))
 		Sleep(100);
 
@@ -27,8 +28,20 @@ HMODULE Base::GetModule(const char* Module)
 {
 	HMODULE hMod = GetModuleHandleA(Module);
 	if (!hMod)
-		FATAL("Failed GetModuleHandle to %s", Module);
+		FATAL("Failed GetModuleHandle to '%s'", Module);
 	return hMod;
+}
+
+FARPROC Base::GetProc(HMODULE Module, const char* Proc)
+{
+	FARPROC result = GetProcAddress(Module, Proc);
+	if (!result)
+	{
+		char name[MAX_PATH];
+		GetModuleFileNameA(Module, name, MAX_PATH);
+		FATAL("Failed GetProcAddress to '%s' in '%s'", Proc, name);
+	}
+	return result;
 }
 
 void Base::Fatal(const char* Title, const char* Format, ...)
