@@ -91,8 +91,11 @@
     <ClInclude Include="Base\imgui_impl_win32.h" />
     <ClInclude Include="Base\Event.h" />
     <ClInclude Include="Modules\Menu\Menu.h" />
-    <ClInclude Include="Base\Interfaces.h" />
     <ClInclude Include="Base\AsmTools.h" />
     <ClInclude Include="Base\Wrappers\EngineClientWrappers.h" />
+    <ClInclude Include="Base\Interfaces.h" />
+    <ClInclude Include="Base\Wrappers\Wrappers.h" />
+    <ClInclude Include="SDK\InterfaceVersions\EngineClient013.h" />
+    <ClInclude Include="SDK\InterfaceVersions\EngineClient014.h" />
   </ItemGroup>
 </Project>
