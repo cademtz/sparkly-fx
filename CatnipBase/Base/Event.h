@@ -4,7 +4,14 @@
 #include <functional>
 
 class CEventCallback;
-typedef std::function<void(void*)> CallbackFunc_t;
+typedef std::function<int()> CallbackFunc_t;
+
+enum EEventReturnFlags
+{
+	Return_Normal = 0,
+	Return_Skip = (1 << 1), // - Skip calling other modules/listeners after the current function returns
+	Return_NoOriginal = (1 << 1), // - For hooks. Prevents calling the original function
+};
 
 class CBaseEvent
 {
@@ -15,7 +22,7 @@ public:
 
 	CEventCallback* AddCallback(const CallbackFunc_t& Func);
 	inline const char* Name() const { return m_name; }
-	void Push(void* Data);
+	int Push();
 
 	template<size_t N>
 	static CBaseEvent* GetEvent(const char(&Name)[N])
@@ -48,9 +55,10 @@ public:
 	inline void RegisterEvent(const char(&Name)[N]) { m_events.push_back(new CBaseEvent(Name)); }
 
 	template<size_t N>
-	inline void PushEvent(const char(&Name)[N], void* Data) { CBaseEvent::GetEvent(Name)->Push(Data); }
+	inline int PushEvent(const char(&Name)[N]) { return CBaseEvent::GetEvent(Name)->Push(); }
 
 private:
+	unsigned m_evenstate = 0;
 	std::list<CBaseEvent*> m_events;
 };
 
@@ -59,7 +67,7 @@ class CEventCallback
 public:
 	~CEventCallback() { m_event->RemoveCallback(this); }
 
-	const std::function<void(void*)>& Func() const { return m_func; }
+	const CallbackFunc_t& Func() const { return m_func; }
 
 protected:
 	friend CBaseEvent;

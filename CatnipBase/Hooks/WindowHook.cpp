@@ -1,4 +1,4 @@
-#include "WindowProc.h"
+#include "WindowHook.h"
 
 CWindowHook::CWindowHook(HWND Window) : m_hwnd(Window), m_ctx(), BASEHOOK(CWindowHook)
 {
@@ -13,7 +13,11 @@ void CWindowHook::Unhook() {
 LRESULT WINAPI CWindowHook::Hooked_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	auto hook = GETHOOK(CWindowHook);
-	hook->Context() = WindowProc_Ctx{ hWnd, uMsg, wParam, lParam };
-	hook->PushEvent(EVENT_WINDOWPROC, 0);
+	hook->Context() = WindowProc_Ctx{ hWnd, uMsg, wParam, lParam, TRUE };
+
+	int flags = hook->PushEvent(EVENT_WINDOWPROC);
+	if (flags & Return_NoOriginal)
+		return hook->Context().result;
+
 	return hook->OldProc()(hWnd, uMsg, wParam, lParam);
 }

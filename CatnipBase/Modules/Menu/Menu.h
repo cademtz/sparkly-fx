@@ -5,6 +5,9 @@ class CMenu : public CModule
 {
 public:
 	CMenu();
-	void OnPresent();
-	void OnWindowProc();
+	int OnPresent();
+	int OnWindowProc();
+
+private:
+	bool m_open;
 };

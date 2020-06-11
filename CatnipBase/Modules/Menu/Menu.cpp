@@ -1,21 +1,24 @@
 #include "Menu.h"
 #include "Base/Base.h"
 #include "Hooks/OverlayHook.h"
-#include "Hooks/WindowProc.h"
+#include "Hooks/WindowHook.h"
 
 #include <imgui.h>
 #include <imgui/examples/imgui_impl_dx9.h>
 #include <imgui/imgui_demo.cpp>
 #include "Base/imgui_impl_win32.h"
 
-CMenu::CMenu()
+CMenu::CMenu() : m_open(false)
 {
-	Listen(EVENT_DX9PRESENT, [this](void*) { OnPresent(); });
-	Listen(EVENT_WINDOWPROC, [this](void*) { OnWindowProc(); });
+	Listen(EVENT_DX9PRESENT, [this]() { return OnPresent(); });
+	Listen(EVENT_WINDOWPROC, [this]() { return OnWindowProc(); });
 }
 
-void CMenu::OnPresent()
+int CMenu::OnPresent()
 {
+	if (!m_open)
+		return 0;
+
 	auto hook = GETHOOK(COverlayHook);
 
 	if (!ImGui::GetCurrentContext())
@@ -37,10 +40,29 @@ void CMenu::OnPresent()
 
 	ImGui::Render();
 	ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+	
+	return 0;
 }
 
-void CMenu::OnWindowProc()
+int CMenu::OnWindowProc()
 {
 	auto ctx = GETHOOK(CWindowHook)->Context();
-	ImGui_ImplWin32_WndProcHandler(ctx.hwnd, ctx.msg, ctx.wparam, ctx.lparam);
+	switch (ctx.msg)
+	{
+	case WM_KEYDOWN:
+		switch (ctx.wparam)
+		{
+		case VK_INSERT:
+		case VK_F11:
+			m_open = !m_open;
+			return Return_NoOriginal | Return_Skip;
+		}
+	}
+
+	if (m_open)
+	{
+		ctx.result = ImGui_ImplWin32_WndProcHandler(ctx.hwnd, ctx.msg, ctx.wparam, ctx.lparam);
+		return Return_NoOriginal | Return_Skip;
+	}
+	return 0;
 }

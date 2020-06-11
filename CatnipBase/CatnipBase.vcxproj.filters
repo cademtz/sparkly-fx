@@ -29,9 +29,6 @@
     <ClCompile Include="Base\Sig.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
-    <ClCompile Include="Hooks\WindowProc.cpp">
-      <Filter>Modules</Filter>
-    </ClCompile>
     <ClCompile Include="Hooks\OverlayHook.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
@@ -56,6 +53,9 @@
     <ClCompile Include="Base\Wrappers\EngineClientWrappers.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="Hooks\WindowHook.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Hooks\Hooks.h">
@@ -65,7 +65,6 @@
       <Filter>Modules</Filter>
     </ClInclude>
     <ClInclude Include="Modules\ESP\ESP.h" />
-    <ClInclude Include="SDK\SDK.h" />
     <ClInclude Include="SDK\cdll_int.h" />
     <ClInclude Include="SDK\basetypes.h" />
     <ClInclude Include="SDK\commonmacros.h" />
@@ -87,7 +86,6 @@
     <ClInclude Include="Base\Base.h" />
     <ClInclude Include="Base\Sig.h" />
     <ClInclude Include="Hooks\OverlayHook.h" />
-    <ClInclude Include="Hooks\WindowProc.h" />
     <ClInclude Include="Base\imgui_impl_win32.h" />
     <ClInclude Include="Base\Event.h" />
     <ClInclude Include="Modules\Menu\Menu.h" />
@@ -97,5 +95,6 @@
     <ClInclude Include="Base\Wrappers\Wrappers.h" />
     <ClInclude Include="SDK\InterfaceVersions\EngineClient013.h" />
     <ClInclude Include="SDK\InterfaceVersions\EngineClient014.h" />
+    <ClInclude Include="Hooks\WindowHook.h" />
   </ItemGroup>
 </Project>

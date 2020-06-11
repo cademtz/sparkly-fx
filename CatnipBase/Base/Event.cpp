@@ -6,10 +6,16 @@ CEventCallback* CBaseEvent::AddCallback(const CallbackFunc_t& Func)
 	return m_listeners.back();
 }
 
-void CBaseEvent::Push(void* Data)
+int CBaseEvent::Push()
 {
+	int flags = 0;
 	for (auto& callback : m_listeners)
-		callback->Func()(Data);
+	{
+		flags |= callback->Func()();
+		if (flags & Return_Skip)
+			break;
+	}
+	return flags;
 }
 
 CEventManager::~CEventManager()

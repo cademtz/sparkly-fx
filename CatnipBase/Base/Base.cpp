@@ -1,5 +1,5 @@
 #include "Base.h"
-#include "Hooks/WindowProc.h"
+#include "Hooks/WindowHook.h"
 #include "Hooks/OverlayHook.h"
 #include "Modules/Menu/Menu.h"
 #include "Interfaces.h"

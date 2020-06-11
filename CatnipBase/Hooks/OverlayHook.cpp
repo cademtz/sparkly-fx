@@ -42,7 +42,7 @@ HRESULT WINAPI COverlayHook::Hooked_Reset(IDirect3DDevice9* thisptr, D3DPRESENT_
 {
 	auto hook = GETHOOK(COverlayHook);
 	hook->Device() = thisptr;
-	hook->PushEvent(EVENT_DX9RESET, 0);
+	hook->PushEvent(EVENT_DX9RESET);
 	return hook->Reset()(thisptr, Params);
 }
 
@@ -50,6 +50,13 @@ HRESULT WINAPI COverlayHook::Hooked_Present(IDirect3DDevice9* thisptr, const REC
 {
 	auto hook = GETHOOK(COverlayHook);
 	hook->Device() = thisptr;
-	hook->PushEvent(EVENT_DX9PRESENT, 0);
+
+	DWORD oldstate;
+	thisptr->GetRenderState(D3DRS_SRGBWRITEENABLE, &oldstate);
+	thisptr->SetRenderState(D3DRS_SRGBWRITEENABLE, false);
+
+	hook->PushEvent(EVENT_DX9PRESENT);
+
+	thisptr->SetRenderState(D3DRS_SRGBWRITEENABLE, oldstate);
 	return hook->Present()(thisptr, Src, Dest, Window, DirtyRegion);
 }
