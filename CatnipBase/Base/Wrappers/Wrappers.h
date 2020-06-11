@@ -24,7 +24,13 @@ class IAchievementMgr;
 class CGamestatsData;
 class KeyValues;
 
-class InterfaceReg;
+class ClientClass;
+class bf_write;
+class bf_read;
+class CViewSetup;
+enum ClientFrameStage_t;
+class CStandardRecvProxies;
+class CRenamedRecvTableInfo;
 
 class IEngineClientWrapper
 {
@@ -63,4 +69,31 @@ public:
 	virtual void			ClientCmd_Unrestricted(const char* szCmdString) = 0;
 	virtual IAchievementMgr* GetAchievementMgr() = 0;
 	virtual CGamestatsData* GetGamestatsData() = 0;
+};
+
+class IClientDLLWrapper
+{
+public:
+	enum EOffsets {
+		Off_CreateMove
+	};
+
+	virtual ~IClientDLLWrapper() { }
+
+	virtual int GetOffset(EOffsets Offset) = 0;
+
+	virtual ClientClass* GetAllClasses(void) = 0;
+	virtual void CreateMove(int sequence_number, float input_sample_frametime, bool active) = 0;
+	virtual bool			WriteUsercmdDeltaToBuffer(bf_write* buf, int from, int to, bool isnewcommand) = 0;
+	virtual void			View_Render(vrect_t* rect) = 0;
+	virtual void			RenderView(const CViewSetup& view, int nClearFlags, int whatToDraw) = 0;
+	virtual void			SetCrosshairAngle(const QAngle& angle) = 0;
+	virtual void			InstallStringTableCallback(char const* tableName) = 0;
+	virtual void			FrameStageNotify(ClientFrameStage_t curStage) = 0;
+	virtual bool			DispatchUserMessage(int msg_type, bf_read& msg_data) = 0;
+	virtual CStandardRecvProxies* GetStandardRecvProxies() = 0;
+	virtual int				GetScreenWidth() = 0;
+	virtual int				GetScreenHeight() = 0;
+	virtual bool			GetPlayerView(CViewSetup& playerView) = 0;
+	virtual CRenamedRecvTableInfo* GetRenamedRecvTableInfos() = 0;
 };

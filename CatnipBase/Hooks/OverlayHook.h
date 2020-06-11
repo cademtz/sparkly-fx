@@ -13,6 +13,7 @@ class COverlayHook : public CBaseHook
 public:
 	COverlayHook();
 
+	void Hook() override;
 	void Unhook() override;
 
 	inline IDirect3DDevice9*& Device() { return m_dev; }
@@ -33,3 +34,5 @@ private:
 		HWND Window,
 		const RGNDATA* DirtyRegion);
 };
+
+inline COverlayHook _g_overlayhook;

@@ -13,6 +13,12 @@
 
 COverlayHook::COverlayHook() : m_dev(nullptr), BASEHOOK(COverlayHook)
 {
+	RegisterEvent(EVENT_DX9PRESENT);
+	RegisterEvent(EVENT_DX9RESET);
+}
+
+void COverlayHook::Hook()
+{
 	UINT_PTR presentcall = Sig::FindPattern(OVERLAY_MODULE, OVERLAY_PRESENT_SIG);
 	UINT_PTR resetcall = Sig::FindPattern(OVERLAY_MODULE, OVERLAY_RESET_SIG);
 
@@ -27,9 +33,6 @@ COverlayHook::COverlayHook() : m_dev(nullptr), BASEHOOK(COverlayHook)
 
 	*m_pPresent = &Hooked_Present;
 	*m_pReset = &Hooked_Reset;
-
-	RegisterEvent(EVENT_DX9PRESENT);
-	RegisterEvent(EVENT_DX9RESET);
 }
 
 void COverlayHook::Unhook()

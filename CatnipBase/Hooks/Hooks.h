@@ -14,9 +14,11 @@ public:
 	CBaseHook(const char(&Name)[N]) : m_name(Name) { m_hooks.push_back(this); }
 	virtual ~CBaseHook();
 
+	virtual void Hook() = 0;
 	virtual void Unhook() { }
 	const char* Name() { return m_name; }
 	static std::list<CBaseHook*>& Hooks() { return m_hooks; }
+	static void HookAll();
 
 	template<class T, size_t N>
 	static inline T* GetHook(const char(&Name)[N])

@@ -1,6 +1,18 @@
 #include "Hooks.h"
 #include <Windows.h>
 
+CBaseHook::~CBaseHook()
+{
+	Unhook();
+	m_hooks.remove(this);
+}
+
+void CBaseHook::HookAll()
+{
+	for (auto hook : m_hooks)
+		hook->Hook();
+}
+
 void CVMTHook::Hook(void* Instance, bool AllInstances)
 {
 	m_inst = Instance;
@@ -57,10 +69,4 @@ void CVMTHook::Set(size_t Index, void* Function)
 	}
 	else
 		m_newvmt[Index] = Function;
-}
-
-CBaseHook::~CBaseHook()
-{
-	Unhook();
-	m_hooks.remove(this);
 }
