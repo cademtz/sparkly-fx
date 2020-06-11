@@ -10,6 +10,7 @@ struct WindowProc_Ctx
 	UINT msg;
 	WPARAM wparam;
 	LPARAM lparam;
+	LRESULT result;
 };
 
 class CWindowHook : public CBaseHook
