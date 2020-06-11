@@ -12,13 +12,11 @@ void Base::OnAttach(HMODULE Module)
 
 DWORD WINAPI Base::HookThread(LPVOID Args)
 {
-	Interfaces::CreateInterfaces();
-
 	while (!(hWnd = FindWindowA("Valve001", 0)))
 		Sleep(100);
 
-	new CWindowHook(hWnd);
-	new COverlayHook;
+	Interfaces::CreateInterfaces();
+	CBaseHook::HookAll();
 	new CMenu;
 
 	return 0;

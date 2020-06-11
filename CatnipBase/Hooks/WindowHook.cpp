@@ -1,9 +1,13 @@
 #include "WindowHook.h"
 
-CWindowHook::CWindowHook(HWND Window) : m_hwnd(Window), m_ctx(), BASEHOOK(CWindowHook)
-{
-	m_oldproc = (WNDPROC)SetWindowLongPtr(m_hwnd, GWLP_WNDPROC, (LONG_PTR)Hooked_WndProc);
+CWindowHook::CWindowHook() : m_hwnd(0), m_ctx(), BASEHOOK(CWindowHook) {
 	RegisterEvent(EVENT_WINDOWPROC);
+}
+
+void CWindowHook::Hook()
+{
+	m_hwnd = Base::hWnd;
+	m_oldproc = (WNDPROC)SetWindowLongPtr(m_hwnd, GWLP_WNDPROC, (LONG_PTR)Hooked_WndProc);
 }
 
 void CWindowHook::Unhook() {

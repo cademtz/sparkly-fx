@@ -16,7 +16,9 @@ struct WindowProc_Ctx
 class CWindowHook : public CBaseHook
 {
 public:
-	CWindowHook(HWND Window);
+	CWindowHook();
+
+	void Hook() override;
 	void Unhook() override;
 
 	inline HWND Window() const { return m_hwnd; }
@@ -30,3 +32,5 @@ private:
 
 	static LRESULT WINAPI Hooked_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
+
+inline CWindowHook _g_windowhook;

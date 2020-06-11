@@ -169,6 +169,7 @@
   <ItemGroup>
     <ClCompile Include="Base\AsmTools.cpp" />
     <ClCompile Include="Base\Base.cpp" />
+    <ClCompile Include="Base\Wrappers\ClientDLLWrappers.cpp" />
     <ClCompile Include="Base\Wrappers\EngineClientWrappers.cpp" />
     <ClCompile Include="Base\Event.cpp" />
     <ClCompile Include="Base\imgui.cpp" />
@@ -187,6 +188,7 @@
     <ClInclude Include="Base\AsmTools.h" />
     <ClInclude Include="Base\Base.h" />
     <ClInclude Include="Base\Interfaces.h" />
+    <ClInclude Include="Base\Wrappers\ClientDLLWrappers.h" />
     <ClInclude Include="Base\Wrappers\EngineClientWrappers.h" />
     <ClInclude Include="Base\Event.h" />
     <ClInclude Include="Base\imgui_impl_win32.h" />
@@ -208,6 +210,7 @@
     <ClInclude Include="SDK\const.h" />
     <ClInclude Include="SDK\InputEnums.h" />
     <ClInclude Include="SDK\interface.h" />
+    <ClInclude Include="SDK\InterfaceVersions\ClientDLL017.h" />
     <ClInclude Include="SDK\InterfaceVersions\EngineClient013.h" />
     <ClInclude Include="SDK\InterfaceVersions\EngineClient014.h" />
     <ClInclude Include="SDK\mathlib.h" />

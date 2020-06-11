@@ -56,6 +56,9 @@
     <ClCompile Include="Hooks\WindowHook.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="Base\Wrappers\ClientDLLWrappers.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Hooks\Hooks.h">
@@ -96,5 +99,7 @@
     <ClInclude Include="SDK\InterfaceVersions\EngineClient013.h" />
     <ClInclude Include="SDK\InterfaceVersions\EngineClient014.h" />
     <ClInclude Include="Hooks\WindowHook.h" />
+    <ClInclude Include="Base\Wrappers\ClientDLLWrappers.h" />
+    <ClInclude Include="SDK\InterfaceVersions\ClientDLL017.h" />
   </ItemGroup>
 </Project>
