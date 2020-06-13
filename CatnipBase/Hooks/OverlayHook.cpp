@@ -43,7 +43,7 @@ void COverlayHook::Unhook()
 
 HRESULT WINAPI COverlayHook::Hooked_Reset(IDirect3DDevice9* thisptr, D3DPRESENT_PARAMETERS* Params)
 {
-	auto hook = GETHOOK(COverlayHook);
+	static auto hook = GETHOOK(COverlayHook);
 	hook->Device() = thisptr;
 	hook->PushEvent(EVENT_DX9RESET);
 	return hook->Reset()(thisptr, Params);
@@ -51,7 +51,7 @@ HRESULT WINAPI COverlayHook::Hooked_Reset(IDirect3DDevice9* thisptr, D3DPRESENT_
 
 HRESULT WINAPI COverlayHook::Hooked_Present(IDirect3DDevice9* thisptr, const RECT* Src, const RECT* Dest, HWND Window, const RGNDATA* DirtyRegion)
 {
-	auto hook = GETHOOK(COverlayHook);
+	static auto hook = GETHOOK(COverlayHook);
 	hook->Device() = thisptr;
 
 	DWORD oldstate;

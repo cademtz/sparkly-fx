@@ -19,12 +19,12 @@ int CMenu::OnPresent()
 	if (!m_open)
 		return 0;
 
-	auto hook = GETHOOK(COverlayHook);
+	static auto hook = GETHOOK(COverlayHook);
 
 	if (!ImGui::GetCurrentContext())
 	{
 		ImGui::CreateContext();
-		ImGui::StyleColorsDark();
+		ImGui::StyleColorsLight();
 		ImGui::GetIO().IniFilename = nullptr;
 		ImGui::GetIO().LogFilename = nullptr;
 
