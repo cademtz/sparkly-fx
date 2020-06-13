@@ -59,6 +59,9 @@
     <ClCompile Include="Hooks\ClientHook.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="Base\Lua\Lua.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Hooks\Hooks.h">
@@ -125,5 +128,6 @@
     <ClInclude Include="SDK\iclientthinkable.h" />
     <ClInclude Include="Hooks\ClientHook.h" />
     <ClInclude Include="Base\fnv1a.h" />
+    <ClInclude Include="Base\Lua\Lua.h" />
   </ItemGroup>
 </Project>
