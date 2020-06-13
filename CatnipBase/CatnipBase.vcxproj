@@ -169,6 +169,7 @@
   <ItemGroup>
     <ClCompile Include="Base\AsmTools.cpp" />
     <ClCompile Include="Base\Base.cpp" />
+    <ClCompile Include="Base\Lua\Lua.cpp" />
     <ClCompile Include="Base\Wrappers\ClientDLLWrappers.cpp" />
     <ClCompile Include="Base\Wrappers\EngineClientWrappers.cpp" />
     <ClCompile Include="Base\Event.cpp" />
@@ -189,6 +190,7 @@
     <ClInclude Include="Base\Base.h" />
     <ClInclude Include="Base\fnv1a.h" />
     <ClInclude Include="Base\Interfaces.h" />
+    <ClInclude Include="Base\Lua\Lua.h" />
     <ClInclude Include="Base\Wrappers\ClientDLLWrappers.h" />
     <ClInclude Include="Base\Wrappers\EngineClientWrappers.h" />
     <ClInclude Include="Base\Event.h" />

@@ -15,7 +15,7 @@ struct EventHandle {
 enum EEventReturnFlags
 {
 	Return_Normal = 0,
-	Return_Skip = (1 << 1), // - Skip calling other modules/listeners after the current function returns
+	Return_Skip = (1 << 0), // - Skip calling other modules/listeners after the current function returns
 	Return_NoOriginal = (1 << 1), // - For hooks. Prevents calling the original function
 };
 
