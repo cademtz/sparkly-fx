@@ -4,3 +4,6 @@
 [submodule "LuaJIT"]
 	path = LuaJIT
 	url = https://github.com/LuaJIT/LuaJIT
+[submodule "LuaBridge"]
+	path = LuaBridge
+	url = https://github.com/vinniefalco/LuaBridge
