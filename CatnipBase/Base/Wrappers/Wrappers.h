@@ -2,6 +2,11 @@
 #include "SDK/basetypes.h"
 #include "SDK/mathlib.h"
 
+enum EOffsets {
+	Off_CreateMove,
+	Off_FrameStageNotify
+};
+
 struct model_t;
 class Vector;
 class SurfInfo;
@@ -36,6 +41,7 @@ class IEngineClientWrapper
 {
 public:
 	virtual ~IEngineClientWrapper() { }
+	virtual void* Inst() = 0;
 
 	virtual void				GetScreenSize(int& width, int& height) = 0;
 	virtual void				ServerCmd(const char* szCmdString, bool bReliable = true) = 0;
@@ -74,13 +80,8 @@ public:
 class IClientDLLWrapper
 {
 public:
-	enum EOffsets {
-		Off_CreateMove,
-		Off_FrameStageNotify
-	};
-
 	virtual ~IClientDLLWrapper() { }
-
+	virtual void* Inst() = 0;
 	virtual int GetOffset(EOffsets Offset) = 0;
 
 	virtual ClientClass* GetAllClasses(void) = 0;

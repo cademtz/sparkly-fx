@@ -11,6 +11,8 @@ class IEngineClientWrapper013 : public IEngineClientWrapper
 public:
 	IEngineClientWrapper013(void* EngineClient) : m_int((IVEngineClient013*)EngineClient) { }
 
+	void* Inst() override { return m_int; }
+
 	virtual void				GetScreenSize(int& width, int& height);
 	virtual void				ServerCmd(const char* szCmdString, bool bReliable = true);
 	virtual void				ClientCmd(const char* szCmdString);
@@ -51,6 +53,8 @@ class IEngineClientWrapper014 : public IEngineClientWrapper
 
 public:
 	IEngineClientWrapper014(void* EngineClient14) : m_int((IVEngineClient014*)m_int) { }
+
+	void* Inst() override { return m_int; }
 
 	virtual void				GetScreenSize(int& width, int& height);
 	virtual void				ServerCmd(const char* szCmdString, bool bReliable = true);

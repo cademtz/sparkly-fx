@@ -3,10 +3,14 @@
 #include <unordered_map>
 #include <functional>
 
-#define DECL_EVENT(name) constexpr uint32_t name = #name##_hash
+#define DECL_EVENT(name) constexpr EventHandle name = { #name##_hash }
 
 class CEventCallback;
 typedef std::function<int()> CallbackFunc_t;
+
+struct EventHandle {
+	const uint32_t hash;
+};
 
 enum EEventReturnFlags
 {
@@ -18,17 +22,14 @@ enum EEventReturnFlags
 class CBaseEvent
 {
 public:
-	CBaseEvent(const uint32_t Hash) : m_hash(Hash) { m_events[Hash] = this; }
+	CBaseEvent(const EventHandle Event) : m_hash(Event.hash) { m_events[m_hash] = this; }
 	~CBaseEvent() { m_events.erase(m_hash); }
 
 	CEventCallback* AddCallback(const CallbackFunc_t& Func);
 	inline const uint32_t hash() const { return m_hash; }
 	int Push();
 
-	static CBaseEvent* GetEvent(const uint32_t Hash)
-	{
-		return m_events[Hash];
-	}
+	static CBaseEvent* GetEvent(const EventHandle Event) { return m_events[Event.hash]; }
 
 protected:
 	friend CEventCallback;
@@ -47,9 +48,9 @@ class CEventManager
 public:
 	~CEventManager();
 
-	inline void RegisterEvent(const uint32_t Hash) { m_events.push_back(new CBaseEvent(Hash)); }
+	inline void RegisterEvent(const EventHandle Event) { m_events.push_back(new CBaseEvent(Event)); }
 
-	inline int PushEvent(const uint32_t Hash) { return CBaseEvent::GetEvent(Hash)->Push(); }
+	inline int PushEvent(const EventHandle Event) { return CBaseEvent::GetEvent(Event)->Push(); }
 
 private:
 	unsigned m_evenstate = 0;
