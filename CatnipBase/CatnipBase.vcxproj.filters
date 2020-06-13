@@ -17,9 +17,6 @@
     <ClCompile Include="Hooks\Hooks.cpp">
       <Filter>Hooks</Filter>
     </ClCompile>
-    <ClCompile Include="Modules\Module.cpp">
-      <Filter>Modules</Filter>
-    </ClCompile>
     <ClCompile Include="Modules\ESP\ESP.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
