@@ -176,6 +176,7 @@
     <ClCompile Include="Base\imgui_impl_dx9.cpp" />
     <ClCompile Include="Base\Interfaces.cpp" />
     <ClCompile Include="Base\Sig.cpp" />
+    <ClCompile Include="Hooks\ClientHook.cpp" />
     <ClCompile Include="Hooks\Hooks.cpp" />
     <ClCompile Include="Hooks\OverlayHook.cpp" />
     <ClCompile Include="Hooks\WindowHook.cpp" />
@@ -186,6 +187,7 @@
   <ItemGroup>
     <ClInclude Include="Base\AsmTools.h" />
     <ClInclude Include="Base\Base.h" />
+    <ClInclude Include="Base\fnv1a.h" />
     <ClInclude Include="Base\Interfaces.h" />
     <ClInclude Include="Base\Wrappers\ClientDLLWrappers.h" />
     <ClInclude Include="Base\Wrappers\EngineClientWrappers.h" />
@@ -193,6 +195,7 @@
     <ClInclude Include="Base\imgui_impl_win32.h" />
     <ClInclude Include="Base\Wrappers\Wrappers.h" />
     <ClInclude Include="Base\Sig.h" />
+    <ClInclude Include="Hooks\ClientHook.h" />
     <ClInclude Include="Hooks\Hooks.h" />
     <ClInclude Include="Hooks\OverlayHook.h" />
     <ClInclude Include="Hooks\WindowHook.h" />

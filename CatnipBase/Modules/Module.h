@@ -9,8 +9,8 @@ public:
 	virtual ~CModule() { m_modules.remove(this); }
 
 protected:
-	inline void Listen(const uint32_t Hash, const CallbackFunc_t& Func) {
-		CBaseEvent::GetEvent(Hash)->AddCallback(Func);
+	inline void Listen(const EventHandle Event, const CallbackFunc_t& Func) {
+		CBaseEvent::GetEvent(Event)->AddCallback(Func);
 	}
 
 private:

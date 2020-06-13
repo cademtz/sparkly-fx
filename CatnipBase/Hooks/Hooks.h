@@ -4,14 +4,18 @@
 #include "Base/fnv1a.h"
 
 // - Use this to initialize CBaseHook
-#define BASEHOOK(Type) CBaseHook(#Type##_hash)
-#define GETHOOK(Type) CBaseHook::GetHook<Type>(#Type##_hash)
+#define BASEHOOK(Type) CBaseHook(HookHandle { #Type##_hash })
+#define GETHOOK(Type) CBaseHook::GetHook<Type>(HookHandle { #Type##_hash })
+
+struct HookHandle {
+	const uint32_t hash;
+};
 
 class CBaseHook : public CEventManager
 {
 public:
 	// - Use BASEHOOK(your_custom_class_here) to initialize a CBaseHook
-	CBaseHook(const uint32_t Hash) : m_hash(Hash) { m_hooks[Hash] = this; }
+	CBaseHook(const HookHandle Hook) : m_hash(Hook.hash) { m_hooks[m_hash] = this; }
 	virtual ~CBaseHook();
 
 	virtual void Hook() = 0;
@@ -21,10 +25,7 @@ public:
 	static void HookAll();
 
 	template<class T>
-	static inline T* GetHook(const uint32_t Hash)
-	{
-		return (T*)m_hooks[Hash];
-	}
+	static inline T* GetHook(const HookHandle Hook) { return (T*)m_hooks[Hook.hash]; }
 
 private:
 	uint32_t m_hash;
@@ -45,7 +46,7 @@ public:
 	void Unhook();
 
 	template <class T>
-	inline T* Get(size_t Index) { return (T*)m_oldvmt[Index]; }
+	inline T Get(size_t Index) { return (T)m_oldvmt[Index]; }
 	void Set(size_t Index, void* Function);
 
 private:
