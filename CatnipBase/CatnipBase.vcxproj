@@ -211,6 +211,7 @@
     <ClInclude Include="SDK\InputEnums.h" />
     <ClInclude Include="SDK\interface.h" />
     <ClInclude Include="SDK\InterfaceVersions\ClientDLL017.h" />
+    <ClInclude Include="SDK\InterfaceVersions\ClientDLL018.h" />
     <ClInclude Include="SDK\InterfaceVersions\EngineClient013.h" />
     <ClInclude Include="SDK\InterfaceVersions\EngineClient014.h" />
     <ClInclude Include="SDK\mathlib.h" />

@@ -21,10 +21,12 @@ void Interfaces::CreateInterfaces()
 
 	fn = GetFactory("client.dll");
 
-	if (void* clientdll7 = fn("VClient017", 0))
-		clientdll = new IClientDLLWrapper017(clientdll7);
+	if (void* clientdll17 = fn("VClient017", 0))
+		hlclient = new IClientDLLWrapper017(clientdll17);
+	else if (void* clientdll18 = fn("VClient018", 0))
+		hlclient = new IClientDLLWrapper018(clientdll18);
 
-	if (!engine || !clientdll)
+	if (!engine || !hlclient)
 		FATAL("Unsupported game interfaces");
 }
 

@@ -101,5 +101,6 @@
     <ClInclude Include="Hooks\WindowHook.h" />
     <ClInclude Include="Base\Wrappers\ClientDLLWrappers.h" />
     <ClInclude Include="SDK\InterfaceVersions\ClientDLL017.h" />
+    <ClInclude Include="SDK\InterfaceVersions\ClientDLL018.h" />
   </ItemGroup>
 </Project>
