@@ -1,7 +1,9 @@
 #pragma once
 #include "Base.h"
-#include <list>
+#include <unordered_map>
 #include <functional>
+
+#define DECL_EVENT(name) constexpr uint32_t name = #name##_hash
 
 class CEventCallback;
 typedef std::function<int()> CallbackFunc_t;
@@ -16,22 +18,16 @@ enum EEventReturnFlags
 class CBaseEvent
 {
 public:
-	template<size_t N>
-	CBaseEvent(const char(& Name)[N]) : m_name(Name) { m_events.push_back(this); }
-	~CBaseEvent() { m_events.remove(this); }
+	CBaseEvent(const uint32_t Hash) : m_hash(Hash) { m_events[Hash] = this; }
+	~CBaseEvent() { m_events.erase(m_hash); }
 
 	CEventCallback* AddCallback(const CallbackFunc_t& Func);
-	inline const char* Name() const { return m_name; }
+	inline const uint32_t hash() const { return m_hash; }
 	int Push();
 
-	template<size_t N>
-	static CBaseEvent* GetEvent(const char(&Name)[N])
+	static CBaseEvent* GetEvent(const uint32_t Hash)
 	{
-		for (auto event : m_events)
-			if (event->m_name == Name)
-				return event;
-		FATAL("'%s' was not a registered event", Name);
-		return nullptr;
+		return m_events[Hash];
 	}
 
 protected:
@@ -41,9 +37,9 @@ protected:
 private:
 	CBaseEvent(CBaseEvent&&);
 
-	const char* m_name;
+	uint32_t m_hash;
 	std::list<CEventCallback*> m_listeners;
-	inline static std::list<CBaseEvent*> m_events;
+	inline static std::unordered_map<uint32_t, CBaseEvent*> m_events;
 };
 
 class CEventManager
@@ -51,11 +47,9 @@ class CEventManager
 public:
 	~CEventManager();
 
-	template<size_t N>
-	inline void RegisterEvent(const char(&Name)[N]) { m_events.push_back(new CBaseEvent(Name)); }
+	inline void RegisterEvent(const uint32_t Hash) { m_events.push_back(new CBaseEvent(Hash)); }
 
-	template<size_t N>
-	inline int PushEvent(const char(&Name)[N]) { return CBaseEvent::GetEvent(Name)->Push(); }
+	inline int PushEvent(const uint32_t Hash) { return CBaseEvent::GetEvent(Hash)->Push(); }
 
 private:
 	unsigned m_evenstate = 0;

@@ -7,5 +7,5 @@ namespace Interfaces
 	void DestroyInterfaces();
 
 	inline IEngineClientWrapper* engine = nullptr;
-	inline IClientDLLWrapper* clientdll = nullptr;
+	inline IClientDLLWrapper* hlclient = nullptr;
 }

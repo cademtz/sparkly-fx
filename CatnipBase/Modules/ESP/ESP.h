@@ -4,4 +4,8 @@
 
 class CESP : public CModule
 {
+public:
+	CESP();
+
+	void OnFrame();
 };

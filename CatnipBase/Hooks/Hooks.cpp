@@ -4,13 +4,13 @@
 CBaseHook::~CBaseHook()
 {
 	Unhook();
-	m_hooks.remove(this);
+	m_hooks.erase(m_hash);
 }
 
 void CBaseHook::HookAll()
 {
 	for (auto hook : m_hooks)
-		hook->Hook();
+		hook.second->Hook();
 }
 
 void CVMTHook::Hook(void* Instance, bool AllInstances)

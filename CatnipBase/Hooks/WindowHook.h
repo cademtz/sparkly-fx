@@ -2,7 +2,7 @@
 #include <Windows.h>
 #include "Hooks.h"
 
-#define EVENT_WINDOWPROC "Event_WindowProc"
+DECL_EVENT(EVENT_WINDOWPROC);
 
 struct WindowProc_Ctx
 {
