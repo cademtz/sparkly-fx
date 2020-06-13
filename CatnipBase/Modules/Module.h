@@ -9,9 +9,8 @@ public:
 	virtual ~CModule() { m_modules.remove(this); }
 
 protected:
-	template<size_t N>
-	inline void Listen(const char(&Name)[N], const CallbackFunc_t& Func) {
-		CBaseEvent::GetEvent(Name)->AddCallback(Func);
+	inline void Listen(const uint32_t Hash, const CallbackFunc_t& Func) {
+		CBaseEvent::GetEvent(Hash)->AddCallback(Func);
 	}
 
 private:

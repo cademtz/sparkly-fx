@@ -182,7 +182,6 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Modules\ESP\ESP.cpp" />
     <ClCompile Include="Modules\Menu\Menu.cpp" />
-    <ClCompile Include="Modules\Module.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Base\AsmTools.h" />
