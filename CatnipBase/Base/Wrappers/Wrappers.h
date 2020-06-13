@@ -75,7 +75,8 @@ class IClientDLLWrapper
 {
 public:
 	enum EOffsets {
-		Off_CreateMove
+		Off_CreateMove,
+		Off_FrameStageNotify
 	};
 
 	virtual ~IClientDLLWrapper() { }
@@ -87,13 +88,9 @@ public:
 	virtual bool			WriteUsercmdDeltaToBuffer(bf_write* buf, int from, int to, bool isnewcommand) = 0;
 	virtual void			View_Render(vrect_t* rect) = 0;
 	virtual void			RenderView(const CViewSetup& view, int nClearFlags, int whatToDraw) = 0;
-	virtual void			SetCrosshairAngle(const QAngle& angle) = 0;
 	virtual void			InstallStringTableCallback(char const* tableName) = 0;
 	virtual void			FrameStageNotify(ClientFrameStage_t curStage) = 0;
 	virtual bool			DispatchUserMessage(int msg_type, bf_read& msg_data) = 0;
 	virtual CStandardRecvProxies* GetStandardRecvProxies() = 0;
-	virtual int				GetScreenWidth() = 0;
-	virtual int				GetScreenHeight() = 0;
 	virtual bool			GetPlayerView(CViewSetup& playerView) = 0;
-	virtual CRenamedRecvTableInfo* GetRenamedRecvTableInfos() = 0;
 };
