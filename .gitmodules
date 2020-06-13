@@ -7,3 +7,6 @@
 [submodule "LuaBridge"]
 	path = LuaBridge
 	url = https://github.com/vinniefalco/LuaBridge
+[submodule "zydis"]
+	path = zydis
+	url = https://github.com/zyantific/zydis.git
