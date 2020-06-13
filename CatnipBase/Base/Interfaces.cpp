@@ -25,13 +25,19 @@ void Interfaces::CreateInterfaces()
 		hlclient = new IClientDLLWrapper017(clientdll17);
 	else if (void* clientdll18 = fn("VClient018", 0))
 		hlclient = new IClientDLLWrapper018(clientdll18);
+	if (void* entitylist = fn(VCLIENTENTITYLIST_INTERFACE_VERSION, 0))
+		entlist = (IClientEntityList*)entitylist;
 
-	if (!engine || !hlclient)
+	if (!engine || !hlclient || !entlist)
 		FATAL("Unsupported game interfaces");
 }
 
 void Interfaces::DestroyInterfaces()
 {
 	delete engine;
+	delete hlclient;
+	delete entlist;
 	engine = nullptr;
+	hlclient = nullptr;
+	entlist = nullptr;
 }
