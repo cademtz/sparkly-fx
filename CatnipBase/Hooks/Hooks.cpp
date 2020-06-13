@@ -32,6 +32,7 @@ void CVMTHook::Hook(void* Instance, bool AllInstances)
 	{
 		m_oldvmt = vmt;
 		m_newvmt = copy;
+		*(void***)m_inst = m_newvmt;
 	}
 }
 

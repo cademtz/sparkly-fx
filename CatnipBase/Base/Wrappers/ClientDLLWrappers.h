@@ -11,6 +11,7 @@ class IClientDLLWrapper017 : public IClientDLLWrapper
 public:
 	IClientDLLWrapper017(void* ClientDLL) : m_int((IBaseClientDLL*)ClientDLL) { }
 
+	void* Inst() override { return m_int; }
 	virtual int GetOffset(EOffsets Offset);
 
 	virtual ClientClass* GetAllClasses(void);
@@ -32,6 +33,7 @@ class IClientDLLWrapper018 : public IClientDLLWrapper
 public:
 	IClientDLLWrapper018(void* ClientDLL) : m_int((IBaseClientDLL018*)ClientDLL) { }
 
+	void* Inst() override { return m_int; }
 	virtual int GetOffset(EOffsets Offset);
 
 	virtual ClientClass* GetAllClasses(void);
