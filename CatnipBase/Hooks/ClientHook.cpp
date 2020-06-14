@@ -21,21 +21,25 @@ void CClientHook::Unhook() {
 void CClientHook::HLCreateMove(int sequence_number, float input_sample_frametime, bool active)
 {
 	// TODO: Hideous
-	m_hlhook.Get<HLCreateMoveFn_t>(Interfaces::hlclient->GetOffset(Off_CreateMove))(
-		Interfaces::hlclient, sequence_number, input_sample_frametime, active);
+	static HLCreateMoveFn_t original = m_hlhook.Get<HLCreateMoveFn_t>(Interfaces::hlclient->GetOffset(Off_CreateMove));
+
+
+	original(Interfaces::hlclient, sequence_number, input_sample_frametime, active);
 }
 
 void CClientHook::FrameStageNotify(ClientFrameStage_t curStage)
 {
-	m_hlhook.Get<FrameStageNotifyFn_t>(Interfaces::hlclient->GetOffset(Off_FrameStageNotify))(
-		Interfaces::hlclient, curStage);
+	static FrameStageNotifyFn_t original = m_hlhook.Get<FrameStageNotifyFn_t>(Interfaces::hlclient->GetOffset(Off_FrameStageNotify));
+
+	original(Interfaces::hlclient, curStage);
 }
 
 void __stdcall CClientHook::Hooked_HLCreateMove(int sequence_number, float input_sample_frametime, bool active)
 {
-	auto hook = GETHOOK(CClientHook);
+	static auto hook = GETHOOK(CClientHook);
+
 	auto ctx = hook->Context();
-	ctx.active = active, ctx.input_sample_frametime = input_sample_frametime, ctx.active = active;
+	ctx.active = active, ctx.input_sample_frametime = input_sample_frametime;
 
 	int flags = hook->PushEvent(EVENT_HLCREATEMOVE);
 	if (flags & Return_NoOriginal)
@@ -46,7 +50,8 @@ void __stdcall CClientHook::Hooked_HLCreateMove(int sequence_number, float input
 
 void __stdcall CClientHook::Hooked_FrameStageNotify(ClientFrameStage_t curStage)
 {
-	auto hook = GETHOOK(CClientHook);
+	static auto hook = GETHOOK(CClientHook);
+
 	auto ctx = hook->Context();
 	ctx.curStage = curStage;
 

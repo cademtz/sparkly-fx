@@ -1,8 +1,11 @@
 #include "Lua.h"
-
 #ifdef BUILDCFG_LUA
 #include "Base/Interfaces.h"
+#include "Hooks/ClientHook.h"
+
 #include "Exports/ExportedInterfaces.h"
+
+#include "Callbacks/LuaCallbacks.h"
 
 void CLua::Init()
 {
@@ -38,4 +41,20 @@ RunResult_t CLua::Execute(const char* Code)
 	}
 	return { true, NULL };
 }
+
+void CLuaEventListener::Start(lua_State* LuaState)
+{
+	// TODO listen for events
+
+	/*
+		- Run callbacks like this
+		- Table should be automatically deleted once out of scope 
+
+		auto arguments = luabridge::newTable(LuaState);
+		arguments["example"] = 123;
+
+		CLuaCallbacks::ExecuteCallbacks(EVENT_*, arguments);
+	*/
+}
+
 #endif
