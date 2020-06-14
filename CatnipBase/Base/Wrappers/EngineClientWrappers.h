@@ -52,7 +52,7 @@ class IEngineClientWrapper014 : public IEngineClientWrapper
 	IVEngineClient014* m_int;
 
 public:
-	IEngineClientWrapper014(void* EngineClient14) : m_int((IVEngineClient014*)m_int) { }
+	IEngineClientWrapper014(void* EngineClient14) : m_int((IVEngineClient014*)EngineClient14) { }
 
 	void* Inst() override { return m_int; }
 

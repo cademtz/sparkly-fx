@@ -4,6 +4,8 @@
 #include "Modules/Menu/Menu.h"
 #include "Interfaces.h"
 
+#include "Lua/Lua.h"
+
 void Base::OnAttach(HMODULE Module)
 {
 	hInst = Module;
@@ -15,9 +17,19 @@ DWORD WINAPI Base::HookThread(LPVOID Args)
 	while (!(hWnd = FindWindowA("Valve001", 0)))
 		Sleep(100);
 
+#ifdef _DEBUG
+	AllocConsole();
+	SetConsoleTitleA("catnitch baes");
+	freopen("conin$", "r", stdin);
+	freopen("conout$", "w", stdout);
+	freopen("conout$", "w", stderr);
+#endif
+
 	Interfaces::CreateInterfaces();
 	CBaseHook::HookAll();
 	new CMenu;
+
+	CLua::Init();
 
 	return 0;
 }
