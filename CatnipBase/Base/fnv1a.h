@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace FNV
+namespace fnv
 {
     namespace internal
     {
@@ -17,5 +17,5 @@ namespace FNV
 
 constexpr static inline uint32_t operator ""_hash(const char* pszString, size_t)
 {
-    return FNV::calculate(pszString);
+    return fnv::calculate(pszString);
 }
