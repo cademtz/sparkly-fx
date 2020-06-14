@@ -7,6 +7,19 @@
 
 #define FATAL(...) Base::Fatal("Fatal error in " __FUNCTION__, __VA_ARGS__)
 
+enum EAppID
+{
+	AppId_HL2 = 220,
+	AppId_CSS = 240,
+	AppID_HL2DM = 320,
+	AppId_Portal = 400,
+	AppId_TF2 = 440,
+	AppId_L4D = 500,
+	AppId_L4D2 = 550,
+	AppId_Portal2 = 620,
+	AppId_CSGO = 730,
+};
+
 namespace Base
 {
 	void OnAttach(HMODULE Module);

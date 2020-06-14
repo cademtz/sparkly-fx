@@ -50,14 +50,9 @@ bool IEngineClientWrapper013::IsConnected() {
 	return m_int->IsConnected();
 }
 void IEngineClientWrapper013::Con_NPrintf(int pos, const char* fmt, ...) {
-	char buf[512];
-
 	va_list va;
 	va_start(va, fmt);
-	vsprintf_s(buf, fmt, va);
-	va_end(va);
-	
-	return m_int->Con_NPrintf(pos, buf);
+	return m_int->Con_NPrintf(pos, fmt, va);
 }
 const VMatrix& IEngineClientWrapper013::WorldToScreenMatrix() {
 	return m_int->WorldToScreenMatrix();

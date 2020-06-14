@@ -68,6 +68,9 @@
     <ClCompile Include="Base\Lua\Callbacks\LuaCallbacks.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="Base\Wrappers\ClientModeWrappers.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Hooks\Hooks.h">
@@ -139,5 +142,10 @@
     <ClInclude Include="Base\Lua\Exports\ExportedInterfaces.h" />
     <ClInclude Include="BuildConfig.h" />
     <ClInclude Include="Base\Lua\Callbacks\LuaCallbacks.h" />
+    <ClInclude Include="SDK\iclientmode.h" />
+    <ClInclude Include="Base\Wrappers\ClientModeWrappers.h" />
+    <ClInclude Include="SDK\usercmd.h" />
+    <ClInclude Include="SDK\InterfaceVersions\ClientModeSDK.h" />
+    <ClInclude Include="SDK\InterfaceVersions\ClientModeCSGO.h" />
   </ItemGroup>
 </Project>

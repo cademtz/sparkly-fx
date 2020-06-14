@@ -175,6 +175,7 @@
     <ClCompile Include="Base\Lua\Exports\ExportedEngine.cpp" />
     <ClCompile Include="Base\Lua\Lua.cpp" />
     <ClCompile Include="Base\Wrappers\ClientDLLWrappers.cpp" />
+    <ClCompile Include="Base\Wrappers\ClientModeWrappers.cpp" />
     <ClCompile Include="Base\Wrappers\EngineClientWrappers.cpp" />
     <ClCompile Include="Base\Event.cpp" />
     <ClCompile Include="Base\imgui.cpp" />
@@ -199,6 +200,7 @@
     <ClInclude Include="Base\Lua\Exports\ExportedInterfaces.h" />
     <ClInclude Include="Base\Lua\Lua.h" />
     <ClInclude Include="Base\Wrappers\ClientDLLWrappers.h" />
+    <ClInclude Include="Base\Wrappers\ClientModeWrappers.h" />
     <ClInclude Include="Base\Wrappers\EngineClientWrappers.h" />
     <ClInclude Include="Base\Event.h" />
     <ClInclude Include="Base\imgui_impl_win32.h" />
@@ -225,6 +227,7 @@
     <ClInclude Include="SDK\IAppSystem.h" />
     <ClInclude Include="SDK\icliententity.h" />
     <ClInclude Include="SDK\icliententitylist.h" />
+    <ClInclude Include="SDK\iclientmode.h" />
     <ClInclude Include="SDK\iclientnetworkable.h" />
     <ClInclude Include="SDK\iclientrenderable.h" />
     <ClInclude Include="SDK\iclientthinkable.h" />
@@ -237,6 +240,8 @@
     <ClInclude Include="SDK\interface.h" />
     <ClInclude Include="SDK\InterfaceVersions\ClientDLL017.h" />
     <ClInclude Include="SDK\InterfaceVersions\ClientDLL018.h" />
+    <ClInclude Include="SDK\InterfaceVersions\ClientModeSDK.h" />
+    <ClInclude Include="SDK\InterfaceVersions\ClientModeCSGO.h" />
     <ClInclude Include="SDK\InterfaceVersions\EngineClient013.h" />
     <ClInclude Include="SDK\InterfaceVersions\EngineClient014.h" />
     <ClInclude Include="SDK\istudiorender.h" />
@@ -247,6 +252,7 @@
     <ClInclude Include="SDK\refcount.h" />
     <ClInclude Include="SDK\studio.h" />
     <ClInclude Include="SDK\texture_group_names.h" />
+    <ClInclude Include="SDK\usercmd.h" />
     <ClInclude Include="SDK\valve_minmax_off.h" />
     <ClInclude Include="SDK\valve_minmax_on.h" />
     <ClInclude Include="SDK\vector.h" />
