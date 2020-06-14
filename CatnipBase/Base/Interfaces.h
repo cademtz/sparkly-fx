@@ -10,4 +10,5 @@ namespace Interfaces
 	inline IEngineClientWrapper* engine = nullptr;
 	inline IClientDLLWrapper* hlclient = nullptr;
 	inline IClientEntityList* entlist = nullptr;
+	inline IClientModeWrapper* client = nullptr;
 }

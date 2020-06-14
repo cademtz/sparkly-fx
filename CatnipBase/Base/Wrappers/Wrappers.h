@@ -4,23 +4,24 @@
 
 enum EOffsets {
 	Off_CreateMove,
-	Off_FrameStageNotify
+	Off_FrameStageNotify,
+	Off_ShouldDrawDetailObjects,
+	Off_ShouldDrawEntity,
+	Off_ShouldDrawLocalPlayer,
+	Off_ShouldDrawParticles,
+	Off_ShouldDrawViewModel,
+	Off_ShouldDrawCrosshair,
 };
 
 struct model_t;
 class Vector;
-class SurfInfo;
 class IMaterial;
 struct client_textmessage_t;
 typedef struct player_info_s player_info_t;
-class CSentence;
-class CAudioSource;
 class QAngle;
 enum ButtonCode_t;
 class VMatrix;
-class ISpatialQuery;
 class IMaterialSystem;
-struct AudioState_t;
 class INetChannelInfo;
 class CPhysCollide;
 struct OcclusionParams_t;
@@ -35,7 +36,9 @@ class bf_read;
 class CViewSetup;
 enum ClientFrameStage_t;
 class CStandardRecvProxies;
-class CRenamedRecvTableInfo;
+class C_BaseEntity;
+class C_BasePlayer;
+class CUserCmd;
 
 class IEngineClientWrapper
 {
@@ -94,4 +97,24 @@ public:
 	virtual bool			DispatchUserMessage(int msg_type, bf_read& msg_data) = 0;
 	virtual CStandardRecvProxies* GetStandardRecvProxies() = 0;
 	virtual bool			GetPlayerView(CViewSetup& playerView) = 0;
+};
+
+class IClientModeWrapper
+{
+public:
+	virtual ~IClientModeWrapper() { }
+	virtual void* Inst() = 0;
+	virtual int GetOffset(EOffsets Offset) = 0;
+
+	virtual bool	ShouldDrawDetailObjects() = 0;
+	virtual bool	ShouldDrawEntity(C_BaseEntity* pEnt) = 0;
+	virtual bool	ShouldDrawLocalPlayer(C_BasePlayer* pPlayer) = 0;
+	virtual bool	ShouldDrawParticles() = 0;
+	virtual bool	CreateMove(float flInputSampleTime, CUserCmd* cmd) = 0;
+	virtual bool	ShouldDrawViewModel(void) = 0;
+	virtual bool	ShouldDrawCrosshair(void) = 0;
+	virtual void	PreRender(CViewSetup* pSetup) = 0;
+	virtual void	PostRender(void) = 0;
+	virtual wchar_t* GetServerName() = 0;
+	virtual wchar_t* GetMapName() = 0;
 };
