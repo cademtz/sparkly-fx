@@ -118,7 +118,7 @@ public:
 	virtual int	GetAppID() = 0;
 	virtual void _unk112() = 0;
 	virtual void _unk113() = 0;
-	virtual void			ClientCmd_Unrestricted(const char* szCmdString) = 0;
+	virtual void			ClientCmd_Unrestricted(const char* szCmdString, bool lol = false) = 0;
 	virtual void _unk115() = 0;
 	virtual void _unk116() = 0;
 	virtual void _unk117() = 0;
