@@ -2,10 +2,18 @@
 #include <lua.hpp>
 #include <LuaBridge/LuaBridge.h>
 
+#pragma comment(lib, "lua51.lib")
+
+typedef struct {
+	bool status;
+	const char* error;
+} RunResult_t;
+
 class CLua
 {
-	lua_State* m_state;
+	static inline lua_State* m_state;
 public:
-	void Init();
+	static void Init();
+
+	static RunResult_t Execute(const char* Code);
 };
-inline CLua g_Lua;

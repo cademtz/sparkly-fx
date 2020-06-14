@@ -62,6 +62,9 @@
     <ClCompile Include="Base\Lua\Lua.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="Base\Lua\Exports\ExportedEngine.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Hooks\Hooks.h">
@@ -129,5 +132,7 @@
     <ClInclude Include="Hooks\ClientHook.h" />
     <ClInclude Include="Base\fnv1a.h" />
     <ClInclude Include="Base\Lua\Lua.h" />
+    <ClInclude Include="Base\Lua\Exports\ExportedEngine.h" />
+    <ClInclude Include="Base\Lua\Exports\ExportedInterfaces.h" />
   </ItemGroup>
 </Project>
