@@ -134,5 +134,6 @@
     <ClInclude Include="Base\Lua\Lua.h" />
     <ClInclude Include="Base\Lua\Exports\ExportedEngine.h" />
     <ClInclude Include="Base\Lua\Exports\ExportedInterfaces.h" />
+    <ClInclude Include="BuildConfig.h" />
   </ItemGroup>
 </Project>

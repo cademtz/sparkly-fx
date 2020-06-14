@@ -1,4 +1,8 @@
 #pragma once
+#include "BuildConfig.h"
+
+#ifdef BUILDCFG_LUA
+
 #include <lua.hpp>
 #include <LuaBridge/LuaBridge.h>
 
@@ -17,3 +21,5 @@ public:
 
 	static RunResult_t Execute(const char* Code);
 };
+
+#endif
