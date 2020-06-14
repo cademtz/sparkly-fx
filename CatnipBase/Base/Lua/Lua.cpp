@@ -1,4 +1,6 @@
 #include "Lua.h"
+
+#ifdef BUILDCFG_LUA
 #include "Base/Interfaces.h"
 #include "Exports/ExportedInterfaces.h"
 
@@ -36,3 +38,4 @@ RunResult_t CLua::Execute(const char* Code)
 	}
 	return { true, NULL };
 }
+#endif

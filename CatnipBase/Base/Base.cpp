@@ -29,7 +29,9 @@ DWORD WINAPI Base::HookThread(LPVOID Args)
 	CBaseHook::HookAll();
 	new CMenu;
 
+#ifdef BUILDCFG_LUA
 	CLua::Init();
+#endif
 
 	return 0;
 }
