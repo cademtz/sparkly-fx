@@ -1,8 +1,15 @@
 #include "Interfaces.h"
 #include "Base.h"
+#include "Sig.h"
 #include "Wrappers/EngineClientWrappers.h"
 #include "Wrappers/ClientDLLWrappers.h"
 #include "Wrappers/ClientModeWrappers.h"
+
+#ifdef _WIN64
+#define SIG_CLIENTMODE "8B 0D ? ? ? ? 48 8B 01"
+#else
+#define SIG_CLIENTMODE "8B 0D ? ? ? ? 8B 01"
+#endif
 
 CreateInterfaceFn GetFactory(const char* Module)
 {
@@ -30,6 +37,21 @@ void Interfaces::CreateInterfaces()
 
 	if (!engine || !hlclient || !entlist)
 		FATAL("Unsupported game interfaces");
+
+	void* hudprocinput = (*(void***)hlclient->Inst())[10];
+	void* clientref = Sig::FindPattern<void*>(hudprocinput, 0xFF, SIG_CLIENTMODE);
+	if (!clientref)
+		FATAL("Failed signature to g_pClientModeShared");
+
+	void* clientmode = AsmTools::Relative(clientref, 2);
+	switch (engine->GetAppID())
+	{
+	case AppId_CSGO:
+		client = new IClientModeWrapperCSGO(clientmode);
+		break;
+	default:
+		client = new IClientModeWrapperSDK(clientmode);
+	}
 }
 
 void Interfaces::DestroyInterfaces()
@@ -37,7 +59,9 @@ void Interfaces::DestroyInterfaces()
 	delete engine;
 	delete hlclient;
 	delete entlist;
+	delete client;
 	engine = nullptr;
 	hlclient = nullptr;
 	entlist = nullptr;
+	client = nullptr;
 }

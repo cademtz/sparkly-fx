@@ -22,7 +22,7 @@ namespace Sig
 	}
 	template <class T = UINT_PTR, class TStart>
 	inline T FindPattern(TStart Start, size_t Len, const char* Pattern) {
-		return (T)FindPattern((UINT_PTR)Start, Start + Len, Pattern);
+		return (T)FindPattern((UINT_PTR)Start, (UINT_PTR)Start + Len, Pattern);
 	}
 	template <class T = UINT_PTR>
 	inline T FindPattern(const char* Module, const char* Pattern) {
