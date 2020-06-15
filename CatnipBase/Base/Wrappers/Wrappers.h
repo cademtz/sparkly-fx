@@ -11,6 +11,8 @@ enum EOffsets {
 	Off_ShouldDrawParticles,
 	Off_ShouldDrawViewModel,
 	Off_ShouldDrawCrosshair,
+	Off_PreRender,
+	Off_PostRender,
 };
 
 struct model_t;
@@ -115,6 +117,4 @@ public:
 	virtual bool	ShouldDrawCrosshair(void) = 0;
 	virtual void	PreRender(CViewSetup* pSetup) = 0;
 	virtual void	PostRender(void) = 0;
-	virtual wchar_t* GetServerName() = 0;
-	virtual wchar_t* GetMapName() = 0;
 };
