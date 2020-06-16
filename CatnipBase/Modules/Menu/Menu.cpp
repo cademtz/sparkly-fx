@@ -67,6 +67,18 @@ int CMenu::OnWindowProc()
 		m_running = true;
 		ImGui_ImplWin32_WndProcHandler(ctx->hwnd, ctx->msg, ctx->wparam, ctx->lparam);
 		m_running = false;
+
+		switch (ctx->msg)
+		{
+		case WM_KEYDOWN:
+			if (!ImGui::GetIO().WantTextInput)
+				return 0; // Let users continue walking in-game unless typing inside IMGUI
+		case WM_KEYUP:
+		case WM_LBUTTONUP:
+		case WM_RBUTTONUP:
+		case WM_XBUTTONUP:
+			return 0; // Prevent "stuck" input by allowing game to recieve key up
+		}
 		return Return_NoOriginal | Return_Skip;
 	}
 	return 0;
