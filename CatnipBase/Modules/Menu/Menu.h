@@ -9,7 +9,8 @@ public:
 	int OnWindowProc();
 	int OnCurPos();
 	int OnShowCur();
+	int OnSetCur();
 
 private:
-	bool m_open;
+	bool m_open = false, m_running = false;
 };
