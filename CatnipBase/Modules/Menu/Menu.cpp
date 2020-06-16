@@ -8,12 +8,13 @@
 #include <imgui/imgui_demo.cpp>
 #include "Base/imgui_impl_win32.h"
 
-CMenu::CMenu() : m_open(false)
+CMenu::CMenu()
 {
 	Listen(EVENT_DX9PRESENT, [this]() { return OnPresent(); });
 	Listen(EVENT_WINDOWPROC, [this]() { return OnWindowProc(); });
 	Listen(EVENT_SETCURSORPOS, [this]() { return OnCurPos(); });
 	Listen(EVENT_SHOWCURSOR, [this]() { return OnShowCur();  });
+	Listen(EVENT_SETCURSOR, [this]() { return OnSetCur(); });
 }
 
 int CMenu::OnPresent()
@@ -49,10 +50,10 @@ int CMenu::OnPresent()
 int CMenu::OnWindowProc()
 {
 	auto ctx = GETHOOK(CWindowHook)->Context();
-	switch (ctx.msg)
+	switch (ctx->msg)
 	{
 	case WM_KEYDOWN:
-		switch (ctx.wparam)
+		switch (ctx->wparam)
 		{
 		case VK_INSERT:
 		case VK_F11:
@@ -63,7 +64,9 @@ int CMenu::OnWindowProc()
 
 	if (m_open)
 	{
-		ctx.result = ImGui_ImplWin32_WndProcHandler(ctx.hwnd, ctx.msg, ctx.wparam, ctx.lparam);
+		m_running = true;
+		ImGui_ImplWin32_WndProcHandler(ctx->hwnd, ctx->msg, ctx->wparam, ctx->lparam);
+		m_running = false;
 		return Return_NoOriginal | Return_Skip;
 	}
 	return 0;
@@ -78,10 +81,9 @@ int CMenu::OnCurPos()
 
 int CMenu::OnShowCur()
 {
-	if (!m_open)
+	if (m_open)
 	{
 		static auto hook = GETHOOK(CWindowHook);
-		
 		static CURSORINFO info{ sizeof(info) };
 		GetCursorInfo(&info);
 		if (!(info.flags & CURSOR_SHOWING))
@@ -90,4 +92,11 @@ int CMenu::OnShowCur()
 		return Return_NoOriginal;
 	}
 	return 0;
+}
+
+int CMenu::OnSetCur()
+{
+	if (!m_open || m_running)
+		return 0;
+	return Return_NoOriginal;
 }

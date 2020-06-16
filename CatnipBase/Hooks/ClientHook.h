@@ -30,7 +30,7 @@ public:
 	void HLCreateMove(int sequence_number, float input_sample_frametime, bool active);
 	void FrameStageNotify(ClientFrameStage_t curStage);
 	bool CreateMove(float flInputSampleTime, CUserCmd* cmd);
-	CClientHook_Ctx& Context() { return m_ctx; }
+	CClientHook_Ctx* Context() { return &m_ctx; }
 
 private:
 	CVMTHook m_hlhook, m_clhook;

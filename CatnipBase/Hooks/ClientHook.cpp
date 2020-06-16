@@ -45,9 +45,8 @@ bool CClientHook::CreateMove(float flInputSampleTime, CUserCmd* cmd)
 void __stdcall CClientHook::Hooked_HLCreateMove(int sequence_number, float input_sample_frametime, bool active)
 {
 	static auto hook = GETHOOK(CClientHook);
-
 	auto ctx = hook->Context();
-	ctx.active = active, ctx.input_sample_frametime = input_sample_frametime;
+	ctx->active = active, ctx->input_sample_frametime = input_sample_frametime;
 
 	int flags = hook->PushEvent(EVENT_HLCREATEMOVE);
 	if (flags & Return_NoOriginal)
@@ -61,7 +60,7 @@ void __stdcall CClientHook::Hooked_FrameStageNotify(ClientFrameStage_t curStage)
 	static auto hook = GETHOOK(CClientHook);
 
 	auto ctx = hook->Context();
-	ctx.curStage = curStage;
+	ctx->curStage = curStage;
 
 	int flags = hook->PushEvent(EVENT_FRAMESTAGENOTIFY);
 	if (flags & Return_NoOriginal)
@@ -75,11 +74,11 @@ bool __fastcall CClientHook::Hooked_CreateMove(void* thisptr, void* edx, float f
 	static auto hook = GETHOOK(CClientHook);
 	auto ctx = hook->Context();
 
-	ctx.result = hook->CreateMove(flInputSampleTime, cmd);
-	ctx.input_sample_frametime = flInputSampleTime;
+	ctx->result = hook->CreateMove(flInputSampleTime, cmd);
+	ctx->input_sample_frametime = flInputSampleTime;
 	//ctx.cmd = CUserCmd_Wrap(cmd);
 
 	hook->PushEvent(EVENT_CREATEMOVE);
 
-    return ctx.result;
+    return ctx->result;
 }
