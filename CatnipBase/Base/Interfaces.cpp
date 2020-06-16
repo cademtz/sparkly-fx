@@ -39,11 +39,11 @@ void Interfaces::CreateInterfaces()
 		FATAL("Unsupported game interfaces");
 
 	void* hudprocinput = (*(void***)hlclient->Inst())[10];
-	void* clientref = Sig::FindPattern<void*>(hudprocinput, 0xFF, SIG_CLIENTMODE);
+	void* clientref = Sig::FindPattern<void*>(hudprocinput, 0x10, SIG_CLIENTMODE);
 	if (!clientref)
 		FATAL("Failed signature to g_pClientModeShared");
 
-	void* clientmode = AsmTools::Relative(clientref, 2);
+	void* clientmode = *AsmTools::Relative<void**>(clientref, 2);
 	switch (engine->GetAppID())
 	{
 	case AppId_CSGO:
