@@ -12,6 +12,8 @@ CMenu::CMenu() : m_open(false)
 {
 	Listen(EVENT_DX9PRESENT, [this]() { return OnPresent(); });
 	Listen(EVENT_WINDOWPROC, [this]() { return OnWindowProc(); });
+	Listen(EVENT_SETCURSORPOS, [this]() { return OnCurPos(); });
+	Listen(EVENT_SHOWCURSOR, [this]() { return OnShowCur();  });
 }
 
 int CMenu::OnPresent()
@@ -63,6 +65,29 @@ int CMenu::OnWindowProc()
 	{
 		ctx.result = ImGui_ImplWin32_WndProcHandler(ctx.hwnd, ctx.msg, ctx.wparam, ctx.lparam);
 		return Return_NoOriginal | Return_Skip;
+	}
+	return 0;
+}
+
+int CMenu::OnCurPos()
+{
+	if (m_open)
+		return Return_NoOriginal;
+	return 0;
+}
+
+int CMenu::OnShowCur()
+{
+	if (!m_open)
+	{
+		static auto hook = GETHOOK(CWindowHook);
+		
+		static CURSORINFO info{ sizeof(info) };
+		GetCursorInfo(&info);
+		if (!(info.flags & CURSOR_SHOWING))
+			while (ShowCursor(true) < 0);
+
+		return Return_NoOriginal;
 	}
 	return 0;
 }

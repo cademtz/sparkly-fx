@@ -7,6 +7,8 @@ public:
 	CMenu();
 	int OnPresent();
 	int OnWindowProc();
+	int OnCurPos();
+	int OnShowCur();
 
 private:
 	bool m_open;

@@ -3,6 +3,8 @@
 #include "Hooks.h"
 
 DECL_EVENT(EVENT_WINDOWPROC);
+DECL_EVENT(EVENT_SETCURSORPOS);
+DECL_EVENT(EVENT_SHOWCURSOR);
 
 struct WindowProc_Ctx
 {
@@ -11,6 +13,8 @@ struct WindowProc_Ctx
 	WPARAM wparam;
 	LPARAM lparam;
 	LRESULT result;
+
+	int cur_x, cur_y;
 };
 
 class CWindowHook : public CBaseHook
@@ -25,12 +29,19 @@ public:
 	inline WNDPROC OldProc() const { return m_oldproc; }
 	inline WindowProc_Ctx& Context() { return m_ctx; }
 
+	BOOL SetCurPos(int X, int Y);
+	int ShowCur(BOOL bShow);
+
 private:
+	CJumpHook m_hkcurpos, m_hkshowcur;
+
 	HWND m_hwnd;
 	WNDPROC m_oldproc;
 	WindowProc_Ctx m_ctx;
 
 	static LRESULT WINAPI Hooked_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	static BOOL __stdcall Hooked_SetCursorPos(int X, int Y);
+	static int __stdcall Hooked_ShowCursor(BOOL bShow);
 };
 
 inline CWindowHook _g_windowhook;
