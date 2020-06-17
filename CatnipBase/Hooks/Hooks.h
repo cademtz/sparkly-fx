@@ -7,6 +7,12 @@
 #define BASEHOOK(Type) CBaseHook(HookHandle { #Type##_hash })
 #define GETHOOK(Type) CBaseHook::GetHook<Type>(HookHandle { #Type##_hash })
 
+#ifdef _WIN64
+#define UNCRAP void*,
+#else
+#define UNCRAP
+#endif
+
 struct HookHandle {
 	const uint32_t hash;
 };

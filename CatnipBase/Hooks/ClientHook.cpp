@@ -4,6 +4,7 @@
 
 CClientHook::CClientHook() : BASEHOOK(CClientHook)
 {
+	RegisterEvent(EVENT_CREATEMOVE);
 	RegisterEvent(EVENT_HLCREATEMOVE);
 	RegisterEvent(EVENT_FRAMESTAGENOTIFY);
 }
@@ -15,7 +16,7 @@ void CClientHook::Hook()
 	m_hlhook.Set(Interfaces::hlclient->GetOffset(Off_FrameStageNotify), Hooked_FrameStageNotify);
 
 	m_clhook.Hook(Interfaces::client->Inst());
-	//m_clhook.Set(Interfaces::client->GetOffset(Off_CreateMove), Hooked_CreateMove);
+	m_clhook.Set(Interfaces::client->GetOffset(Off_CreateMove), Hooked_CreateMove);
 }
 
 void CClientHook::Unhook() {
@@ -38,11 +39,22 @@ void CClientHook::FrameStageNotify(ClientFrameStage_t curStage)
 
 bool CClientHook::CreateMove(float flInputSampleTime, CUserCmd* cmd)
 {
-	static auto original = m_clhook.Get<CreateMoveFn_t>(Interfaces::client->GetOffset(Off_CreateMove));
-	return original(Interfaces::client->Inst(), flInputSampleTime, cmd);
+	// !!	Compiler LITERALLY will not give the correct result.
+	//		Always seems to call with completely wrong convention.
+	//		Am I just being stupid?
+
+	//static auto original = m_clhook.Get<void*>(Interfaces::client->GetOffset(Off_CreateMove));
+	//return ((CreateMoveFn_t)original)(Interfaces::client->Inst(), flInputSampleTime, cmd);
+
+
+	m_clhook.Unhook();
+	bool result = Interfaces::client->CreateMove(flInputSampleTime, cmd);
+	m_clhook.Hook(Interfaces::client->Inst());
+	m_clhook.Set(Interfaces::client->GetOffset(Off_CreateMove), Hooked_CreateMove);
+	return result;
 }
 
-void __stdcall CClientHook::Hooked_HLCreateMove(int sequence_number, float input_sample_frametime, bool active)
+void __stdcall CClientHook::Hooked_HLCreateMove(UNCRAP int sequence_number, float input_sample_frametime, bool active)
 {
 	static auto hook = GETHOOK(CClientHook);
 	auto ctx = hook->Context();
@@ -55,7 +67,7 @@ void __stdcall CClientHook::Hooked_HLCreateMove(int sequence_number, float input
 	hook->HLCreateMove(sequence_number, input_sample_frametime, active);
 }
 
-void __stdcall CClientHook::Hooked_FrameStageNotify(ClientFrameStage_t curStage)
+void __stdcall CClientHook::Hooked_FrameStageNotify(UNCRAP ClientFrameStage_t curStage)
 {
 	static auto hook = GETHOOK(CClientHook);
 
@@ -69,7 +81,7 @@ void __stdcall CClientHook::Hooked_FrameStageNotify(ClientFrameStage_t curStage)
 	hook->FrameStageNotify(curStage);
 }
 
-bool __fastcall CClientHook::Hooked_CreateMove(void* thisptr, void* edx, float flInputSampleTime, CUserCmd* cmd)
+bool __stdcall CClientHook::Hooked_CreateMove(UNCRAP float flInputSampleTime, CUserCmd* cmd)
 {
 	static auto hook = GETHOOK(CClientHook);
 	auto ctx = hook->Context();
