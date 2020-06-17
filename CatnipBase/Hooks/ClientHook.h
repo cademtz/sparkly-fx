@@ -36,9 +36,9 @@ private:
 	CVMTHook m_hlhook, m_clhook;
 	CClientHook_Ctx m_ctx;
 
-	static void __stdcall Hooked_HLCreateMove(int sequence_number, float input_sample_frametime, bool active);
-	static void __stdcall Hooked_FrameStageNotify(ClientFrameStage_t curStage);
-	static bool __fastcall Hooked_CreateMove(void* thisptr, void* edx, float flInputSampleTime, CUserCmd* cmd);
+	static void __stdcall Hooked_HLCreateMove(UNCRAP int sequence_number, float input_sample_frametime, bool active);
+	static void __stdcall Hooked_FrameStageNotify(UNCRAP ClientFrameStage_t curStage);
+	static bool __stdcall Hooked_CreateMove(UNCRAP float flInputSampleTime, CUserCmd* cmd);
 };
 
 inline CClientHook _g_clienthook;
