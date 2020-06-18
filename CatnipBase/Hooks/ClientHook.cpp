@@ -88,7 +88,7 @@ bool __stdcall CClientHook::Hooked_CreateMove(UNCRAP float flInputSampleTime, CU
 
 	ctx->result = hook->CreateMove(flInputSampleTime, cmd);
 	ctx->input_sample_frametime = flInputSampleTime;
-	//ctx.cmd = CUserCmd_Wrap(cmd);
+	ctx->cmd = cmd;
 
 	hook->PushEvent(EVENT_CREATEMOVE);
 

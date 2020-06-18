@@ -16,6 +16,7 @@
 #include "interface.h"
 #include "mathlib.h"
 #include "istudiorender.h"
+#include "Color.h"
 
 //-----------------------------------------------------------------------------
 // forward declarations
