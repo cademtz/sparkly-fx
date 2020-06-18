@@ -13,7 +13,7 @@ void CWindowHook::Hook()
 	m_oldproc = (WNDPROC)SetWindowLongPtr(m_hwnd, GWLP_WNDPROC, (LONG_PTR)Hooked_WndProc);
 	
 	m_hkcurpos.Hook(&SetCursorPos, Hooked_SetCursorPos);
-	m_hkshowcur.Hook(&ShowCursor, Hooked_ShowCursor);
+	//m_hkshowcur.Hook(&ShowCursor, Hooked_ShowCursor); // Steam overlay freaks out and locks up. idk im tired.
 	m_hksetcur.Hook(&SetCursor, Hooked_SetCursor);
 }
 
