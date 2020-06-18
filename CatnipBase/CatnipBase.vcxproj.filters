@@ -71,6 +71,12 @@
     <ClCompile Include="Base\Wrappers\ClientModeWrappers.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="Base\AltimorNetvar.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Netvars.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Hooks\Hooks.h">
@@ -147,5 +153,15 @@
     <ClInclude Include="SDK\usercmd.h" />
     <ClInclude Include="SDK\InterfaceVersions\ClientModeSDK.h" />
     <ClInclude Include="SDK\InterfaceVersions\ClientModeCSGO.h" />
+    <ClInclude Include="Base\AltimorNetvar.h" />
+    <ClInclude Include="SDK\client_class.h" />
+    <ClInclude Include="SDK\dt_recv.h" />
+    <ClInclude Include="SDK\dt_common.h" />
+    <ClInclude Include="SDK\strtools.h" />
+    <ClInclude Include="SDK\dbg.h" />
+    <ClInclude Include="SDK\Color.h" />
+    <ClInclude Include="Base\Wrappers\EntityWrappers.h" />
+    <ClInclude Include="Base\Netvars.h" />
+    <ClInclude Include="Base\Entity.h" />
   </ItemGroup>
 </Project>

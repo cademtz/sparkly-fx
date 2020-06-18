@@ -170,11 +170,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Base\AltimorNetvar.cpp" />
     <ClCompile Include="Base\AsmTools.cpp" />
     <ClCompile Include="Base\Base.cpp" />
     <ClCompile Include="Base\Lua\Callbacks\LuaCallbacks.cpp" />
     <ClCompile Include="Base\Lua\Exports\ExportedEngine.cpp" />
     <ClCompile Include="Base\Lua\Lua.cpp" />
+    <ClCompile Include="Base\Netvars.cpp" />
     <ClCompile Include="Base\Wrappers\ClientDLLWrappers.cpp" />
     <ClCompile Include="Base\Wrappers\ClientModeWrappers.cpp" />
     <ClCompile Include="Base\Wrappers\EngineClientWrappers.cpp" />
@@ -192,19 +194,23 @@
     <ClCompile Include="Modules\Menu\Menu.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Base\AltimorNetvar.h" />
     <ClInclude Include="Base\AsmTools.h" />
     <ClInclude Include="Base\Base.h" />
+    <ClInclude Include="Base\Entity.h" />
     <ClInclude Include="Base\fnv1a.h" />
     <ClInclude Include="Base\Interfaces.h" />
     <ClInclude Include="Base\Lua\Callbacks\LuaCallbacks.h" />
     <ClInclude Include="Base\Lua\Exports\ExportedEngine.h" />
     <ClInclude Include="Base\Lua\Exports\ExportedInterfaces.h" />
     <ClInclude Include="Base\Lua\Lua.h" />
+    <ClInclude Include="Base\Netvars.h" />
     <ClInclude Include="Base\Wrappers\ClientDLLWrappers.h" />
     <ClInclude Include="Base\Wrappers\ClientModeWrappers.h" />
     <ClInclude Include="Base\Wrappers\EngineClientWrappers.h" />
     <ClInclude Include="Base\Event.h" />
     <ClInclude Include="Base\imgui_impl_win32.h" />
+    <ClInclude Include="Base\Wrappers\EntityWrappers.h" />
     <ClInclude Include="Base\Wrappers\Wrappers.h" />
     <ClInclude Include="Base\Sig.h" />
     <ClInclude Include="BuildConfig.h" />
@@ -221,10 +227,15 @@
     <ClInclude Include="SDK\ButtonCode.h" />
     <ClInclude Include="SDK\cdll_int.h" />
     <ClInclude Include="SDK\checksum_crc.h" />
+    <ClInclude Include="SDK\client_class.h" />
     <ClInclude Include="SDK\client_render_handle.h" />
+    <ClInclude Include="SDK\Color.h" />
     <ClInclude Include="SDK\commonmacros.h" />
     <ClInclude Include="SDK\const.h" />
     <ClInclude Include="SDK\datamap.h" />
+    <ClInclude Include="SDK\dbg.h" />
+    <ClInclude Include="SDK\dt_common.h" />
+    <ClInclude Include="SDK\dt_recv.h" />
     <ClInclude Include="SDK\IAppSystem.h" />
     <ClInclude Include="SDK\icliententity.h" />
     <ClInclude Include="SDK\icliententitylist.h" />
@@ -251,6 +262,7 @@
     <ClInclude Include="SDK\math_pfns.h" />
     <ClInclude Include="SDK\platform.h" />
     <ClInclude Include="SDK\refcount.h" />
+    <ClInclude Include="SDK\strtools.h" />
     <ClInclude Include="SDK\studio.h" />
     <ClInclude Include="SDK\texture_group_names.h" />
     <ClInclude Include="SDK\usercmd.h" />

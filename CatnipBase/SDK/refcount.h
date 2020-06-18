@@ -9,6 +9,7 @@
 #define REFCOUNT_H
 
 //#include "tier0/threadtools.h"
+#define AssertMsg
 
 #if defined( _WIN32 )
 #pragma once

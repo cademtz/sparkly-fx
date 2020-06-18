@@ -3,6 +3,7 @@
 #include "Hooks/OverlayHook.h"
 #include "Modules/Menu/Menu.h"
 #include "Interfaces.h"
+#include "Netvars.h"
 
 #include "Lua/Lua.h"
 
@@ -26,6 +27,7 @@ DWORD WINAPI Base::HookThread(LPVOID Args)
 #endif
 
 	Interfaces::CreateInterfaces();
+	Netvars::GetNetvars();
 	CBaseHook::HookAll();
 	new CMenu;
 

@@ -118,3 +118,9 @@ public:
 	virtual void	PreRender(CViewSetup* pSetup) = 0;
 	virtual void	PostRender(void) = 0;
 };
+
+class CEntity
+{
+public:
+	virtual ~CEntity() { }
+};

@@ -16,7 +16,7 @@ struct CClientHook_Ctx
 	float input_sample_frametime;
 	bool active;
 	ClientFrameStage_t curStage;
-	//CUserCmdWrap* cmd;
+	CUserCmd* cmd;
 	bool result;
 };
 
