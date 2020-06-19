@@ -6,6 +6,7 @@
 #include <imgui.h>
 #include <imgui/examples/imgui_impl_dx9.h>
 #include <imgui/imgui_demo.cpp>
+#include <imgui/imgui_internal.h>
 #include "Base/imgui_impl_win32.h"
 
 CMenu::CMenu()
@@ -26,7 +27,7 @@ int CMenu::OnPresent()
 
 	if (!ImGui::GetCurrentContext())
 	{
-		ImGui::CreateContext();
+		auto ctx = ImGui::CreateContext();
 		ImGui::StyleColorsLight();
 		ImGui::GetIO().IniFilename = nullptr;
 		ImGui::GetIO().LogFilename = nullptr;

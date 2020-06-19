@@ -185,6 +185,8 @@
     <ClCompile Include="Base\imgui_impl_dx9.cpp" />
     <ClCompile Include="Base\Interfaces.cpp" />
     <ClCompile Include="Base\Sig.cpp" />
+    <ClCompile Include="Base\Wrappers\EntityWrappers.cpp" />
+    <ClCompile Include="Base\Wrappers\Wrappers.cpp" />
     <ClCompile Include="Hooks\ClientHook.cpp" />
     <ClCompile Include="Hooks\Hooks.cpp" />
     <ClCompile Include="Hooks\OverlayHook.cpp" />
@@ -256,6 +258,8 @@
     <ClInclude Include="SDK\InterfaceVersions\ClientModeCSGO.h" />
     <ClInclude Include="SDK\InterfaceVersions\EngineClient013.h" />
     <ClInclude Include="SDK\InterfaceVersions\EngineClient014.h" />
+    <ClInclude Include="SDK\InterfaceVersions\EntityCSGO.h" />
+    <ClInclude Include="SDK\InterfaceVersions\EntitySDK.h" />
     <ClInclude Include="SDK\istudiorender.h" />
     <ClInclude Include="SDK\ivmodelrender.h" />
     <ClInclude Include="SDK\mathlib.h" />
