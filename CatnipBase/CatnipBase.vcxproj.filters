@@ -17,9 +17,6 @@
     <ClCompile Include="Hooks\Hooks.cpp">
       <Filter>Hooks</Filter>
     </ClCompile>
-    <ClCompile Include="Modules\ESP\ESP.cpp">
-      <Filter>Modules</Filter>
-    </ClCompile>
     <ClCompile Include="Base\Base.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
@@ -83,6 +80,18 @@
     <ClCompile Include="Base\Wrappers\Wrappers.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="Modules\Draw\Draw.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Hooks\PanelHook.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Entity.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Modules\Visuals\Visuals.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Hooks\Hooks.h">
@@ -91,7 +100,6 @@
     <ClInclude Include="Modules\Module.h">
       <Filter>Modules</Filter>
     </ClInclude>
-    <ClInclude Include="Modules\ESP\ESP.h" />
     <ClInclude Include="SDK\cdll_int.h" />
     <ClInclude Include="SDK\basetypes.h" />
     <ClInclude Include="SDK\commonmacros.h" />
@@ -171,5 +179,11 @@
     <ClInclude Include="Base\Entity.h" />
     <ClInclude Include="SDK\InterfaceVersions\EntitySDK.h" />
     <ClInclude Include="SDK\InterfaceVersions\EntityCSGO.h" />
+    <ClInclude Include="Modules\Draw\Draw.h" />
+    <ClInclude Include="SDK\IPanel.h" />
+    <ClInclude Include="SDK\VGUI.h" />
+    <ClInclude Include="Hooks\PanelHook.h" />
+    <ClInclude Include="Base\VFunc.h" />
+    <ClInclude Include="Modules\Visuals\Visuals.h" />
   </ItemGroup>
 </Project>

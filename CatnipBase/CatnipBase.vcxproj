@@ -173,6 +173,7 @@
     <ClCompile Include="Base\AltimorNetvar.cpp" />
     <ClCompile Include="Base\AsmTools.cpp" />
     <ClCompile Include="Base\Base.cpp" />
+    <ClCompile Include="Base\Entity.cpp" />
     <ClCompile Include="Base\Lua\Callbacks\LuaCallbacks.cpp" />
     <ClCompile Include="Base\Lua\Exports\ExportedEngine.cpp" />
     <ClCompile Include="Base\Lua\Lua.cpp" />
@@ -190,9 +191,11 @@
     <ClCompile Include="Hooks\ClientHook.cpp" />
     <ClCompile Include="Hooks\Hooks.cpp" />
     <ClCompile Include="Hooks\OverlayHook.cpp" />
+    <ClCompile Include="Hooks\PanelHook.cpp" />
     <ClCompile Include="Hooks\WindowHook.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Modules\ESP\ESP.cpp" />
+    <ClCompile Include="Modules\Draw\Draw.cpp" />
+    <ClCompile Include="Modules\Visuals\Visuals.cpp" />
     <ClCompile Include="Modules\Menu\Menu.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -207,6 +210,7 @@
     <ClInclude Include="Base\Lua\Exports\ExportedInterfaces.h" />
     <ClInclude Include="Base\Lua\Lua.h" />
     <ClInclude Include="Base\Netvars.h" />
+    <ClInclude Include="Base\VFunc.h" />
     <ClInclude Include="Base\Wrappers\ClientDLLWrappers.h" />
     <ClInclude Include="Base\Wrappers\ClientModeWrappers.h" />
     <ClInclude Include="Base\Wrappers\EngineClientWrappers.h" />
@@ -219,8 +223,10 @@
     <ClInclude Include="Hooks\ClientHook.h" />
     <ClInclude Include="Hooks\Hooks.h" />
     <ClInclude Include="Hooks\OverlayHook.h" />
+    <ClInclude Include="Hooks\PanelHook.h" />
     <ClInclude Include="Hooks\WindowHook.h" />
-    <ClInclude Include="Modules\ESP\ESP.h" />
+    <ClInclude Include="Modules\Draw\Draw.h" />
+    <ClInclude Include="Modules\Visuals\Visuals.h" />
     <ClInclude Include="Modules\Menu\Menu.h" />
     <ClInclude Include="Modules\Module.h" />
     <ClInclude Include="SDK\annotations.h" />
@@ -260,6 +266,7 @@
     <ClInclude Include="SDK\InterfaceVersions\EngineClient014.h" />
     <ClInclude Include="SDK\InterfaceVersions\EntityCSGO.h" />
     <ClInclude Include="SDK\InterfaceVersions\EntitySDK.h" />
+    <ClInclude Include="SDK\IPanel.h" />
     <ClInclude Include="SDK\istudiorender.h" />
     <ClInclude Include="SDK\ivmodelrender.h" />
     <ClInclude Include="SDK\mathlib.h" />
@@ -275,6 +282,7 @@
     <ClInclude Include="SDK\vector.h" />
     <ClInclude Include="SDK\vector2d.h" />
     <ClInclude Include="SDK\vector4d.h" />
+    <ClInclude Include="SDK\VGUI.h" />
     <ClInclude Include="SDK\vmatrix.h" />
     <ClInclude Include="SDK\vtf.h" />
     <ClInclude Include="SDK\wchartypes.h" />

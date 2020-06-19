@@ -20,10 +20,8 @@ int IClientModeWrapperSDK::GetOffset(EOffsets Offset)
 		return 24;
 	case Off_ShouldDrawCrosshair:
 		return 25;
-	case Off_PreRender:
-		return 27;
-	case Off_PostRender:
-		return 28;
+	case Off_PostRenderVGui:
+		return 29;
 	}
 	return -1;
 }
@@ -46,10 +44,8 @@ int IClientModeWrapperCSGO::GetOffset(EOffsets Offset)
 		return 27;
 	case Off_ShouldDrawCrosshair:
 		return 28;
-	case Off_PreRender:
-		return 30;
-	case Off_PostRender:
-		return 31;
+	case Off_PostRenderVGui:
+		return 32;
 	}
 	return -1;
 }
@@ -81,7 +77,9 @@ void IClientModeWrapperSDK::PreRender(CViewSetup* pSetup) {
 void IClientModeWrapperSDK::PostRender(void) {
 	return m_int->PostRender();
 }
-
+void IClientModeWrapperSDK::PostRenderVGui() {
+	return m_int->PostRenderVGui();
+}
 
 bool IClientModeWrapperCSGO::ShouldDrawDetailObjects() {
 	return m_int->ShouldDrawDetailObjects();
@@ -109,4 +107,7 @@ void IClientModeWrapperCSGO::PreRender(CViewSetup* pSetup) {
 }
 void IClientModeWrapperCSGO::PostRender(void) {
 	return m_int->PostRender();
+}
+void IClientModeWrapperCSGO::PostRenderVGui() {
+	return m_int->PostRenderVGui();
 }

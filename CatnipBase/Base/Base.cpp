@@ -1,7 +1,7 @@
 #include "Base.h"
 #include "Hooks/WindowHook.h"
 #include "Hooks/OverlayHook.h"
-#include "Modules/Menu/Menu.h"
+#include "Modules/Module.h"
 #include "Interfaces.h"
 #include "Netvars.h"
 
@@ -29,7 +29,7 @@ DWORD WINAPI Base::HookThread(LPVOID Args)
 	Interfaces::CreateInterfaces();
 	Netvars::GetNetvars();
 	CBaseHook::HookAll();
-	new CMenu;
+	CModule::StartAll();
 
 #ifdef BUILDCFG_LUA
 	CLua::Init();

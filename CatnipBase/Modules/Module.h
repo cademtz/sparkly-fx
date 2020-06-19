@@ -8,7 +8,15 @@ public:
 	CModule() { m_modules.push_back(this); }
 	virtual ~CModule() { m_modules.remove(this); }
 
+	static void StartAll()
+	{
+		for (auto mod : m_modules)
+			mod->StartListening();
+	}
+
 protected:
+	virtual void StartListening() = 0;
+
 	inline void Listen(const EventHandle Event, const CallbackFunc_t& Func) {
 		CBaseEvent::GetEvent(Event)->AddCallback(Func);
 	}
