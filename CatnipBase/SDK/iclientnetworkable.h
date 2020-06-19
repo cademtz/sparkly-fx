@@ -18,7 +18,7 @@
 
 class IClientEntity;
 class ClientClass;
-typedef class bf_read;
+class bf_read;
 
 enum ShouldTransmitState_t
 {

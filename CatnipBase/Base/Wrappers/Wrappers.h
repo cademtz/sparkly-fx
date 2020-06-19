@@ -1,5 +1,4 @@
 #pragma once
-#include "SDK/basetypes.h"
 #include "SDK/mathlib.h"
 
 enum EOffsets {
@@ -119,8 +118,24 @@ public:
 	virtual void	PostRender(void) = 0;
 };
 
+class CNetworkable;
+class CRenderable;
+
 class CEntity
 {
 public:
 	virtual ~CEntity() { }
+
+	inline CRenderable* Renderable() { return (CRenderable*)((char*)Inst() + 4); }
+	inline CNetworkable* Networkable() { return (CNetworkable*)((char*)Inst() + 8); }
+
+	virtual void* Inst() = 0;
+	virtual bool	SetupBones(matrix3x4_t* pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime) = 0;
+	virtual ClientClass* GetClientClass() = 0;
+	virtual bool			IsDormant(void) = 0;
+	virtual int				entindex(void) const = 0;
 };
+
+// - Creates a new entity wrapped according to the current game
+// - Must be deleted after use
+CEntity* WrapEntity(void* Entity);

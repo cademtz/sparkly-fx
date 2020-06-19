@@ -77,6 +77,12 @@
     <ClCompile Include="Base\Netvars.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="Base\Wrappers\EntityWrappers.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Wrappers\Wrappers.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Hooks\Hooks.h">
@@ -163,5 +169,7 @@
     <ClInclude Include="Base\Wrappers\EntityWrappers.h" />
     <ClInclude Include="Base\Netvars.h" />
     <ClInclude Include="Base\Entity.h" />
+    <ClInclude Include="SDK\InterfaceVersions\EntitySDK.h" />
+    <ClInclude Include="SDK\InterfaceVersions\EntityCSGO.h" />
   </ItemGroup>
 </Project>
