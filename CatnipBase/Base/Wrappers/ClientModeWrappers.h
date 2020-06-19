@@ -23,6 +23,7 @@ public:
 	virtual bool	ShouldDrawCrosshair(void);
 	virtual void	PreRender(CViewSetup* pSetup);
 	virtual void	PostRender(void);
+	virtual void	PostRenderVGui();
 };
 
 class IClientModeWrapperCSGO : public IClientModeWrapper
@@ -44,4 +45,5 @@ public:
 	virtual bool	ShouldDrawCrosshair(void);
 	virtual void	PreRender(CViewSetup* pSetup);
 	virtual void	PostRender(void);
+	virtual void	PostRenderVGui();
 };

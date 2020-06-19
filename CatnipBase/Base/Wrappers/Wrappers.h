@@ -10,8 +10,7 @@ enum EOffsets {
 	Off_ShouldDrawParticles,
 	Off_ShouldDrawViewModel,
 	Off_ShouldDrawCrosshair,
-	Off_PreRender,
-	Off_PostRender,
+	Off_PostRenderVGui,
 };
 
 struct model_t;
@@ -116,26 +115,21 @@ public:
 	virtual bool	ShouldDrawCrosshair(void) = 0;
 	virtual void	PreRender(CViewSetup* pSetup) = 0;
 	virtual void	PostRender(void) = 0;
+	virtual void	PostRenderVGui() = 0;
 };
 
-class CNetworkable;
-class CRenderable;
-
-class CEntity
+class CEntityWrapper
 {
 public:
-	virtual ~CEntity() { }
-
-	inline CRenderable* Renderable() { return (CRenderable*)((char*)Inst() + 4); }
-	inline CNetworkable* Networkable() { return (CNetworkable*)((char*)Inst() + 8); }
+	virtual ~CEntityWrapper() { }
 
 	virtual void* Inst() = 0;
-	virtual bool	SetupBones(matrix3x4_t* pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime) = 0;
-	virtual ClientClass* GetClientClass() = 0;
-	virtual bool			IsDormant(void) = 0;
-	virtual int				entindex(void) const = 0;
+	virtual bool		SetupBones(matrix3x4_t* pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime) = 0;
+	virtual ClientClass*	GetClientClass() = 0;
+	virtual bool		IsDormant(void) = 0;
+	virtual int			entindex(void) const = 0;
 };
 
 // - Creates a new entity wrapped according to the current game
 // - Must be deleted after use
-CEntity* WrapEntity(void* Entity);
+CEntityWrapper* WrapEntity(void* Entity);

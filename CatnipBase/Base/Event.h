@@ -1,5 +1,6 @@
 #pragma once
 #include "Base.h"
+#include "fnv1a.h"
 #include <unordered_map>
 #include <functional>
 

@@ -43,13 +43,11 @@ bool CClientHook::CreateMove(float flInputSampleTime, CUserCmd* cmd)
 	//		Always seems to call with completely wrong convention.
 	//		Am I just being stupid?
 
-	//static auto original = m_clhook.Get<void*>(Interfaces::client->GetOffset(Off_CreateMove));
+	static auto original = m_clhook.Get<void*>(Interfaces::client->GetOffset(Off_CreateMove));
 	//return ((CreateMoveFn_t)original)(Interfaces::client->Inst(), flInputSampleTime, cmd);
 
-
-	m_clhook.Unhook();
+	m_clhook.Set(Interfaces::client->GetOffset(Off_CreateMove), original);
 	bool result = Interfaces::client->CreateMove(flInputSampleTime, cmd);
-	m_clhook.Hook(Interfaces::client->Inst());
 	m_clhook.Set(Interfaces::client->GetOffset(Off_CreateMove), Hooked_CreateMove);
 	return result;
 }

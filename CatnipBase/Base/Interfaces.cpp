@@ -35,7 +35,12 @@ void Interfaces::CreateInterfaces()
 	if (void* entitylist = fn(VCLIENTENTITYLIST_INTERFACE_VERSION, 0))
 		entlist = (IClientEntityList*)entitylist;
 
-	if (!engine || !hlclient || !entlist)
+	fn = GetFactory("vgui2.dll");
+
+	if (void* vguipanel = fn(VGUI_PANEL_INTERFACE_VERSION, 0))
+		panels = (vgui::IPanel*)vguipanel;
+
+	if (!engine || !hlclient || !entlist || !panels)
 		FATAL("Unsupported game interfaces");
 
 	void* hudprocinput = (*(void***)hlclient->Inst())[10];

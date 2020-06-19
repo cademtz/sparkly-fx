@@ -3,7 +3,7 @@
 #include "Base/Interfaces.h"
 #include "EntityWrappers.h"
 
-CEntity* WrapEntity(void* Entity)
+CEntityWrapper* WrapEntity(void* Entity)
 {
 	switch (Interfaces::engine->GetAppID())
 	{

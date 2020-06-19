@@ -1,7 +1,7 @@
 #include "Menu.h"
 #include "Base/Base.h"
-#include "Hooks/OverlayHook.h"
 #include "Hooks/WindowHook.h"
+#include "Modules/Draw/Draw.h"
 
 #include <imgui.h>
 #include <imgui/examples/imgui_impl_dx9.h>
@@ -9,42 +9,23 @@
 #include <imgui/imgui_internal.h>
 #include "Base/imgui_impl_win32.h"
 
-CMenu::CMenu()
+void CMenu::StartListening()
 {
-	Listen(EVENT_DX9PRESENT, [this]() { return OnPresent(); });
 	Listen(EVENT_WINDOWPROC, [this]() { return OnWindowProc(); });
 	Listen(EVENT_SETCURSORPOS, [this]() { return OnCurPos(); });
 	Listen(EVENT_SHOWCURSOR, [this]() { return OnShowCur();  });
 	Listen(EVENT_SETCURSOR, [this]() { return OnSetCur(); });
+	Listen(EVENT_IMGUI, [this]() { return OnImGui(); });
 }
 
-int CMenu::OnPresent()
+int CMenu::OnImGui()
 {
 	if (!m_open)
 		return 0;
 
-	static auto hook = GETHOOK(COverlayHook);
-
-	if (!ImGui::GetCurrentContext())
-	{
-		auto ctx = ImGui::CreateContext();
-		ImGui::StyleColorsLight();
-		ImGui::GetIO().IniFilename = nullptr;
-		ImGui::GetIO().LogFilename = nullptr;
-
-		ImGui_ImplDX9_Init(hook->Device());
-		ImGui_ImplWin32_Init(Base::hWnd);
-	}
-
-	ImGui_ImplDX9_NewFrame();
 	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
-
 	ImGui::ShowDemoWindow();
 
-	ImGui::Render();
-	ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
-	
 	return 0;
 }
 

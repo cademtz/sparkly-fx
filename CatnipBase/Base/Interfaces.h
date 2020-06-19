@@ -1,6 +1,7 @@
 #pragma once
 #include "Wrappers/Wrappers.h"
 #include "SDK/icliententitylist.h"
+#include "SDK/IPanel.h"
 
 namespace Interfaces
 {
@@ -11,4 +12,5 @@ namespace Interfaces
 	inline IClientDLLWrapper* hlclient = nullptr;
 	inline IClientEntityList* entlist = nullptr;
 	inline IClientModeWrapper* client = nullptr;
+	inline vgui::IPanel* panels = nullptr;
 }
