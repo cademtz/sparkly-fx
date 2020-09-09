@@ -3,7 +3,7 @@
 #include "SDK/vector.h"
 #include "SDK/mathlib.h"
 
-#define NV_RET(type, var) return *(type*)((char*)Inst() + var)
+#define NV_RET(type, var) return *(type*)(this + var)
 
 class CEntityWrapper;
 class IClientEntity;
@@ -11,13 +11,10 @@ class ClientClass;
 
 class CBaseEntity
 {
-	CEntityWrapper* m_ent;
-
 public:
-	CBaseEntity(IClientEntity* Entity);
-	~CBaseEntity();
+	inline void* Renderable() const { return (char*)this + 4; }
+	inline void* Networkable() const { return (char*)this + 8; }
 
-	void* Inst();
 	bool		SetupBones(matrix3x4_t* pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime);
 	ClientClass* GetClientClass();
 	bool		IsDormant(void);

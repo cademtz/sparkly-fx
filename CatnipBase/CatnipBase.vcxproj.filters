@@ -74,12 +74,6 @@
     <ClCompile Include="Base\Netvars.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
-    <ClCompile Include="Base\Wrappers\EntityWrappers.cpp">
-      <Filter>Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="Base\Wrappers\Wrappers.cpp">
-      <Filter>Modules</Filter>
-    </ClCompile>
     <ClCompile Include="Modules\Draw\Draw.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
@@ -90,6 +84,12 @@
       <Filter>Modules</Filter>
     </ClCompile>
     <ClCompile Include="Modules\Visuals\Visuals.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Modules\Movement\Movement.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Wrappers\EntityListWrappers.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
   </ItemGroup>
@@ -174,7 +174,6 @@
     <ClInclude Include="SDK\strtools.h" />
     <ClInclude Include="SDK\dbg.h" />
     <ClInclude Include="SDK\Color.h" />
-    <ClInclude Include="Base\Wrappers\EntityWrappers.h" />
     <ClInclude Include="Base\Netvars.h" />
     <ClInclude Include="Base\Entity.h" />
     <ClInclude Include="SDK\InterfaceVersions\EntitySDK.h" />
@@ -185,5 +184,9 @@
     <ClInclude Include="Hooks\PanelHook.h" />
     <ClInclude Include="Base\VFunc.h" />
     <ClInclude Include="Modules\Visuals\Visuals.h" />
+    <ClInclude Include="Modules\Movement\Movement.h" />
+    <ClInclude Include="Base\Wrappers\EntityListWrappers.h" />
+    <ClInclude Include="SDK\basehandle.h" />
+    <ClInclude Include="SDK\InterfaceVersions\ClientEntityList003.h" />
   </ItemGroup>
 </Project>

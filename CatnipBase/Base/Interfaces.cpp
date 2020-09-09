@@ -4,6 +4,7 @@
 #include "Wrappers/EngineClientWrappers.h"
 #include "Wrappers/ClientDLLWrappers.h"
 #include "Wrappers/ClientModeWrappers.h"
+#include "Wrappers/EntityListWrappers.h"
 
 #ifdef _WIN64
 #define SIG_CLIENTMODE "8B 0D ? ? ? ? 48 8B 01"
@@ -33,7 +34,7 @@ void Interfaces::CreateInterfaces()
 	else if (void* clientdll18 = fn("VClient018", 0))
 		hlclient = new IClientDLLWrapper018(clientdll18);
 	if (void* entitylist = fn(VCLIENTENTITYLIST_INTERFACE_VERSION, 0))
-		entlist = (IClientEntityList*)entitylist;
+		entlist = new IClientEntityListWrapper003(entitylist);
 
 	fn = GetFactory("vgui2.dll");
 

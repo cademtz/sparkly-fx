@@ -1,25 +1,36 @@
 #include "Entity.h"
+#include "Base.h"
+#include "Interfaces.h"
+#include "VFunc.h"
 #include "Wrappers/Wrappers.h"
+#include "SDK/icliententity.h"
 
-CBaseEntity::CBaseEntity(IClientEntity* Entity)
-	: m_ent(WrapEntity(Entity)) { }
+// TODO: Make these indexes part of the enum of offset thingies, maybe?
 
-CBaseEntity::~CBaseEntity() {
-	delete m_ent;
-}
-
-void* CBaseEntity::Inst() {
-    return m_ent->Inst();
-}
 bool CBaseEntity::SetupBones(matrix3x4_t* pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime) {
-	return m_ent->SetupBones(pBoneToWorldOut, nMaxBones, boneMask, currentTime);
+	size_t index = 16;
+	if (Interfaces::engine->GetAppID() == AppId_CSGO)
+		index = 13;
+
+	using SetupBonesFn = bool(__thiscall*)(void*, void*, int, int, float);
+	return GetVFunc<SetupBonesFn>(Renderable(), index)(Renderable(), pBoneToWorldOut, nMaxBones, boneMask, currentTime);
 }
 ClientClass* CBaseEntity::GetClientClass() {
-	return m_ent->GetClientClass();
+	return ((IClientEntity*)this)->GetClientClass();
 }
 bool CBaseEntity::IsDormant(void) {
-	return m_ent->IsDormant();
+	size_t index = 8;
+	if (Interfaces::engine->GetAppID() == AppId_CSGO)
+		index = 9;
+
+	using DormantFn = bool (__thiscall*)(void*);
+	return GetVFunc<DormantFn>(Networkable(), index)(Networkable());
 }
 int CBaseEntity::entindex(void) const {
-	return m_ent->entindex();
+	size_t index = 9;
+	if (Interfaces::engine->GetAppID() == AppId_CSGO)
+		index = 10;
+
+	using IndexFn = int(__thiscall*)(void*);
+	return GetVFunc<IndexFn>(Networkable(), index)(Networkable());
 }
