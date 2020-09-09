@@ -1,5 +1,6 @@
 #pragma once
 #include "SDK/mathlib.h"
+#include "SDK/basehandle.h"
 
 enum EOffsets {
 	Off_CreateMove,
@@ -39,6 +40,8 @@ class CStandardRecvProxies;
 class C_BaseEntity;
 class C_BasePlayer;
 class CUserCmd;
+
+class CBaseEntity;
 
 class IEngineClientWrapper
 {
@@ -118,18 +121,12 @@ public:
 	virtual void	PostRenderVGui() = 0;
 };
 
-class CEntityWrapper
+class IClientEntityListWrapper
 {
 public:
-	virtual ~CEntityWrapper() { }
-
-	virtual void* Inst() = 0;
-	virtual bool		SetupBones(matrix3x4_t* pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime) = 0;
-	virtual ClientClass*	GetClientClass() = 0;
-	virtual bool		IsDormant(void) = 0;
-	virtual int			entindex(void) const = 0;
+	virtual CBaseEntity* GetClientEntity(int entnum) = 0;
+	virtual CBaseEntity* GetClientEntityFromHandle(CBaseHandle hEnt) = 0;
+	virtual int					NumberOfEntities(bool bIncludeNonNetworkable) = 0;
+	virtual int					GetHighestEntityIndex(void) = 0;
+	virtual int					GetMaxEntities() = 0;
 };
-
-// - Creates a new entity wrapped according to the current game
-// - Must be deleted after use
-CEntityWrapper* WrapEntity(void* Entity);
