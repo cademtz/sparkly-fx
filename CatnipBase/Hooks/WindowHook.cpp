@@ -14,7 +14,7 @@ void CWindowHook::Hook()
 	
 	m_hkcurpos.Hook(&SetCursorPos, Hooked_SetCursorPos);
 	//m_hkshowcur.Hook(&ShowCursor, Hooked_ShowCursor); // Steam overlay freaks out and locks up. idk im tired.
-	m_hksetcur.Hook(&SetCursor, Hooked_SetCursor);
+	m_hksetcur.Hook("win32u.dll", "NtUserSetCursor", Hooked_SetCursor);
 }
 
 void CWindowHook::Unhook()
@@ -37,7 +37,7 @@ int CWindowHook::ShowCur(BOOL bShow) {
 
 HCURSOR CWindowHook::SetCur(HCURSOR hCursor)
 {
-	static auto NtUserSetCursor = (decltype(Hooked_SetCursor)*)Base::GetProc(Base::GetModule("win32u.dll"), "NtUserSetCursor");
+	auto NtUserSetCursor = (decltype(Hooked_SetCursor)*)m_hksetcur.Original();
 	return NtUserSetCursor(hCursor);
 }
 

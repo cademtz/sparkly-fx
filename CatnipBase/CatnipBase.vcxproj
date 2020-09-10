@@ -190,7 +190,7 @@
     <ClCompile Include="Hooks\ClientHook.cpp" />
     <ClCompile Include="Hooks\Hooks.cpp" />
     <ClCompile Include="Hooks\OverlayHook.cpp" />
-    <ClCompile Include="Hooks\PanelHook.cpp" />
+    <ClCompile Include="Hooks\PaintHook.cpp" />
     <ClCompile Include="Hooks\WindowHook.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Modules\Draw\Draw.cpp" />
@@ -223,7 +223,7 @@
     <ClInclude Include="Hooks\ClientHook.h" />
     <ClInclude Include="Hooks\Hooks.h" />
     <ClInclude Include="Hooks\OverlayHook.h" />
-    <ClInclude Include="Hooks\PanelHook.h" />
+    <ClInclude Include="Hooks\PaintHook.h" />
     <ClInclude Include="Hooks\WindowHook.h" />
     <ClInclude Include="Modules\Draw\Draw.h" />
     <ClInclude Include="Modules\Movement\Movement.h" />
@@ -254,6 +254,7 @@
     <ClInclude Include="SDK\iclientrenderable.h" />
     <ClInclude Include="SDK\iclientthinkable.h" />
     <ClInclude Include="SDK\iclientunknown.h" />
+    <ClInclude Include="SDK\ienginevgui.h" />
     <ClInclude Include="SDK\ihandleentity.h" />
     <ClInclude Include="SDK\imageformat.h" />
     <ClInclude Include="SDK\imaterial.h" />
@@ -286,9 +287,11 @@
     <ClInclude Include="SDK\vector2d.h" />
     <ClInclude Include="SDK\vector4d.h" />
     <ClInclude Include="SDK\VGUI.h" />
+    <ClInclude Include="SDK\vgui_baseui_interface.h" />
     <ClInclude Include="SDK\vmatrix.h" />
     <ClInclude Include="SDK\vtf.h" />
     <ClInclude Include="SDK\wchartypes.h" />
+    <ClInclude Include="SDK\xboxstubs.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
