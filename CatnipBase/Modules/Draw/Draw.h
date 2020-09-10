@@ -21,8 +21,10 @@ public:
 private:
 	int OnPresent();
 	int OnPaintTraverse();
+	int OnPaint();
 
 	ImDrawList* m_list = nullptr;
+	int m_frames = 0;
 	std::mutex m_mtx;
 };
 

@@ -11,6 +11,7 @@ enum EOffsets {
 	Off_ShouldDrawParticles,
 	Off_ShouldDrawViewModel,
 	Off_ShouldDrawCrosshair,
+	Off_PostRender,
 	Off_PostRenderVGui,
 };
 

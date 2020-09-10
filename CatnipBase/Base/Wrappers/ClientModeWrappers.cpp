@@ -20,6 +20,8 @@ int IClientModeWrapperSDK::GetOffset(EOffsets Offset)
 		return 24;
 	case Off_ShouldDrawCrosshair:
 		return 25;
+	case Off_PostRender:
+		return 28;
 	case Off_PostRenderVGui:
 		return 29;
 	}
@@ -44,6 +46,8 @@ int IClientModeWrapperCSGO::GetOffset(EOffsets Offset)
 		return 27;
 	case Off_ShouldDrawCrosshair:
 		return 28;
+	case Off_PostRender:
+		return 31;
 	case Off_PostRenderVGui:
 		return 32;
 	}

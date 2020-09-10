@@ -27,6 +27,9 @@ void Interfaces::CreateInterfaces()
 	else if (void* engine14 = fn("VEngineClient014", 0))
 		engine = new IEngineClientWrapper014(engine14);
 
+	if (void* vgui1 = fn(VENGINE_VGUI_VERSION, 0))
+		vgui = (IEngineVGuiInternal*)vgui1;
+
 	fn = GetFactory("client.dll");
 
 	if (void* clientdll17 = fn("VClient017", 0))
@@ -41,7 +44,7 @@ void Interfaces::CreateInterfaces()
 	if (void* vguipanel = fn(VGUI_PANEL_INTERFACE_VERSION, 0))
 		panels = (vgui::IPanel*)vguipanel;
 
-	if (!engine || !hlclient || !entlist || !panels)
+	if (!engine || !hlclient || !entlist || !panels || !vgui)
 		FATAL("Unsupported game interfaces");
 
 	void* hudprocinput = (*(void***)hlclient->Inst())[10];

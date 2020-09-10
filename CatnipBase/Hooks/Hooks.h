@@ -9,8 +9,10 @@
 
 #ifdef _WIN64
 #define UNCRAP void*,
+#define UNCRAP_VOID void*
 #else
 #define UNCRAP
+#define UNCRAP_VOID
 #endif
 
 struct HookHandle {
