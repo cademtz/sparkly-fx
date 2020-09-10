@@ -5,6 +5,7 @@
 #include "Wrappers/ClientDLLWrappers.h"
 #include "Wrappers/ClientModeWrappers.h"
 #include "Wrappers/EntityListWrappers.h"
+#include "Wrappers/EngineVGUIWrappers.h"
 
 #ifdef _WIN64
 #define SIG_CLIENTMODE "8B 0D ? ? ? ? 48 8B 01"
@@ -28,7 +29,16 @@ void Interfaces::CreateInterfaces()
 		engine = new IEngineClientWrapper014(engine14);
 
 	if (void* vgui1 = fn(VENGINE_VGUI_VERSION, 0))
-		vgui = (IEngineVGuiInternal*)vgui1;
+	{
+		switch (engine->GetAppID())
+		{
+		case AppId_CSGO:
+			vgui = new CEngineVGUIWrapperCSGO(vgui1);
+			break;
+		default:
+			vgui = new CEngineVGUIWrapperSDK(vgui1);
+		}
+	}
 
 	fn = GetFactory("client.dll");
 
@@ -69,8 +79,12 @@ void Interfaces::DestroyInterfaces()
 	delete hlclient;
 	delete entlist;
 	delete client;
+	delete entlist;
+	delete vgui;
 	engine = nullptr;
 	hlclient = nullptr;
 	entlist = nullptr;
 	client = nullptr;
+	entlist = nullptr;
+	vgui = nullptr;
 }

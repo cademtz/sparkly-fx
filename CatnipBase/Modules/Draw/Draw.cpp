@@ -132,7 +132,10 @@ int CDraw::OnPaint()
 {
 	m_mtx.lock();
 
-	if (!m_list)
+	static auto hook = GETHOOK(CPaintHook);
+	auto ctx = hook->Context();
+
+	if (!m_list || m_frames > 0)
 	{
 		m_mtx.unlock();
 		return 0;

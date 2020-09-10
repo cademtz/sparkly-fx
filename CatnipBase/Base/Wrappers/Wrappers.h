@@ -1,6 +1,7 @@
 #pragma once
 #include "SDK/mathlib.h"
 #include "SDK/basehandle.h"
+#include "SDK/ienginevgui.h"
 
 enum EOffsets {
 	Off_CreateMove,
@@ -13,6 +14,7 @@ enum EOffsets {
 	Off_ShouldDrawCrosshair,
 	Off_PostRender,
 	Off_PostRenderVGui,
+	Off_Paint
 };
 
 struct model_t;
@@ -125,9 +127,23 @@ public:
 class IClientEntityListWrapper
 {
 public:
+	virtual ~IClientEntityListWrapper() { }
+	virtual void* Inst() = 0;
+
 	virtual CBaseEntity* GetClientEntity(int entnum) = 0;
 	virtual CBaseEntity* GetClientEntityFromHandle(CBaseHandle hEnt) = 0;
 	virtual int					NumberOfEntities(bool bIncludeNonNetworkable) = 0;
 	virtual int					GetHighestEntityIndex(void) = 0;
 	virtual int					GetMaxEntities() = 0;
+};
+
+class CEngineVGUIWrapper
+{
+public:
+	virtual ~CEngineVGUIWrapper() { }
+	virtual void* Inst() = 0;
+	virtual int GetOffset(EOffsets Offset) = 0;
+
+	virtual bool IsGameUIVisible() = 0;
+	virtual void Paint(PaintMode_t mode) = 0;
 };

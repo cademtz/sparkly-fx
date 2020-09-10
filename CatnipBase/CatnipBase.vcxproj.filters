@@ -92,6 +92,9 @@
     <ClCompile Include="Hooks\PaintHook.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="Base\Wrappers\EngineVGUIWrappers.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Hooks\Hooks.h">
@@ -191,5 +194,8 @@
     <ClInclude Include="SDK\vgui_baseui_interface.h" />
     <ClInclude Include="SDK\xboxstubs.h" />
     <ClInclude Include="Hooks\PaintHook.h" />
+    <ClInclude Include="Base\Wrappers\EngineVGUIWrappers.h" />
+    <ClInclude Include="SDK\InterfaceVersions\EngineVGuiSDK.h" />
+    <ClInclude Include="SDK\InterfaceVersions\EngineVGuiCSGO.h" />
   </ItemGroup>
 </Project>
