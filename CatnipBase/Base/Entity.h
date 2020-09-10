@@ -12,8 +12,8 @@ class ClientClass;
 class CBaseEntity
 {
 public:
-	inline void* Renderable() const { return (char*)this + 4; }
-	inline void* Networkable() const { return (char*)this + 8; }
+	inline void* Renderable() const { return (void**)this + 1; }
+	inline void* Networkable() const { return (void**)this + 2; }
 
 	bool		SetupBones(matrix3x4_t* pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime);
 	ClientClass* GetClientClass();

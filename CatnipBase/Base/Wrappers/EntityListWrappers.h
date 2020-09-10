@@ -9,6 +9,7 @@ class IClientEntityListWrapper003 : public IClientEntityListWrapper
 
 public:
 	IClientEntityListWrapper003(void* EntityList) : m_int((IClientEntityList*)EntityList) { }
+	void* Inst() override { return m_int; }
 
 	virtual CBaseEntity* GetClientEntity(int entnum);
 	virtual CBaseEntity* GetClientEntityFromHandle(CBaseHandle hEnt);

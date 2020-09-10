@@ -53,13 +53,13 @@ public:
 
 #define VENGINE_VGUI_VERSION	"VEngineVGui001"
 
-#if defined(_STATIC_LINKED) && defined(CLIENT_DLL)
+/*#if defined(_STATIC_LINKED) && defined(CLIENT_DLL)
 namespace Client
 {
 	extern IEngineVGui* enginevgui;
 }
 #else
 extern IEngineVGui* enginevgui;
-#endif
+#endif*/
 
 #endif // IENGINEVGUI_H

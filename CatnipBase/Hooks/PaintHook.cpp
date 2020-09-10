@@ -1,6 +1,8 @@
 #include "PaintHook.h"
 #include "Base/Interfaces.h"
 
+// We are currently avoiding a paint traverse hook because x64 GMod sux
+
 #define OFF_PAINTTRAVERSE 41
 
 CPaintHook::CPaintHook() : BASEHOOK(CPaintHook)
@@ -11,28 +13,26 @@ CPaintHook::CPaintHook() : BASEHOOK(CPaintHook)
 
 void CPaintHook::Hook()
 {
-	//m_hook.Hook(Interfaces::panels);
-	m_hook.Hook(Interfaces::vgui);
-	m_hook.Set(13, &Hooked_Paint);
-	//m_hook.Set(OFF_PAINTTRAVERSE, Hooked_PaintTraverse);
+	m_vguihook.Hook(Interfaces::vgui->Inst());
+	m_vguihook.Set(Interfaces::vgui->GetOffset(Off_Paint), &Hooked_Paint);
 }
 
 void CPaintHook::Unhook() {
-	m_hook.Unhook();
+	m_vguihook.Unhook();
 }
 
 void CPaintHook::PaintTraverse(vgui::VPANEL vguiPanel, bool forceRepaint, bool allowForce)
 {
 	using Fn = void(__thiscall*)(void*, vgui::VPANEL, bool, bool);
-	static auto original = m_hook.Get<Fn>(OFF_PAINTTRAVERSE);
+	static auto original = m_vguihook.Get<Fn>(OFF_PAINTTRAVERSE);
 	return original(Interfaces::panels, vguiPanel, forceRepaint, allowForce);
 }
 
 void CPaintHook::Paint(PaintMode_t mode)
 {
 	using Fn = void(__thiscall*)(void*, PaintMode_t);
-	static auto original = m_hook.Get<Fn>(13);
-	return original(Interfaces::vgui, mode);
+	static auto original = m_vguihook.Get<Fn>(Interfaces::vgui->GetOffset(Off_Paint));
+	return original(Interfaces::vgui->Inst(), mode);
 }
 
 void __stdcall CPaintHook::Hooked_PaintTraverse(UNCRAP vgui::VPANEL vguiPanel, bool forceRepaint, bool allowForce)
@@ -51,6 +51,7 @@ void __stdcall CPaintHook::Hooked_PaintTraverse(UNCRAP vgui::VPANEL vguiPanel, b
 void __stdcall CPaintHook::Hooked_Paint(UNCRAP PaintMode_t mode)
 {
 	static auto hook = GETHOOK(CPaintHook);
-	hook->PushEvent(EVENT_PAINT);
+	hook->Context()->mode = mode;
 	hook->Paint(mode);
+	hook->PushEvent(EVENT_PAINT);
 }

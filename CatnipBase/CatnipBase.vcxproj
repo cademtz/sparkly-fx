@@ -186,6 +186,7 @@
     <ClCompile Include="Base\imgui_impl_dx9.cpp" />
     <ClCompile Include="Base\Interfaces.cpp" />
     <ClCompile Include="Base\Sig.cpp" />
+    <ClCompile Include="Base\Wrappers\EngineVGUIWrappers.cpp" />
     <ClCompile Include="Base\Wrappers\EntityListWrappers.cpp" />
     <ClCompile Include="Hooks\ClientHook.cpp" />
     <ClCompile Include="Hooks\Hooks.cpp" />
@@ -216,6 +217,7 @@
     <ClInclude Include="Base\Wrappers\EngineClientWrappers.h" />
     <ClInclude Include="Base\Event.h" />
     <ClInclude Include="Base\imgui_impl_win32.h" />
+    <ClInclude Include="Base\Wrappers\EngineVGUIWrappers.h" />
     <ClInclude Include="Base\Wrappers\EntityListWrappers.h" />
     <ClInclude Include="Base\Wrappers\Wrappers.h" />
     <ClInclude Include="Base\Sig.h" />
@@ -261,6 +263,7 @@
     <ClInclude Include="SDK\imaterialsystem.h" />
     <ClInclude Include="SDK\InputEnums.h" />
     <ClInclude Include="SDK\interface.h" />
+    <ClInclude Include="SDK\InterfaceVersions\EngineVGuiCSGO.h" />
     <ClInclude Include="SDK\InterfaceVersions\ClientDLL017.h" />
     <ClInclude Include="SDK\InterfaceVersions\ClientDLL018.h" />
     <ClInclude Include="SDK\InterfaceVersions\ClientEntityList003.h" />
@@ -268,6 +271,7 @@
     <ClInclude Include="SDK\InterfaceVersions\ClientModeCSGO.h" />
     <ClInclude Include="SDK\InterfaceVersions\EngineClient013.h" />
     <ClInclude Include="SDK\InterfaceVersions\EngineClient014.h" />
+    <ClInclude Include="SDK\InterfaceVersions\EngineVGuiSDK.h" />
     <ClInclude Include="SDK\InterfaceVersions\EntityCSGO.h" />
     <ClInclude Include="SDK\InterfaceVersions\EntitySDK.h" />
     <ClInclude Include="SDK\IPanel.h" />

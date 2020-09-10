@@ -14,5 +14,5 @@ namespace Interfaces
 	inline IClientEntityListWrapper* entlist = nullptr;
 	inline IClientModeWrapper* client = nullptr;
 	inline vgui::IPanel* panels = nullptr;
-	inline IEngineVGuiInternal* vgui = nullptr;
+	inline CEngineVGUIWrapper* vgui = nullptr;
 }
