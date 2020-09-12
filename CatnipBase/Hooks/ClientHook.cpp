@@ -58,12 +58,29 @@ bool CClientHook::CreateMove(float flInputSampleTime, CUserCmd* cmd)
 void __stdcall CClientHook::Hooked_HLCreateMove(UNCRAP int sequence_number, float input_sample_frametime, bool active)
 {
 	bool bSendPacket;
-	auto ebp = (uintptr_t*)(uintptr_t(_AddressOfReturnAddress()) - sizeof(void*));
+	UINT_PTR* baseptr = (UINT_PTR*)_AddressOfReturnAddress() - 1;
+	static int off = -1;
 
 	if constexpr (Base::Win64)
 		bSendPacket = AsmTools::GetR14();
+	else if (Interfaces::engine->GetAppID() == AppId_CSGO)
+	{
+		static bool bSnap = false;
+		if (!bSnap)
+		{
+			// https://i.imgur.com/yNbgIbl.png
+			StackSnapshot snap;
+			AsmTools::AnalyzeStackBeepBoop(&snap, &CClientHook::Hooked_HLCreateMove);
+			off = snap.regs[RegIndex_B].off;
+
+			printf("Stack off: %X\n", off);
+			bSnap = true;
+		}
+
+		bSendPacket = *(bool*)((UINT_PTR)baseptr + off);
+	}
 	else
-		bSendPacket = *((*(bool**)AsmTools::GetBP()) - 1);
+		bSendPacket = *(*(bool**)baseptr - 1);
 
 	static auto hook = GETHOOK(CClientHook);
 	auto ctx = hook->Context();
@@ -71,13 +88,15 @@ void __stdcall CClientHook::Hooked_HLCreateMove(UNCRAP int sequence_number, floa
 
 	int flags = hook->PushEvent(EVENT_HLCREATEMOVE);
 
-	if constexpr (Base::Win64)
-		AsmTools::SetR14((void*)ctx->bSendPacket);
-	else
-		*((*(bool**)AsmTools::GetBP()) - 1) = ctx->bSendPacket;
-
 	if (!(flags & Return_NoOriginal))
 		hook->HLCreateMove(sequence_number, input_sample_frametime, active);
+
+	if constexpr (Base::Win64)
+		AsmTools::SetR14((void*)ctx->bSendPacket);
+	else if (Interfaces::engine->GetAppID() == AppId_CSGO)
+		*(bool*)((UINT_PTR)baseptr + off) = ctx->bSendPacket;
+	else
+		*(*(bool**)baseptr + off) = ctx->bSendPacket;
 }
 
 void __stdcall CClientHook::Hooked_FrameStageNotify(UNCRAP ClientFrameStage_t curStage)
