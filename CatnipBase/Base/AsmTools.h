@@ -8,7 +8,10 @@ struct StackSnapshot;
 
 enum EStackRegIndex
 {
+	RegIndex_A,
 	RegIndex_B,
+	RegIndex_C,
+	RegIndex_D,
 	RegIndex_SI,
 	RegIndex_DI,
 	RegIndex_Count,
@@ -20,6 +23,7 @@ struct StackBase {
 
 struct StackReg {
 	//UINT_PTR value;		// Current value
+	INT_PTR off;			// Offset from base
 	UINT_PTR* value_old;	// Pointer to old value, nullptr if none.
 };
 

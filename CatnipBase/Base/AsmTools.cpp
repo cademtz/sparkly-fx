@@ -5,8 +5,9 @@
 #include <intrin.h>
 
 #define Zydis_EXPORTS // Some hacky crap because lazey
-#define ZYDIS_DISABLE_FORMATTER
+//#define ZYDIS_DISABLE_FORMATTER
 #include <Zydis/Zydis.h>
+#include <inttypes.h>
 
 void* AsmTools::Relative(void* PtrToRel, int Offset)
 {
@@ -28,22 +29,38 @@ bool AsmTools::AnalyzeStackBeepBoop(StackSnapshot* Snap, const void* YourFunc)
 	ZyanStatus status;
 	ZydisDecoder decoder;
 	ZydisDecodedInstruction ins;
+	ZydisFormatter formatter;
+	ZydisFormatterInit(&formatter, ZydisFormatterStyle::ZYDIS_FORMATTER_STYLE_INTEL);
 
 	if constexpr (Base::Win64)
-		ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_ADDRESS_WIDTH_64);
+		status = ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_ADDRESS_WIDTH_64);
 	else
-		ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LONG_COMPAT_32, ZYDIS_ADDRESS_WIDTH_32);
+		status = ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LONG_COMPAT_32, ZYDIS_ADDRESS_WIDTH_32);
 
-	std::vector<StackReg> regs;
-	int bp_off = 0;
+	if (ZYAN_FAILED(status))
+		return false;
+
+	std::vector<std::pair<StackReg, EStackRegIndex>> regs;
+	int bp_off = sizeof(void*);
 
 	while (ZYAN_SUCCESS(status = ZydisDecoderDecodeBuffer(&decoder, (const char*)YourFunc + off, 0xFF, &ins)))
 	{
+#ifdef _DEBUG
+		// Print current instruction pointer.
+		printf("%016" PRIX64 "  ", (ZyanU64)YourFunc + off);
+
+		// Format & print the binary instruction structure to human readable format
+		char buffer[256];
+		ZydisFormatterFormatInstruction(&formatter, &ins, buffer, sizeof(buffer), 0);
+		puts(buffer);
+#endif
+
 		EStackRegIndex id = RegIndex_Count;
 		int viscount = 0;
 		for (int i = 0; i < ins.operand_count; i++)
 			viscount += ins.operands[i].visibility == ZYDIS_OPERAND_VISIBILITY_EXPLICIT;
 
+		bool ret = false;
 		switch (ins.mnemonic)
 		{
 		case ZYDIS_MNEMONIC_PUSH:
@@ -54,12 +71,33 @@ bool AsmTools::AnalyzeStackBeepBoop(StackSnapshot* Snap, const void* YourFunc)
 				{
 					switch (op.reg.value)
 					{
+					case ZYDIS_REGISTER_RAX:
+					case ZYDIS_REGISTER_EAX:
+					case ZYDIS_REGISTER_AX:
+					case ZYDIS_REGISTER_AH:
+					case ZYDIS_REGISTER_AL:
+						id = RegIndex_A;
+						break;
 					case ZYDIS_REGISTER_RBX:
 					case ZYDIS_REGISTER_EBX:
 					case ZYDIS_REGISTER_BX:
 					case ZYDIS_REGISTER_BH:
 					case ZYDIS_REGISTER_BL:
 						id = RegIndex_B;
+						break;
+					case ZYDIS_REGISTER_RCX:
+					case ZYDIS_REGISTER_ECX:
+					case ZYDIS_REGISTER_CX:
+					case ZYDIS_REGISTER_CH:
+					case ZYDIS_REGISTER_CL:
+						id = RegIndex_C;
+						break;
+					case ZYDIS_REGISTER_RDX:
+					case ZYDIS_REGISTER_EDX:
+					case ZYDIS_REGISTER_DX:
+					case ZYDIS_REGISTER_DH:
+					case ZYDIS_REGISTER_DL:
+						id = RegIndex_D;
 						break;
 					case ZYDIS_REGISTER_RSI:
 					case ZYDIS_REGISTER_ESI:
@@ -113,19 +151,35 @@ bool AsmTools::AnalyzeStackBeepBoop(StackSnapshot* Snap, const void* YourFunc)
 			{
 				if (ins.operands[0].type != ZYDIS_OPERAND_TYPE_MEMORY)
 				{
-					off = (ZyanI64)YourFunc - addr;
+					off = (ZyanI64)addr - (ZyanI64)YourFunc;
 					continue; // Skip the adding of instruction length at the loop's end
 				}
 			}
-			// Return, because code may flow anywhere following this jump
+			// End loop, because code may flow anywhere following this jump
 		}
 		case ZYDIS_MNEMONIC_RET:
-			return ZYAN_SUCCESS(status);
+			ret = true;
+			break;
 		}
+
+		if (ret)
+			break;
+
+		if (id != RegIndex_Count)
+		{
+			StackReg reg;
+			reg.off = bp_off;
+			reg.value_old = (UINT_PTR*)((const char*)Snap->base + bp_off);
+			regs.push_back(std::pair(reg, id));
+		}
+
 		off += ins.length;
 		if ((const char*)YourFunc + off == _ReturnAddress())
 			break;
 	}
+
+	for (auto& reg : regs)
+		Snap->regs[reg.second] = reg.first;
 
 	return ZYAN_SUCCESS(status);
 }
