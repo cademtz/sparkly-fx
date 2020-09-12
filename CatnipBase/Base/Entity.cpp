@@ -7,7 +7,8 @@
 
 // TODO: Make these indexes part of the enum of offset thingies, maybe?
 
-bool CBaseEntity::SetupBones(matrix3x4_t* pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime) {
+bool CBaseEntity::SetupBones(matrix3x4_t* pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime)
+{
 	size_t index = 16;
 	if (Interfaces::engine->GetAppID() == AppId_CSGO)
 		index = 13;
@@ -15,10 +16,11 @@ bool CBaseEntity::SetupBones(matrix3x4_t* pBoneToWorldOut, int nMaxBones, int bo
 	using SetupBonesFn = bool(__thiscall*)(void*, void*, int, int, float);
 	return GetVFunc<SetupBonesFn>(Renderable(), index)(Renderable(), pBoneToWorldOut, nMaxBones, boneMask, currentTime);
 }
-ClientClass* CBaseEntity::GetClientClass() {
+ClientClass* CBaseEntity::GetClientClass(){
 	return ((IClientEntity*)this)->GetClientClass();
 }
-bool CBaseEntity::IsDormant(void) {
+bool CBaseEntity::IsDormant(void)
+{
 	size_t index = 8;
 	if (Interfaces::engine->GetAppID() == AppId_CSGO)
 		index = 9;
@@ -26,7 +28,8 @@ bool CBaseEntity::IsDormant(void) {
 	using DormantFn = bool (__thiscall*)(void*);
 	return GetVFunc<DormantFn>(Networkable(), index)(Networkable());
 }
-int CBaseEntity::entindex(void) const {
+int CBaseEntity::entindex(void) const
+{
 	size_t index = 9;
 	if (Interfaces::engine->GetAppID() == AppId_CSGO)
 		index = 10;

@@ -18,6 +18,7 @@ struct CClientHook_Ctx
 	ClientFrameStage_t curStage;
 	CUserCmd* cmd;
 	bool result;
+	bool bSendPacket;
 };
 
 class CClientHook : public CBaseHook

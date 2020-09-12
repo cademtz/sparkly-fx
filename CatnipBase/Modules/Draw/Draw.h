@@ -20,7 +20,6 @@ public:
 
 private:
 	int OnPresent();
-	int OnPaintTraverse();
 	int OnPaint();
 
 	ImDrawList* m_list = nullptr;

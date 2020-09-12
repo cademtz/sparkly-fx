@@ -31,6 +31,7 @@ public:
 	const uint32_t Hash() { return m_hash; }
 	static std::unordered_map<uint32_t, CBaseHook*>& Hooks() { return m_hooks; }
 	static void HookAll();
+	static void UnHookAll();
 
 	template<class T>
 	static inline T* GetHook(const HookHandle Hook) { return (T*)m_hooks[Hook.hash]; }

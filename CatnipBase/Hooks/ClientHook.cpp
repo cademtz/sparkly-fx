@@ -1,6 +1,8 @@
 #include "ClientHook.h"
 #include "Base/Interfaces.h"
 #include "Base/Sig.h"
+#include "SDK/usercmd.h"
+#include <intrin.h>
 
 CClientHook::CClientHook() : BASEHOOK(CClientHook)
 {
@@ -19,7 +21,8 @@ void CClientHook::Hook()
 	m_clhook.Set(Interfaces::client->GetOffset(Off_CreateMove), Hooked_CreateMove);
 }
 
-void CClientHook::Unhook() {
+void CClientHook::Unhook()
+{
 	m_hlhook.Unhook();
 	m_clhook.Unhook();
 }
@@ -54,15 +57,27 @@ bool CClientHook::CreateMove(float flInputSampleTime, CUserCmd* cmd)
 
 void __stdcall CClientHook::Hooked_HLCreateMove(UNCRAP int sequence_number, float input_sample_frametime, bool active)
 {
+	bool bSendPacket;
+	auto ebp = (uintptr_t*)(uintptr_t(_AddressOfReturnAddress()) - sizeof(void*));
+
+	if constexpr (Base::Win64)
+		bSendPacket = AsmTools::GetR14();
+	else
+		bSendPacket = *((*(bool**)AsmTools::GetBP()) - 1);
+
 	static auto hook = GETHOOK(CClientHook);
 	auto ctx = hook->Context();
-	ctx->active = active, ctx->input_sample_frametime = input_sample_frametime;
+	ctx->active = active, ctx->input_sample_frametime = input_sample_frametime, ctx->bSendPacket = bSendPacket;
 
 	int flags = hook->PushEvent(EVENT_HLCREATEMOVE);
-	if (flags & Return_NoOriginal)
-		return;
 
-	hook->HLCreateMove(sequence_number, input_sample_frametime, active);
+	if constexpr (Base::Win64)
+		AsmTools::SetR14((void*)ctx->bSendPacket);
+	else
+		*((*(bool**)AsmTools::GetBP()) - 1) = ctx->bSendPacket;
+
+	if (!(flags & Return_NoOriginal))
+		hook->HLCreateMove(sequence_number, input_sample_frametime, active);
 }
 
 void __stdcall CClientHook::Hooked_FrameStageNotify(UNCRAP ClientFrameStage_t curStage)
@@ -86,9 +101,20 @@ bool __stdcall CClientHook::Hooked_CreateMove(UNCRAP float flInputSampleTime, CU
 
 	ctx->result = hook->CreateMove(flInputSampleTime, cmd);
 	ctx->input_sample_frametime = flInputSampleTime;
-	ctx->cmd = cmd;
+
+	switch (Interfaces::engine->GetAppID())
+	{
+	case AppID_GMod:
+		ctx->cmd = (CUserCmd*)((void**)cmd - 1); // Offset missing VMT
+		break;
+	default:
+		ctx->cmd = cmd;
+	}
 
 	hook->PushEvent(EVENT_CREATEMOVE);
+
+	if (ctx->cmd->tick_count % 14)
+		ctx->bSendPacket = false;
 
     return ctx->result;
 }

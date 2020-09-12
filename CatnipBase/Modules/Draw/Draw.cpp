@@ -21,7 +21,6 @@ CDraw::CDraw()
 void CDraw::StartListening()
 {
 	Listen(EVENT_DX9PRESENT, [this] { return OnPresent(); });
-	Listen(EVENT_PAINTTRAVERSE, [this] { return OnPaintTraverse(); });
 	Listen(EVENT_PAINT, [this] { return OnPaint(); });
 }
 
@@ -89,42 +88,6 @@ int CDraw::OnPresent()
 	ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
 
 
-	return 0;
-}
-
-int CDraw::OnPaintTraverse()
-{
-	/*static auto hook = GETHOOK(CPaintHook);
-	auto ctx = hook->Context();
-
-	static vgui::VPANEL matSysTop = 0;
-	if (!matSysTop && !strcmp(Interfaces::panels->GetName(ctx->panel), "MatSystemTopPanel"))
-		matSysTop = ctx->panel;
-
-	if (!matSysTop || ctx->panel != matSysTop)
-		return 0;
-
-	m_mtx.lock();
-
-	if (!m_list)
-	{
-		m_mtx.unlock();
-		return 0;
-	}
-
-	m_list->_ResetForNewFrame();
-	m_list->PushTextureID(ImGui::GetIO().Fonts[0].TexID);
-	m_list->PushClipRectFullScreen();
-	m_list->AddRectFilled(ImVec2(25, 25), ImVec2(100, 100), ImColor(0, 128, 255));
-	data.TotalVtxCount = m_list->VtxBuffer.Size;
-	data.TotalIdxCount = m_list->IdxBuffer.Size;
-	data.DisplaySize = ImVec2(m_list->_Data->ClipRectFullscreen.z, m_list->_Data->ClipRectFullscreen.w);
-
-	PushEvent(EVENT_DRAW);
-	m_frames++;
-
-	m_mtx.unlock();
-	return 0;*/
 	return 0;
 }
 

@@ -198,4 +198,9 @@
     <ClInclude Include="SDK\InterfaceVersions\EngineVGuiSDK.h" />
     <ClInclude Include="SDK\InterfaceVersions\EngineVGuiCSGO.h" />
   </ItemGroup>
+  <ItemGroup>
+    <MASM Include="Base\AsmTools64.asm">
+      <Filter>Modules</Filter>
+    </MASM>
+  </ItemGroup>
 </Project>

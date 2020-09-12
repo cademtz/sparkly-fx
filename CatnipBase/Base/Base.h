@@ -18,6 +18,7 @@ enum EAppID
 	AppId_L4D2 = 550,
 	AppId_Portal2 = 620,
 	AppId_CSGO = 730,
+	AppID_GMod = 4000,
 };
 
 namespace Base
@@ -32,4 +33,10 @@ namespace Base
 
 	inline HMODULE hInst;
 	inline HWND hWnd;
+
+#ifdef _WIN64
+	constexpr bool Win64 = true;
+#else
+	constexpr bool Win64 = false;
+#endif
 };
