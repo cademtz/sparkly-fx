@@ -297,6 +297,9 @@
     <ClInclude Include="SDK\wchartypes.h" />
     <ClInclude Include="SDK\xboxstubs.h" />
   </ItemGroup>
+  <ItemGroup>
+    <MASM Include="Base\AsmTools64.asm" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />

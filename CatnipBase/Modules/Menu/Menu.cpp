@@ -5,7 +5,7 @@
 
 #include <imgui.h>
 #include <imgui/examples/imgui_impl_dx9.h>
-#include <imgui/imgui_demo.cpp>
+//#include <imgui/imgui_demo.cpp>
 #include <imgui/imgui_internal.h>
 #include "Base/imgui_impl_win32.h"
 
@@ -18,13 +18,38 @@ void CMenu::StartListening()
 	Listen(EVENT_IMGUI, [this]() { return OnImGui(); });
 }
 
+DWORD WINAPI UnhookThread(LPVOID)
+{
+	printf("Unhooking...\n");
+	CBaseHook::UnHookAll();
+
+	printf("Waiting for any hooked calls to end...\n");
+	Sleep(0x1000);
+
+	printf("FreeLibraryAndExitThread\n");
+	FreeLibraryAndExitThread(Base::hInst, 0);
+
+	return 0;
+}
+
 int CMenu::OnImGui()
 {
 	if (!m_open)
 		return 0;
 
 	ImGui_ImplWin32_NewFrame();
-	ImGui::ShowDemoWindow();
+
+	ImGui::SetNextWindowSize(ImVec2(300, 200), ImGuiCond_Once);
+	if (ImGui::Begin("My Cool Window"))
+	{
+		ImGui::BeginGroup();
+		if (ImGui::Button("Eject"))
+			CreateThread(0, 0, &UnhookThread, 0, 0, 0);
+		ImGui::EndGroup();
+	}
+	ImGui::End();
+
+	//ImGui::ShowDemoWindow();
 
 	return 0;
 }

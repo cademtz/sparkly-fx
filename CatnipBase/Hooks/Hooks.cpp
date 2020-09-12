@@ -19,6 +19,12 @@ void CBaseHook::HookAll()
 		hook.second->Hook();
 }
 
+void CBaseHook::UnHookAll()
+{
+	for (auto hook : m_hooks)
+		hook.second->Unhook();
+}
+
 void CVMTHook::Hook(void* Instance, bool AllInstances)
 {
 	m_inst = Instance;
@@ -44,6 +50,9 @@ void CVMTHook::Hook(void* Instance, bool AllInstances)
 
 void CVMTHook::Unhook()
 {
+	if (IsHooked())
+		return;
+
 	size_t size = sizeof(m_oldvmt[0]) * m_count;
 
 	if (m_all)

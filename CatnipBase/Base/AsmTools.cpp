@@ -1,5 +1,12 @@
 #include "AsmTools.h"
+#include "Base.h"
 #include <cstddef>
+#include <vector>
+#include <intrin.h>
+
+#define Zydis_EXPORTS // Some hacky crap because lazey
+#define ZYDIS_DISABLE_FORMATTER
+#include <Zydis/Zydis.h>
 
 void* AsmTools::Relative(void* PtrToRel, int Offset)
 {
@@ -11,3 +18,153 @@ void* AsmTools::Relative(void* PtrToRel, int Offset)
 	return *(void**)ptr;
 #endif
 }
+
+bool AsmTools::AnalyzeStackBeepBoop(StackSnapshot* Snap, const void* YourFunc)
+{
+	ZeroMemory(Snap, sizeof(*Snap));
+	Snap->base = ((StackBase*)GetBP())->caller_base;
+
+	ZyanI64 off = 0;
+	ZyanStatus status;
+	ZydisDecoder decoder;
+	ZydisDecodedInstruction ins;
+
+	if constexpr (Base::Win64)
+		ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_ADDRESS_WIDTH_64);
+	else
+		ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LONG_COMPAT_32, ZYDIS_ADDRESS_WIDTH_32);
+
+	std::vector<StackReg> regs;
+	int bp_off = 0;
+
+	while (ZYAN_SUCCESS(status = ZydisDecoderDecodeBuffer(&decoder, (const char*)YourFunc + off, 0xFF, &ins)))
+	{
+		EStackRegIndex id = RegIndex_Count;
+		int viscount = 0;
+		for (int i = 0; i < ins.operand_count; i++)
+			viscount += ins.operands[i].visibility == ZYDIS_OPERAND_VISIBILITY_EXPLICIT;
+
+		switch (ins.mnemonic)
+		{
+		case ZYDIS_MNEMONIC_PUSH:
+			if (viscount == 1)
+			{
+				auto& op = ins.operands[0];
+				if (op.type == ZYDIS_OPERAND_TYPE_REGISTER) // Pushing register
+				{
+					switch (op.reg.value)
+					{
+					case ZYDIS_REGISTER_RBX:
+					case ZYDIS_REGISTER_EBX:
+					case ZYDIS_REGISTER_BX:
+					case ZYDIS_REGISTER_BH:
+					case ZYDIS_REGISTER_BL:
+						id = RegIndex_B;
+						break;
+					case ZYDIS_REGISTER_RSI:
+					case ZYDIS_REGISTER_ESI:
+					case ZYDIS_REGISTER_SI:
+					case ZYDIS_REGISTER_SIL:
+						id = RegIndex_SI;
+						break;
+					case ZYDIS_REGISTER_RDI:
+					case ZYDIS_REGISTER_EDI:
+					case ZYDIS_REGISTER_DI:
+					case ZYDIS_REGISTER_DIL:
+						id = RegIndex_DI;
+						break;
+					}
+				}
+			}
+		case ZYDIS_MNEMONIC_PUSHA:
+		case ZYDIS_MNEMONIC_PUSHAD:
+		case ZYDIS_MNEMONIC_PUSHF:
+		case ZYDIS_MNEMONIC_PUSHFD:
+			bp_off -= sizeof(int);
+			break;
+		case ZYDIS_MNEMONIC_POP:
+		case ZYDIS_MNEMONIC_POPA:
+		case ZYDIS_MNEMONIC_POPAD:
+		case ZYDIS_MNEMONIC_POPCNT:
+		case ZYDIS_MNEMONIC_POPF:
+		case ZYDIS_MNEMONIC_POPFD:
+		case ZYDIS_MNEMONIC_POPFQ:
+			bp_off += sizeof(int);
+			break;
+		case ZYDIS_MNEMONIC_SUB:
+		case ZYDIS_MNEMONIC_ADD:
+			if (viscount == 2)
+			{
+				auto& op0 = ins.operands[0], & op1 = ins.operands[1];
+				constexpr ZydisRegister sp_val = Base::Win64 ? ZYDIS_REGISTER_RSP : ZYDIS_REGISTER_ESP;
+				if (op0.type == ZYDIS_OPERAND_TYPE_REGISTER && op0.reg.value == sp_val && op1.type == ZYDIS_OPERAND_TYPE_IMMEDIATE)
+				{
+					if (ins.mnemonic == ZYDIS_MNEMONIC_ADD)
+						bp_off += op1.imm.value.u;
+					else
+						bp_off -= op1.imm.value.u;
+				}
+			}
+			break;
+		case ZYDIS_MNEMONIC_JMP:
+		{
+			ZyanU64 addr;
+			if (ZYAN_SUCCESS(ZydisCalcAbsoluteAddress(&ins, ins.operands, (ZyanU64)YourFunc + off, &addr)))
+			{
+				if (ins.operands[0].type != ZYDIS_OPERAND_TYPE_MEMORY)
+				{
+					off = (ZyanI64)YourFunc - addr;
+					continue; // Skip the adding of instruction length at the loop's end
+				}
+			}
+			// Return, because code may flow anywhere following this jump
+		}
+		case ZYDIS_MNEMONIC_RET:
+			return ZYAN_SUCCESS(status);
+		}
+		off += ins.length;
+		if ((const char*)YourFunc + off == _ReturnAddress())
+			break;
+	}
+
+	return ZYAN_SUCCESS(status);
+}
+
+// ONLY 32-bit code follows. Corresponding 64-bit code can be found in "AsmTools64.asm"
+#ifndef _WIN64
+
+__declspec(naked) void* AsmTools::GetB()
+{
+	__asm
+	{
+		mov eax, ebx
+		ret
+	}
+}
+__declspec(naked) void AsmTools::SetB(void* Value)
+{
+	__asm
+	{
+		mov ebx, [esp - 4]
+		ret
+	}
+}
+
+__declspec(naked) void* AsmTools::GetBP()
+{
+	__asm
+	{
+		mov eax, ebp
+		ret
+	}
+}
+__declspec(naked) void AsmTools::SetBP(void* Value)
+{
+	__asm
+	{
+		mov ebp, [esp - 4]
+		ret
+	}
+}
+
+#endif
