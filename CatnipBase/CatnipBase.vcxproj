@@ -190,6 +190,7 @@
     <ClCompile Include="Base\imgui_impl_dx9.cpp" />
     <ClCompile Include="Base\Interfaces.cpp" />
     <ClCompile Include="Base\Sig.cpp" />
+    <ClCompile Include="Base\Wrappers\EngineTraceWrappers.cpp" />
     <ClCompile Include="Base\Wrappers\EngineVGUIWrappers.cpp" />
     <ClCompile Include="Base\Wrappers\EntityListWrappers.cpp" />
     <ClCompile Include="Hooks\ClientHook.cpp" />
@@ -202,6 +203,7 @@
     <ClCompile Include="Modules\Movement\Movement.cpp" />
     <ClCompile Include="Modules\Visuals\Visuals.cpp" />
     <ClCompile Include="Modules\Menu\Menu.cpp" />
+    <ClCompile Include="SDK\gametrace_client.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Base\AltimorNetvar.h" />
@@ -221,6 +223,7 @@
     <ClInclude Include="Base\Wrappers\EngineClientWrappers.h" />
     <ClInclude Include="Base\Event.h" />
     <ClInclude Include="Base\imgui_impl_win32.h" />
+    <ClInclude Include="Base\Wrappers\EngineTraceWrappers.h" />
     <ClInclude Include="Base\Wrappers\EngineVGUIWrappers.h" />
     <ClInclude Include="Base\Wrappers\EntityListWrappers.h" />
     <ClInclude Include="Base\Wrappers\Wrappers.h" />
@@ -240,6 +243,7 @@
     <ClInclude Include="SDK\basehandle.h" />
     <ClInclude Include="SDK\basetypes.h" />
     <ClInclude Include="SDK\bitbuf.h" />
+    <ClInclude Include="SDK\bspflags.h" />
     <ClInclude Include="SDK\ButtonCode.h" />
     <ClInclude Include="SDK\cdll_int.h" />
     <ClInclude Include="SDK\checksum_crc.h" />
@@ -252,6 +256,7 @@
     <ClInclude Include="SDK\dbg.h" />
     <ClInclude Include="SDK\dt_common.h" />
     <ClInclude Include="SDK\dt_recv.h" />
+    <ClInclude Include="SDK\gametrace.h" />
     <ClInclude Include="SDK\IAppSystem.h" />
     <ClInclude Include="SDK\icliententity.h" />
     <ClInclude Include="SDK\icliententitylist.h" />
@@ -260,6 +265,7 @@
     <ClInclude Include="SDK\iclientrenderable.h" />
     <ClInclude Include="SDK\iclientthinkable.h" />
     <ClInclude Include="SDK\iclientunknown.h" />
+    <ClInclude Include="SDK\IEngineTrace.h" />
     <ClInclude Include="SDK\ienginevgui.h" />
     <ClInclude Include="SDK\ihandleentity.h" />
     <ClInclude Include="SDK\imageformat.h" />
@@ -267,6 +273,8 @@
     <ClInclude Include="SDK\imaterialsystem.h" />
     <ClInclude Include="SDK\InputEnums.h" />
     <ClInclude Include="SDK\interface.h" />
+    <ClInclude Include="SDK\InterfaceVersions\EngineTrace003.h" />
+    <ClInclude Include="SDK\InterfaceVersions\EngineTraceSDK.h" />
     <ClInclude Include="SDK\InterfaceVersions\EngineVGuiCSGO.h" />
     <ClInclude Include="SDK\InterfaceVersions\ClientDLL017.h" />
     <ClInclude Include="SDK\InterfaceVersions\ClientDLL018.h" />
@@ -278,19 +286,24 @@
     <ClInclude Include="SDK\InterfaceVersions\EngineVGuiSDK.h" />
     <ClInclude Include="SDK\InterfaceVersions\EntityCSGO.h" />
     <ClInclude Include="SDK\InterfaceVersions\EntitySDK.h" />
+    <ClInclude Include="SDK\InterfaceVersions\EngineTrace004.h" />
     <ClInclude Include="SDK\IPanel.h" />
+    <ClInclude Include="SDK\ispatialpartition.h" />
     <ClInclude Include="SDK\istudiorender.h" />
     <ClInclude Include="SDK\ivmodelrender.h" />
     <ClInclude Include="SDK\mathlib.h" />
     <ClInclude Include="SDK\math_pfns.h" />
+    <ClInclude Include="SDK\cmodel.h" />
     <ClInclude Include="SDK\platform.h" />
     <ClInclude Include="SDK\refcount.h" />
     <ClInclude Include="SDK\strtools.h" />
     <ClInclude Include="SDK\studio.h" />
     <ClInclude Include="SDK\texture_group_names.h" />
+    <ClInclude Include="SDK\trace.h" />
     <ClInclude Include="SDK\usercmd.h" />
     <ClInclude Include="SDK\valve_minmax_off.h" />
     <ClInclude Include="SDK\valve_minmax_on.h" />
+    <ClInclude Include="SDK\vcollide.h" />
     <ClInclude Include="SDK\vector.h" />
     <ClInclude Include="SDK\vector2d.h" />
     <ClInclude Include="SDK\vector4d.h" />

@@ -95,6 +95,12 @@
     <ClCompile Include="Base\Wrappers\EngineVGUIWrappers.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="SDK\gametrace_client.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Wrappers\EngineTraceWrappers.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Hooks\Hooks.h">
@@ -197,6 +203,17 @@
     <ClInclude Include="Base\Wrappers\EngineVGUIWrappers.h" />
     <ClInclude Include="SDK\InterfaceVersions\EngineVGuiSDK.h" />
     <ClInclude Include="SDK\InterfaceVersions\EngineVGuiCSGO.h" />
+    <ClInclude Include="SDK\IEngineTrace.h" />
+    <ClInclude Include="SDK\InterfaceVersions\EngineTraceSDK.h" />
+    <ClInclude Include="SDK\trace.h" />
+    <ClInclude Include="SDK\bspflags.h" />
+    <ClInclude Include="SDK\vcollide.h" />
+    <ClInclude Include="SDK\gametrace.h" />
+    <ClInclude Include="SDK\cmodel.h" />
+    <ClInclude Include="SDK\ispatialpartition.h" />
+    <ClInclude Include="SDK\InterfaceVersions\EngineTrace004.h" />
+    <ClInclude Include="SDK\InterfaceVersions\EngineTrace003.h" />
+    <ClInclude Include="Base\Wrappers\EngineTraceWrappers.h" />
   </ItemGroup>
   <ItemGroup>
     <MASM Include="Base\AsmTools64.asm">
