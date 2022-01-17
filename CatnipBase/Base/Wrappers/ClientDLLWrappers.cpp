@@ -1,6 +1,6 @@
 #include "ClientDLLWrappers.h"
-#include "SDK/InterfaceVersions/ClientDLL017.h"
-#include "SDK/InterfaceVersions/ClientDLL018.h"
+#include <SDK/InterfaceVersions/ClientDLL017.h>
+#include <SDK/InterfaceVersions/ClientDLL018.h>
 
 int IClientDLLWrapper017::GetOffset(EOffsets Offset)
 {

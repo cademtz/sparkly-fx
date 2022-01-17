@@ -1,7 +1,7 @@
 #include "Visuals.h"
-#include "Base/Interfaces.h"
-#include "Base/Entity.h"
-#include "Modules/Draw/Draw.h"
+#include <Base/Interfaces.h>
+#include <Base/Entity.h>
+#include "Draw.h"
 #include <string>
 
 void CVisuals::StartListening() {

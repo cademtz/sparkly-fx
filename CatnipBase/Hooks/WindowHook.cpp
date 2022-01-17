@@ -1,5 +1,4 @@
 #include "WindowHook.h"
-#include <assert.h>
 
 WndProcArgs CWindowHook::m_ctx;
 
@@ -90,7 +89,7 @@ void CWindowHook::SetInputEnabled(bool Enabled)
 void CWindowHook::SetInputEnabled_Increment(bool Enabled)
 {
 	m_inputBypai += Enabled ? -1 : 1;
-	assert(m_inputBypai >= 0);
+	//assert(m_inputBypai >= 0);
 }
 
 LRESULT WINAPI CWindowHook::Hooked_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)

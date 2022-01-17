@@ -1,7 +1,7 @@
 #pragma once
 #include "Netvars.h"
-#include "SDK/vector.h"
-#include "SDK/mathlib.h"
+#include <SDK/vector.h>
+#include <SDK/mathlib.h>
 
 #define NV_RET(type, var) return *(type*)(this + var)
 

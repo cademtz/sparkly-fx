@@ -3,7 +3,7 @@
 #include "Interfaces.h"
 #include "VFunc.h"
 #include "Wrappers/Wrappers.h"
-#include "SDK/icliententity.h"
+#include <SDK/icliententity.h>
 
 // TODO: Make these indexes part of the enum of offset thingies, maybe?
 

@@ -1,8 +1,8 @@
 #include "Hooks.h"
 #include <Windows.h>
 #include <MinHook.h>
-#include "Base/Sig.h"
-#include "Base/AsmTools.h"
+#include <Base/Sig.h>
+#include <Base/AsmTools.h>
 
 #define Zydis_EXPORTS // Some hacky crap because lazey
 #define ZYDIS_DISABLE_FORMATTER

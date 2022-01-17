@@ -1,7 +1,6 @@
 #include "EngineClientWrappers.h"
-#include "SDK/InterfaceVersions/EngineClient013.h"
-#include "SDK/InterfaceVersions/EngineClient014.h"
-#include <stdio.h>
+#include <SDK/InterfaceVersions/EngineClient013.h>
+#include <SDK/InterfaceVersions/EngineClient014.h>
 #include <cstdarg>
 
 void IEngineClientWrapper013::GetScreenSize(int& width, int& height) {

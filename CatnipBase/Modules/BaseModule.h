@@ -1,6 +1,6 @@
 #pragma once
 #include <list>
-#include "Base/Event.h"
+#include <Base/Event.h>
 
 class CModule
 {

@@ -1,6 +1,6 @@
 #include "ClientModeWrappers.h"
-#include "SDK/InterfaceVersions/ClientModeSDK.h"
-#include "SDK/InterfaceVersions/ClientModeCSGO.h"
+#include <SDK/InterfaceVersions/ClientModeSDK.h>
+#include <SDK/InterfaceVersions/ClientModeCSGO.h>
 
 int IClientModeWrapperSDK::GetOffset(EOffsets Offset)
 {

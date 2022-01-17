@@ -1,7 +1,7 @@
 #include "ClientHook.h"
-#include "Base/Interfaces.h"
-#include "Base/Sig.h"
-#include "SDK/usercmd.h"
+#include <Base/Interfaces.h>
+#include <Base/Sig.h>
+#include <SDK/usercmd.h>
 #include <intrin.h>
 
 CClientHook::CClientHook() : BASEHOOK(CClientHook)
@@ -82,14 +82,13 @@ void __stdcall CClientHook::Hooked_HLCreateMove(UNCRAP int sequence_number, floa
 	else
 		bSendPacket = *(*(bool**)baseptr - 1);
 
-	static auto hook = GETHOOK(CClientHook);
-	auto ctx = hook->Context();
+	auto ctx = g_hk_client.Context();
 	ctx->active = active, ctx->input_sample_frametime = input_sample_frametime, ctx->bSendPacket = bSendPacket;
 
-	int flags = hook->PushEvent(EVENT_HLCREATEMOVE);
+	int flags = g_hk_client.PushEvent(EVENT_HLCREATEMOVE);
 
 	if (!(flags & Return_NoOriginal))
-		hook->HLCreateMove(sequence_number, input_sample_frametime, active);
+		g_hk_client.HLCreateMove(sequence_number, input_sample_frametime, active);
 
 	if constexpr (Base::Win64)
 		AsmTools::SetR14((void*)ctx->bSendPacket);
@@ -101,24 +100,20 @@ void __stdcall CClientHook::Hooked_HLCreateMove(UNCRAP int sequence_number, floa
 
 void __stdcall CClientHook::Hooked_FrameStageNotify(UNCRAP ClientFrameStage_t curStage)
 {
-	static auto hook = GETHOOK(CClientHook);
+	g_hk_client.Context()->curStage = curStage;
 
-	auto ctx = hook->Context();
-	ctx->curStage = curStage;
-
-	int flags = hook->PushEvent(EVENT_FRAMESTAGENOTIFY);
+	int flags = g_hk_client.PushEvent(EVENT_FRAMESTAGENOTIFY);
 	if (flags & Return_NoOriginal)
 		return;
 
-	hook->FrameStageNotify(curStage);
+	g_hk_client.FrameStageNotify(curStage);
 }
 
 bool __stdcall CClientHook::Hooked_CreateMove(UNCRAP float flInputSampleTime, CUserCmd* cmd)
 {
-	static auto hook = GETHOOK(CClientHook);
-	auto ctx = hook->Context();
+	auto ctx = g_hk_client.Context();
 
-	ctx->result = hook->CreateMove(flInputSampleTime, cmd);
+	ctx->result = g_hk_client.CreateMove(flInputSampleTime, cmd);
 	ctx->input_sample_frametime = flInputSampleTime;
 
 	switch (Interfaces::engine->GetAppID())
@@ -130,6 +125,6 @@ bool __stdcall CClientHook::Hooked_CreateMove(UNCRAP float flInputSampleTime, CU
 		ctx->cmd = cmd;
 	}
 
-	hook->PushEvent(EVENT_CREATEMOVE);
+	g_hk_client.PushEvent(EVENT_CREATEMOVE);
     return ctx->result;
 }

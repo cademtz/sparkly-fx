@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Modules/Module.h"
+#include "BaseModule.h"
 
 class CVisuals : public CModule
 {

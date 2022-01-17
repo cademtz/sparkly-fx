@@ -1,8 +1,8 @@
 #pragma once
 #include "Wrappers/Wrappers.h"
-#include "SDK/icliententitylist.h"
-#include "SDK/IPanel.h"
-#include "SDK/vgui_baseui_interface.h"
+#include <SDK/icliententitylist.h>
+#include <SDK/IPanel.h>
+#include <SDK/vgui_baseui_interface.h>
 
 namespace Interfaces
 {

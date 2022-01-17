@@ -35,9 +35,6 @@
     <ClCompile Include="Base\Event.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
-    <ClCompile Include="Modules\Menu\Menu.cpp">
-      <Filter>Modules</Filter>
-    </ClCompile>
     <ClCompile Include="Base\Interfaces.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
@@ -74,16 +71,7 @@
     <ClCompile Include="Base\Netvars.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
-    <ClCompile Include="Modules\Draw\Draw.cpp">
-      <Filter>Modules</Filter>
-    </ClCompile>
     <ClCompile Include="Base\Entity.cpp">
-      <Filter>Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="Modules\Visuals\Visuals.cpp">
-      <Filter>Modules</Filter>
-    </ClCompile>
-    <ClCompile Include="Modules\Movement\Movement.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
     <ClCompile Include="Base\Wrappers\EntityListWrappers.cpp">
@@ -101,13 +89,22 @@
     <ClCompile Include="Base\Wrappers\EngineTraceWrappers.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="Modules\Draw.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Modules\Menu.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Modules\Movement.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Modules\Visuals.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Hooks\Hooks.h">
       <Filter>Hooks</Filter>
-    </ClInclude>
-    <ClInclude Include="Modules\Module.h">
-      <Filter>Modules</Filter>
     </ClInclude>
     <ClInclude Include="SDK\cdll_int.h" />
     <ClInclude Include="SDK\basetypes.h" />
@@ -132,7 +129,6 @@
     <ClInclude Include="Hooks\OverlayHook.h" />
     <ClInclude Include="Base\imgui_impl_win32.h" />
     <ClInclude Include="Base\Event.h" />
-    <ClInclude Include="Modules\Menu\Menu.h" />
     <ClInclude Include="Base\AsmTools.h" />
     <ClInclude Include="Base\Wrappers\EngineClientWrappers.h" />
     <ClInclude Include="Base\Interfaces.h" />
@@ -187,12 +183,9 @@
     <ClInclude Include="Base\Entity.h" />
     <ClInclude Include="SDK\InterfaceVersions\EntitySDK.h" />
     <ClInclude Include="SDK\InterfaceVersions\EntityCSGO.h" />
-    <ClInclude Include="Modules\Draw\Draw.h" />
     <ClInclude Include="SDK\IPanel.h" />
     <ClInclude Include="SDK\VGUI.h" />
     <ClInclude Include="Base\VFunc.h" />
-    <ClInclude Include="Modules\Visuals\Visuals.h" />
-    <ClInclude Include="Modules\Movement\Movement.h" />
     <ClInclude Include="Base\Wrappers\EntityListWrappers.h" />
     <ClInclude Include="SDK\basehandle.h" />
     <ClInclude Include="SDK\InterfaceVersions\ClientEntityList003.h" />
@@ -214,6 +207,13 @@
     <ClInclude Include="SDK\InterfaceVersions\EngineTrace004.h" />
     <ClInclude Include="SDK\InterfaceVersions\EngineTrace003.h" />
     <ClInclude Include="Base\Wrappers\EngineTraceWrappers.h" />
+    <ClInclude Include="Modules\BaseModule.h">
+      <Filter>Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="Modules\Draw.h" />
+    <ClInclude Include="Modules\Menu.h" />
+    <ClInclude Include="Modules\Movement.h" />
+    <ClInclude Include="Modules\Visuals.h" />
   </ItemGroup>
   <ItemGroup>
     <MASM Include="Base\AsmTools64.asm">
