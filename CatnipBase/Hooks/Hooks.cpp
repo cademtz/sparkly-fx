@@ -1,5 +1,8 @@
 #include "Hooks.h"
 #include <Windows.h>
+#include <MinHook.h>
+#include "Base/Sig.h"
+#include "Base/AsmTools.h"
 
 #define Zydis_EXPORTS // Some hacky crap because lazey
 #define ZYDIS_DISABLE_FORMATTER
@@ -87,84 +90,23 @@ void CVMTHook::Set(size_t Index, void* Function)
 		m_newvmt[Index] = Function;
 }
 
-void CJumpHook::Hook(void* From, void* To, size_t Length)
+void CJumpHook::Hook(void* From, void* To)
 {
-	if (!Length)
-	{
-		ZydisDecoder de;
-#ifdef _WIN64
-		ZydisDecoderInit(&de, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_ADDRESS_WIDTH_64);
-#define JMPFUNC AbsJmp
-#define JMPSIZE 14
-#else
-		ZydisDecoderInit(&de, ZYDIS_MACHINE_MODE_LONG_COMPAT_32, ZYDIS_ADDRESS_WIDTH_32);
-#define JMPFUNC RelJmp
-#define JMPSIZE 5
-#endif
-		ZyanUSize offset = 0;
-		const ZyanUSize length = 0xFF;
-		ZydisDecodedInstruction instruction;
-		while (ZYAN_SUCCESS(ZydisDecoderDecodeBuffer(
-			&de, (char*)From + offset, length - offset, &instruction)))
-		{
-			offset += instruction.length;
-			if (offset >= JMPSIZE)
-			{
-				Length = offset;
-				break;
-			}
-		}
-	}
-	DWORD dwOld;
-	VirtualProtect((void*)From, Length, PAGE_EXECUTE_READWRITE, &dwOld);
+	MH_STATUS mh_status = MH_Initialize();
+	if (mh_status != MH_OK && mh_status != MH_ERROR_ALREADY_INITIALIZED)
+		FATAL("Failed to initialize minhook");
 
-	m_original = (PBYTE)VirtualAlloc(nullptr, Length + JMPSIZE, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-	memcpy(m_original, (void*)From, Length);
+	if (MH_CreateHook(From, To, &m_original) != MH_OK)
+		FATAL("Failed to create hook");
 
-	JMPFUNC((UINT_PTR)m_original + Length, (UINT_PTR)From + Length);
-	JMPFUNC((UINT_PTR)From, (UINT_PTR)To);
+	if (MH_EnableHook(From) != MH_OK)
+		FATAL("Failed to enable hook");
 
-	VirtualProtect((void*)From, Length, dwOld, &dwOld);
-	FlushInstructionCache(GetCurrentProcess(), 0, 0);
-
-	m_loc = (void*)From, m_hooklen = Length;
-	m_hooked = true;
-}
-
-void CJumpHook::Hook(const char* Module, const char* Function, void* To, size_t Length)
-{
-	HMODULE hMod = Base::GetModule(Module);
-	FARPROC pFunc = Base::GetProc(hMod, Function);
-	Hook(pFunc, To, Length);
+	m_from = From, m_to = To;
 }
 
 void CJumpHook::UnHook()
 {
-	if (!m_hooked)
-		return;
-
-	DWORD dwOld;
-	VirtualProtect(m_loc, m_hooklen, PAGE_EXECUTE_READWRITE, &dwOld);
-	memcpy_s(m_loc, m_hooklen, m_original, m_hooklen);
-	VirtualProtect(m_loc, m_hooklen, dwOld, &dwOld);
-	VirtualFree(m_original, 0, MEM_RELEASE);
-	FlushInstructionCache(GetCurrentProcess(), 0, 0);
-
-	m_loc = nullptr, m_hooklen = 0;
-	m_hooked = false;
-}
-
-void CJumpHook::RelJmp(UINT_PTR From, UINT_PTR To)
-{
-	*(BYTE*)From = 0xE9;
-	*(DWORD*)(From + 1) = To - From - 5;
-}
-
-void CJumpHook::AbsJmp(UINT_PTR From, UINT_PTR To)
-{
-	PBYTE b = (PBYTE)From;
-
-	*(WORD*)From = MAKEWORD(0xFF, 0x25);	// jmp [rip+imm32]
-	*(DWORD*)&b[2] = 0;						// rip + 0
-	*(UINT_PTR*)&b[6] = To;
+	if (MH_RemoveHook(m_from) != MH_OK)
+		FATAL("Failed to destroy hook");
 }

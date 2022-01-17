@@ -3,12 +3,14 @@
 #include "Hooks/OverlayHook.h"
 #include "Hooks/PaintHook.h"
 #include "Hooks/ClientHook.h"
+#include "Modules/Menu/Menu.h"
 #include "SDK/ienginevgui.h"
 
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <imgui/examples/imgui_impl_dx9.h>
 #include "Base/imgui_impl_win32.h"
+#include "SDK/vmatrix.h"
 
 ImDrawData data;
 
@@ -24,12 +26,12 @@ void CDraw::StartListening()
 	Listen(EVENT_PAINT, [this] { return OnPaint(); });
 }
 
-typedef float Urinate[3][4];
-
 bool CDraw::WorldToScreen(const Vector& World, ImVec2& Screen)
 {
 	int width, height;
-	const Urinate& vmatrix = (Urinate&)Interfaces::engine->WorldToScreenMatrix();
+
+	typedef float matrix4x4_t[4][4];
+	const matrix4x4_t& vmatrix = (matrix4x4_t&)Interfaces::engine->WorldToScreenMatrix();
 	Interfaces::engine->GetScreenSize(width, height);
 
 	float w = vmatrix[3][0] * World[0] + vmatrix[3][1] * World[1] + vmatrix[3][2] * World[2] + vmatrix[3][3];
@@ -73,12 +75,6 @@ int CDraw::OnPresent()
 	ImGui::NewFrame();
 
 	m_mtx.lock();
-	if (m_frames)
-	{
-		char buf[16];
-		itoa(m_frames, buf, 10);
-		m_list->AddText(ImVec2(25, 25), ImColor(255, 0, 0), buf);
-	}
 	ImGui_ImplDX9_RenderDrawData(&data);
 	m_frames = 0;
 	m_mtx.unlock();
@@ -86,7 +82,6 @@ int CDraw::OnPresent()
 	PushEvent(EVENT_IMGUI);
 	ImGui::Render();
 	ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
-
 
 	return 0;
 }
@@ -107,7 +102,6 @@ int CDraw::OnPaint()
 	m_list->_ResetForNewFrame();
 	m_list->PushTextureID(ImGui::GetIO().Fonts[0].TexID);
 	m_list->PushClipRectFullScreen();
-	m_list->AddRectFilled(ImVec2(25, 25), ImVec2(100, 100), ImColor(0, 128, 255));
 	data.TotalVtxCount = m_list->VtxBuffer.Size;
 	data.TotalIdxCount = m_list->IdxBuffer.Size;
 	data.DisplaySize = ImVec2(m_list->_Data->ClipRectFullscreen.z, m_list->_Data->ClipRectFullscreen.w);

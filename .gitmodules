@@ -10,3 +10,6 @@
 [submodule "zydis"]
 	path = zydis
 	url = https://github.com/zyantific/zydis.git
+[submodule "minhook"]
+	path = minhook
+	url = https://github.com/TsudaKageyu/minhook
