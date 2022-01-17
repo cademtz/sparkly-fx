@@ -1,11 +1,11 @@
 #pragma once
 #include <unordered_map>
-#include "Base/Event.h"
-#include "Base/fnv1a.h"
+#include <Base/Event.h>
+#include <Base/fnv1a.h>
 
 // - Use this to initialize CBaseHook
 #define BASEHOOK(Type) CBaseHook(HookHandle { #Type##_hash })
-#define GETHOOK(Type) CBaseHook::GetHook<Type>(HookHandle { #Type##_hash })
+//#define GETHOOK(Type) CBaseHook::GetHook<Type>(HookHandle { #Type##_hash })
 
 #ifdef _WIN64
 #define UNCRAP void*,

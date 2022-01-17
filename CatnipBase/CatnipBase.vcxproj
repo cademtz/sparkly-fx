@@ -199,10 +199,10 @@
     <ClCompile Include="Hooks\PaintHook.cpp" />
     <ClCompile Include="Hooks\WindowHook.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Modules\Draw\Draw.cpp" />
-    <ClCompile Include="Modules\Movement\Movement.cpp" />
-    <ClCompile Include="Modules\Visuals\Visuals.cpp" />
-    <ClCompile Include="Modules\Menu\Menu.cpp" />
+    <ClCompile Include="Modules\Draw.cpp" />
+    <ClCompile Include="Modules\Movement.cpp" />
+    <ClCompile Include="Modules\Visuals.cpp" />
+    <ClCompile Include="Modules\Menu.cpp" />
     <ClCompile Include="SDK\gametrace_client.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -234,11 +234,11 @@
     <ClInclude Include="Hooks\OverlayHook.h" />
     <ClInclude Include="Hooks\PaintHook.h" />
     <ClInclude Include="Hooks\WindowHook.h" />
-    <ClInclude Include="Modules\Draw\Draw.h" />
-    <ClInclude Include="Modules\Movement\Movement.h" />
-    <ClInclude Include="Modules\Visuals\Visuals.h" />
-    <ClInclude Include="Modules\Menu\Menu.h" />
-    <ClInclude Include="Modules\Module.h" />
+    <ClInclude Include="Modules\Draw.h" />
+    <ClInclude Include="Modules\Movement.h" />
+    <ClInclude Include="Modules\Visuals.h" />
+    <ClInclude Include="Modules\Menu.h" />
+    <ClInclude Include="Modules\BaseModule.h" />
     <ClInclude Include="SDK\annotations.h" />
     <ClInclude Include="SDK\basehandle.h" />
     <ClInclude Include="SDK\basetypes.h" />

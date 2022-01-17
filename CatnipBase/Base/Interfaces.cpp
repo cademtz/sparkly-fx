@@ -90,12 +90,12 @@ void Interfaces::DestroyInterfaces()
 	delete hlclient;
 	delete entlist;
 	delete client;
-	delete entlist;
+	delete trace;
 	delete vgui;
 	engine = nullptr;
 	hlclient = nullptr;
 	entlist = nullptr;
 	client = nullptr;
-	entlist = nullptr;
+	trace = nullptr;
 	vgui = nullptr;
 }

@@ -1,6 +1,6 @@
 #pragma once
 #include "Hooks.h"
-#include "Base/Interfaces.h"
+#include <Base/Interfaces.h>
 
 DECL_EVENT(EVENT_CREATEMOVE);
 DECL_EVENT(EVENT_HLCREATEMOVE);
@@ -42,4 +42,4 @@ private:
 	static bool __stdcall Hooked_CreateMove(UNCRAP float flInputSampleTime, CUserCmd* cmd);
 };
 
-inline CClientHook _g_clienthook;
+inline CClientHook g_hk_client;

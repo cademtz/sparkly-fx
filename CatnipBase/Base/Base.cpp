@@ -1,7 +1,7 @@
 #include "Base.h"
-#include "Hooks/WindowHook.h"
-#include "Hooks/OverlayHook.h"
-#include "Modules/Module.h"
+#include <Hooks/WindowHook.h>
+#include <Hooks/OverlayHook.h>
+#include <Modules/BaseModule.h>
 #include "Interfaces.h"
 #include "Netvars.h"
 

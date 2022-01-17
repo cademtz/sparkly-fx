@@ -1,5 +1,5 @@
 #include "OverlayHook.h"
-#include "Base/Sig.h"
+#include <Base/Sig.h>
 
 #ifdef _WIN64
 #define OVERLAY_MODULE "GameOverlayRenderer64.dll"
@@ -47,23 +47,21 @@ void COverlayHook::Unhook()
 
 HRESULT WINAPI COverlayHook::Hooked_Reset(IDirect3DDevice9* thisptr, D3DPRESENT_PARAMETERS* Params)
 {
-	static auto hook = GETHOOK(COverlayHook);
-	hook->Device() = thisptr;
-	hook->PushEvent(EVENT_DX9RESET);
-	return hook->Reset()(thisptr, Params);
+	g_hk_overlay.Device() = thisptr;
+	g_hk_overlay.PushEvent(EVENT_DX9RESET);
+	return g_hk_overlay.Reset()(thisptr, Params);
 }
 
 HRESULT WINAPI COverlayHook::Hooked_Present(IDirect3DDevice9* thisptr, const RECT* Src, const RECT* Dest, HWND Window, const RGNDATA* DirtyRegion)
 {
-	static auto hook = GETHOOK(COverlayHook);
-	hook->Device() = thisptr;
+	g_hk_overlay.Device() = thisptr;
 
 	DWORD oldstate;
 	thisptr->GetRenderState(D3DRS_SRGBWRITEENABLE, &oldstate);
 	thisptr->SetRenderState(D3DRS_SRGBWRITEENABLE, false);
 
-	hook->PushEvent(EVENT_DX9PRESENT);
+	g_hk_overlay.PushEvent(EVENT_DX9PRESENT);
 
 	thisptr->SetRenderState(D3DRS_SRGBWRITEENABLE, oldstate);
-	return hook->Present()(thisptr, Src, Dest, Window, DirtyRegion);
+	return g_hk_overlay.Present()(thisptr, Src, Dest, Window, DirtyRegion);
 }

@@ -1,16 +1,16 @@
 #include "Draw.h"
-#include "Base/Interfaces.h"
-#include "Hooks/OverlayHook.h"
-#include "Hooks/PaintHook.h"
-#include "Hooks/ClientHook.h"
-#include "Modules/Menu/Menu.h"
-#include "SDK/ienginevgui.h"
+#include <Base/Interfaces.h>
+#include <Hooks/OverlayHook.h>
+#include <Hooks/PaintHook.h>
+#include <Hooks/ClientHook.h>
+#include <SDK/ienginevgui.h>
+#include "Menu.h"
 
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <imgui/examples/imgui_impl_dx9.h>
-#include "Base/imgui_impl_win32.h"
-#include "SDK/vmatrix.h"
+#include <Base/imgui_impl_win32.h>
+#include <SDK/vmatrix.h>
 
 ImDrawData data;
 
@@ -48,8 +48,6 @@ bool CDraw::WorldToScreen(const Vector& World, ImVec2& Screen)
 
 int CDraw::OnPresent()
 {
-	static auto hook = GETHOOK(COverlayHook);
-
 	if (!ImGui::GetCurrentContext())
 	{
 		auto ctx = ImGui::CreateContext();
@@ -57,7 +55,7 @@ int CDraw::OnPresent()
 		ImGui::GetIO().IniFilename = nullptr;
 		ImGui::GetIO().LogFilename = nullptr;
 
-		ImGui_ImplDX9_Init(hook->Device());
+		ImGui_ImplDX9_Init(g_hk_overlay.Device());
 		ImGui_ImplWin32_Init(Base::hWnd);
 
 		m_mtx.lock();
@@ -89,9 +87,6 @@ int CDraw::OnPresent()
 int CDraw::OnPaint()
 {
 	m_mtx.lock();
-
-	static auto hook = GETHOOK(CPaintHook);
-	auto ctx = hook->Context();
 
 	if (!m_list || m_frames > 0)
 	{

@@ -35,4 +35,4 @@ private:
 		const RGNDATA* DirtyRegion);
 };
 
-inline COverlayHook _g_overlayhook;
+inline COverlayHook g_hk_overlay;

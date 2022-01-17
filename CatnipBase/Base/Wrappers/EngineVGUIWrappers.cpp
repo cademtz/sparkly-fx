@@ -1,6 +1,6 @@
 #include "EngineVGUIWrappers.h"
-#include "SDK/InterfaceVersions/EngineVGuiSDK.h"
-#include "SDK/InterfaceVersions/EngineVGuiCSGO.h"
+#include <SDK/InterfaceVersions/EngineVGuiSDK.h>
+#include <SDK/InterfaceVersions/EngineVGuiCSGO.h>
 
 int CEngineVGUIWrapperSDK::GetOffset(EOffsets Offset)
 {

@@ -1,5 +1,5 @@
 #include "PaintHook.h"
-#include "Base/Interfaces.h"
+#include <Base/Interfaces.h>
 
 // We are currently avoiding a paint traverse hook because x64 GMod sux
 
@@ -37,21 +37,19 @@ void CPaintHook::Paint(PaintMode_t mode)
 
 void __stdcall CPaintHook::Hooked_PaintTraverse(UNCRAP vgui::VPANEL vguiPanel, bool forceRepaint, bool allowForce)
 {
-	static auto hook = GETHOOK(CPaintHook);
-	auto ctx = hook->Context();
+	auto ctx = g_hk_panel.Context();
 	ctx->panel = vguiPanel, ctx->forceRepaint = forceRepaint, ctx->allowForce = allowForce;
 
-	int flags = hook->PushEvent(EVENT_PAINTTRAVERSE);
+	int flags = g_hk_panel.PushEvent(EVENT_PAINTTRAVERSE);
 	if (flags & Return_NoOriginal)
 		return;
 
-	hook->PaintTraverse(vguiPanel, forceRepaint, allowForce);
+	g_hk_panel.PaintTraverse(vguiPanel, forceRepaint, allowForce);
 }
 
 void __stdcall CPaintHook::Hooked_Paint(UNCRAP PaintMode_t mode)
 {
-	static auto hook = GETHOOK(CPaintHook);
-	hook->Context()->mode = mode;
-	hook->Paint(mode);
-	hook->PushEvent(EVENT_PAINT);
+	g_hk_panel.Context()->mode = mode;
+	g_hk_panel.Paint(mode);
+	g_hk_panel.PushEvent(EVENT_PAINT);
 }

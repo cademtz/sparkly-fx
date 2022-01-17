@@ -1,7 +1,7 @@
 #include "Movement.h"
-#include "Hooks/ClientHook.h"
-#include "SDK/usercmd.h"
-#include "Modules/Menu/Menu.h"
+#include <Hooks/ClientHook.h>
+#include <SDK/usercmd.h>
+#include "Menu.h"
 
 void CMovement::StartListening()
 {
@@ -17,8 +17,7 @@ int CMovement::OnMenu()
 
 int CMovement::OnCreateMove()
 {
-	static auto hook = GETHOOK(CClientHook);
-	auto ctx = hook->Context();
+	auto ctx = g_hk_client.Context();
 
 	if (m_fakelag)
 	{

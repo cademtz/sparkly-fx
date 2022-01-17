@@ -1,7 +1,7 @@
 #pragma once
 #include "Hooks.h"
-#include "SDK/VGUI.h"
-#include "SDK/ienginevgui.h"
+#include <SDK/VGUI.h>
+#include <SDK/ienginevgui.h>
 
 DECL_EVENT(EVENT_PAINTTRAVERSE);
 DECL_EVENT(EVENT_PAINT);
@@ -33,4 +33,4 @@ private:
 	static void __stdcall Hooked_Paint(UNCRAP PaintMode_t mode);
 };
 
-inline CPaintHook _g_panelhook;
+inline CPaintHook g_hk_panel;
