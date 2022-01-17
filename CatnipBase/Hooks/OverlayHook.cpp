@@ -3,12 +3,16 @@
 
 #ifdef _WIN64
 #define OVERLAY_MODULE "GameOverlayRenderer64.dll"
-#define OVERLAY_RESET_SIG "FF 15 ?? ?? ?? ?? 8B F8 85 C0 78 23"
-#define OVERLAY_PRESENT_SIG "8D 05 ?? ?? ?? ?? 48 8D 15 92 C6 FF FF"
+#define OVERLAY_RESET_SIG "48 8B CF FF 15 ? ? ? ? 8B F8 "
+#define OVERLAY_RESET_OFF 5
+#define OVERLAY_PRESENT_SIG "FF 15 ? ? ? ? 8B F8 EB 1E"
+#define OVERLAY_PRESENT_OFF 2
 #else
 #define OVERLAY_MODULE "GameOverlayRenderer.dll"
-#define OVERLAY_RESET_SIG "FF 15 ? ? ? ? 8B F8 85 FF 78 18"
-#define OVERLAY_PRESENT_SIG "FF 15 ?? ?? ?? ?? 8B F8 85 DB"
+#define OVERLAY_RESET_SIG "68 ? ? ? ? 68 ? ? ? ? FF 76 40 E8 ? ? ? ? 83 C4 10 68"
+#define OVERLAY_RESET_OFF 1
+#define OVERLAY_PRESENT_SIG "68 ? ? ? ? 68 ? ? ? ? FF 76 44"
+#define OVERLAY_PRESENT_OFF 1
 #endif
 
 COverlayHook::COverlayHook() : m_dev(nullptr), BASEHOOK(COverlayHook)
@@ -25,8 +29,8 @@ void COverlayHook::Hook()
 	if (!presentcall || !resetcall)
 		FATAL("Failed to find signatures in " OVERLAY_MODULE);
 
-	m_pPresent = AsmTools::Relative<void**>(presentcall, 2);
-	m_pReset = AsmTools::Relative<void**>(resetcall, 2);
+	m_pPresent = AsmTools::Relative<void**>(presentcall, OVERLAY_PRESENT_OFF);
+	m_pReset = AsmTools::Relative<void**>(resetcall, OVERLAY_RESET_OFF);
 
 	m_oldpresent = *m_pPresent;
 	m_oldreset = *m_pReset;

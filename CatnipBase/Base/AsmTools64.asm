@@ -26,10 +26,10 @@ GetB proc
 	ret
 GetB endp
 
-SetB proc
+_SetB proc
 	mov rbx, rcx
 	ret
-SetB endp
+_SetB endp
 
 GetBP proc
 	mov rax, rbp

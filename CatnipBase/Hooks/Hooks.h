@@ -71,27 +71,15 @@ public:
 	~CJumpHook() { UnHook(); }
 
 	template<class T = void*>
-	inline T Location() { return (T)m_loc; }
+	inline T Location() { return (T)m_from; }
 	template<class T = void*>
 	inline T Original() { return (T)m_original; }
 
-
-	template <class T = void*>
-	void Hook(T From, void* To, size_t Length = 0) { Hook((void*)From, To, Length); }
-	void Hook(void* From, void* To, size_t Length = 0);
-	void Hook(const char* Module, const char* Function, void* To, size_t Length = 0);
-
+	void Hook(void* From, void* To);
 	void UnHook();
 
 private:
-	bool m_hooked = false;
-	void* m_loc = nullptr;
-	BYTE* m_original = nullptr;
-	size_t m_hooklen = 0;
-
-	// - Length: 5
-	void RelJmp(UINT_PTR From, UINT_PTR To);
-
-	// - Length: 14
-	void AbsJmp(UINT_PTR From, UINT_PTR To);
+	void* m_original = nullptr;
+	void* m_from = nullptr;
+	void* m_to = nullptr;
 };

@@ -1,20 +1,25 @@
 #pragma once
 #include "Modules/Module.h"
+#include <imgui.h>
 
-class CMenu : public CModule
+DECL_EVENT(EVENT_MENU);
+
+class CMenu : public CModule, CEventManager
 {
 public:
-	CMenu() { }
+	CMenu();
 	void StartListening() override;
 
 private:
+	bool AcceptMsg(HWND hWnd, UINT uMsg, LPARAM lParam, WPARAM wParam);
+
 	int OnImGui();
 	int OnWindowProc();
-	int OnCurPos();
-	int OnShowCur();
-	int OnSetCur();
 
-	bool m_open = false, m_running = false;
+	bool IsOpen();
+	void SetOpen(bool Val);
+
+	bool m_open = false;
 };
 
-inline CMenu _g_menu;
+inline CMenu g_menu;

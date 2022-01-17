@@ -74,22 +74,22 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)imgui;$(SolutionDir)LuaJIT/src;$(SolutionDir)LuaBridge/Source;$(SolutionDir)zydis\include;$(SolutionDir)zydis\dependencies\zycore\include;$(SolutionDir)zydis\msvc;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)zydis\msvc\bin\$(Configuration)X86;$(SolutionDir)libs;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)zydis\msvc\bin\$(Configuration)$(PlatformTarget.ToUpper());$(SolutionDir)libs;$(SolutionDir)lib\$(Configuration);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)imgui;$(SolutionDir)LuaJIT/src;$(SolutionDir)LuaBridge/Source;$(SolutionDir)zydis\include;$(SolutionDir)zydis\dependencies\zycore\include;$(SolutionDir)zydis\msvc;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)zydis\msvc\bin\$(Configuration)X64;$(SolutionDir)libs\x64;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)zydis\msvc\bin\$(Configuration)$(PlatformTarget.ToUpper());$(SolutionDir)libs;$(SolutionDir)lib\$(Configuration);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir)imgui;$(SolutionDir)LuaJIT/src;$(SolutionDir)LuaBridge/Source;$(SolutionDir)zydis\include;$(SolutionDir)zydis\dependencies\zycore\include;$(SolutionDir)zydis\msvc;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)zydis\msvc\bin\$(Configuration)X86;$(SolutionDir)libs;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)zydis\msvc\bin\$(Configuration)$(PlatformTarget.ToUpper());$(SolutionDir)libs;$(SolutionDir)lib\$(Configuration);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir)imgui;$(SolutionDir)LuaJIT/src;$(SolutionDir)LuaBridge/Source;$(SolutionDir)zydis\include;$(SolutionDir)zydis\dependencies\zycore\include;$(SolutionDir)zydis\msvc;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)zydis\msvc\bin\$(Configuration)X64;$(SolutionDir)libs\x64;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)zydis\msvc\bin\$(Configuration)$(PlatformTarget.ToUpper());$(SolutionDir)libs;$(SolutionDir)lib\$(Configuration);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -101,12 +101,13 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);$(SolutionDir)minhook\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>libMinHook.$(PlatformTarget).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -119,12 +120,13 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);$(SolutionDir)minhook\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>libMinHook.$(PlatformTarget).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -139,13 +141,14 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);$(SolutionDir)minhook\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>libMinHook.$(PlatformTarget).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -160,13 +163,14 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);$(SolutionDir)minhook\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>libMinHook.$(PlatformTarget).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

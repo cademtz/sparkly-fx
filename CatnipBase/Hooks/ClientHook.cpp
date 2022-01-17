@@ -131,9 +131,5 @@ bool __stdcall CClientHook::Hooked_CreateMove(UNCRAP float flInputSampleTime, CU
 	}
 
 	hook->PushEvent(EVENT_CREATEMOVE);
-
-	if (ctx->cmd->tick_count % 14)
-		ctx->bSendPacket = false;
-
     return ctx->result;
 }

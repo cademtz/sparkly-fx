@@ -4,8 +4,11 @@
 #include <vector>
 #include <intrin.h>
 
+#ifndef _DEBUG
+#define ZYDIS_DISABLE_FORMATTER
+#endif
+
 #define Zydis_EXPORTS // Some hacky crap because lazey
-//#define ZYDIS_DISABLE_FORMATTER
 #include <Zydis/Zydis.h>
 #include <inttypes.h>
 
@@ -29,8 +32,11 @@ bool AsmTools::AnalyzeStackBeepBoop(StackSnapshot* Snap, const void* YourFunc)
 	ZyanStatus status;
 	ZydisDecoder decoder;
 	ZydisDecodedInstruction ins;
+
+#ifdef _DEBUG
 	ZydisFormatter formatter;
 	ZydisFormatterInit(&formatter, ZydisFormatterStyle::ZYDIS_FORMATTER_STYLE_INTEL);
+#endif
 
 	if constexpr (Base::Win64)
 		status = ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_ADDRESS_WIDTH_64);
@@ -40,7 +46,6 @@ bool AsmTools::AnalyzeStackBeepBoop(StackSnapshot* Snap, const void* YourFunc)
 	if (ZYAN_FAILED(status))
 		return false;
 
-	std::vector<std::pair<StackReg, EStackRegIndex>> regs;
 	int bp_off = sizeof(void*);
 
 	while (ZYAN_SUCCESS(status = ZydisDecoderDecodeBuffer(&decoder, (const char*)YourFunc + off, 0xFF, &ins)))
@@ -167,19 +172,17 @@ bool AsmTools::AnalyzeStackBeepBoop(StackSnapshot* Snap, const void* YourFunc)
 
 		if (id != RegIndex_Count)
 		{
-			StackReg reg;
-			reg.off = bp_off;
-			reg.value_old = (UINT_PTR*)((const char*)Snap->base + bp_off);
-			regs.push_back(std::pair(reg, id));
+			if (bp_off <= Snap->regs[id].off)
+			{
+				Snap->regs[id].off = bp_off;
+				Snap->regs[id].value_old = (UINT_PTR*)((const char*)Snap->base + bp_off);
+			}
 		}
 
 		off += ins.length;
 		if ((const char*)YourFunc + off == _ReturnAddress())
 			break;
 	}
-
-	for (auto& reg : regs)
-		Snap->regs[reg.second] = reg.first;
 
 	return ZYAN_SUCCESS(status);
 }
