@@ -46,6 +46,10 @@ class CUserCmd;
 
 class CBaseEntity;
 
+struct Ray_t;
+typedef class CGameTrace trace_t;
+class ITraceFilter;
+
 class IEngineClientWrapper
 {
 public:
@@ -146,4 +150,14 @@ public:
 
 	virtual bool IsGameUIVisible() = 0;
 	virtual void Paint(PaintMode_t mode) = 0;
+};
+
+class IEngineTraceWrapper
+{
+public:
+	virtual ~IEngineTraceWrapper() { }
+	virtual void* Inst() = 0;
+
+	virtual int		GetPointContents(const Vector& vecAbsPosition, IHandleEntity** ppEntity = NULL) = 0;
+	virtual void	TraceRay(const Ray_t& ray, unsigned int fMask, ITraceFilter* pTraceFilter, trace_t* pTrace) = 0;
 };

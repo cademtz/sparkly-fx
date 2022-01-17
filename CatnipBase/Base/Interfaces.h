@@ -15,4 +15,5 @@ namespace Interfaces
 	inline IClientModeWrapper* client = nullptr;
 	inline vgui::IPanel* panels = nullptr;
 	inline CEngineVGUIWrapper* vgui = nullptr;
+	inline IEngineTraceWrapper* trace = nullptr;
 }
