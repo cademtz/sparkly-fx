@@ -4,6 +4,9 @@ project(xsdk-base)
 
 add_library(xsdk-base SHARED)
 target_compile_features(xsdk-base PUBLIC cxx_std_17)
+set_property(TARGET xsdk-base PROPERTY
+  MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+)
 target_include_directories(xsdk-base PRIVATE src/ imgui/ ${CMAKE_CURRENT_SOURCE_DIR}/)
 add_subdirectory(src)
 
