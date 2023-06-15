@@ -30,4 +30,4 @@ cmake --build .
 There are a couple options.
 - A: Open the CMake project with VS, or
 - B: Perform the CMake steps 1 & 2 to generate the VS project files
-    - This should create VS project files by default. If not, you may have to add a commandline argument to set VS as the CMake Generator.
+    - This should use Visual Studio's CMake Generator by default. If not, you will have to add a commandline argument to set VS as the CMake Generator.
