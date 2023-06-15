@@ -4,3 +4,5 @@ target_sources(xsdk-base PRIVATE
     Movement.cpp
     Visuals.cpp
 )
+
+add_subdirectory(fx)
