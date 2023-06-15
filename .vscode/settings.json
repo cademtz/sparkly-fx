@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "chrono": "cpp",
+        "system_error": "cpp",
+        "xlocale": "cpp"
+    }
+}

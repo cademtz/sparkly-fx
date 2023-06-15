@@ -1,12 +1,6 @@
 [submodule "imgui"]
 	path = imgui
 	url = https://github.com/ocornut/imgui.git
-[submodule "LuaJIT"]
-	path = LuaJIT
-	url = https://github.com/LuaJIT/LuaJIT
-[submodule "LuaBridge"]
-	path = LuaBridge
-	url = https://github.com/vinniefalco/LuaBridge
 [submodule "zydis"]
 	path = zydis
 	url = https://github.com/zyantific/zydis.git
