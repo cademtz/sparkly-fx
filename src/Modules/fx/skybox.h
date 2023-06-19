@@ -3,13 +3,15 @@
 
 class SkyboxModule : public CModule {
 public:
-    void StartListening() override;
-    int OnMenu();
-
     bool IsReady() const;
+
+protected:
+    void StartListening() override;
 
 private:
     typedef bool(_cdecl* LoadNamedSkysFn)(const char*);
+
+    int OnMenu();
 
     std::array<char, 256> m_skybox_path = { 0 };
     std::string m_last_load_error;

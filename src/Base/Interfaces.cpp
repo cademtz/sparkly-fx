@@ -39,7 +39,7 @@ void Interfaces::CreateInterfaces()
 		trace = new IEngineTrace003Wrapper(trace3);
 	else if (void* trace4 = fn("EngineTraceClient004", 0))
 		trace = new IEngineTrace004Wrapper(trace4);
-
+	
 	if (void* vgui1 = fn(VENGINE_VGUI_VERSION, 0))
 	{
 		switch (engine->GetAppID())
@@ -69,7 +69,7 @@ void Interfaces::CreateInterfaces()
 
 	if (void* vguipanel = fn(VGUI_PANEL_INTERFACE_VERSION, 0))
 		panels = (vgui::IPanel*)vguipanel;
-
+	
 	AssertInterfacePointer("IEngineClient", engine);
 	AssertInterfacePointer("IClientDLL", hlclient);
 	AssertInterfacePointer("IClientEntityList", entlist);
