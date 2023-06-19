@@ -17,6 +17,9 @@ enum EOffsets {
 	Off_Paint,
 	Off_View_Render,
 	Off_OverrideView,
+	Off_DrawModelExecute,
+	Off_DrawModelExStaticProp,
+	Off_DrawStaticPropArrayFast,
 };
 
 struct model_t;
@@ -35,7 +38,6 @@ enum SkyboxVisibility_t;
 class IAchievementMgr;
 class CGamestatsData;
 class KeyValues;
-
 class ClientClass;
 class bf_write;
 class bf_read;
@@ -45,12 +47,11 @@ class CStandardRecvProxies;
 class C_BaseEntity;
 class C_BasePlayer;
 class CUserCmd;
-
 class CBaseEntity;
-
 struct Ray_t;
 typedef class CGameTrace trace_t;
 class ITraceFilter;
+class IMatRenderContext;
 
 class IEngineClientWrapper
 {
@@ -165,4 +166,21 @@ public:
 	virtual void	ClipRayToEntity(const Ray_t& ray, unsigned int fMask, IHandleEntity* pEnt, trace_t* pTrace) = 0;
 	virtual void	TraceRay(const Ray_t& ray, unsigned int fMask, ITraceFilter* pTraceFilter, trace_t* pTrace) = 0;
 	virtual bool PointOutsideWorld(const Vector& ptTest) = 0;
+};
+
+class IVModelRenderWrapper
+{
+public:
+	virtual ~IVModelRenderWrapper() { }
+	virtual void* Inst() = 0;
+	virtual int GetOffset(EOffsets Offset) = 0;
+};
+
+class IMaterialSystemWrapper
+{
+public:
+	virtual ~IMaterialSystemWrapper() { }
+	virtual void* Inst() = 0;
+
+	virtual IMatRenderContext* GetRenderContext() = 0;
 };
