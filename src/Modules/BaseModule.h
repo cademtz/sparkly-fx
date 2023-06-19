@@ -6,6 +6,7 @@ class CModule
 {
 public:
 	CModule() { m_modules.push_back(this); }
+	bool IsActive() { return !m_failed_requirements; }
 	virtual ~CModule() { m_modules.remove(this); }
 
 	static void StartAll()
@@ -21,7 +22,10 @@ protected:
 		CBaseEvent::GetEvent(Event)->AddCallback(Func);
 	}
 
+	void Require();
+
 private:
 	static inline std::list<CModule*> m_modules;
+	bool m_failed_requirements = false;
 	std::list<CEventCallback*> m_callbacks;
 };

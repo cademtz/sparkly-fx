@@ -7,6 +7,12 @@
 #include "Wrappers/EntityListWrappers.h"
 #include "Wrappers/EngineVGUIWrappers.h"
 #include "Wrappers/EngineTraceWrappers.h"
+#include "Wrappers/ModelRenderWrappers.h"
+#include "Wrappers/MaterialSystemWrappers.h"
+#include <SDK/icliententitylist.h>
+#include <SDK/IPanel.h>
+#include <SDK/vgui_baseui_interface.h>
+#include <SDK/ienginetool.h>
 
 #ifdef _WIN64
 #define SIG_CLIENTMODE "8B 0D ? ? ? ? 48 8B 01"
@@ -39,6 +45,12 @@ void Interfaces::CreateInterfaces()
 		trace = new IEngineTrace003Wrapper(trace3);
 	else if (void* trace4 = fn("EngineTraceClient004", 0))
 		trace = new IEngineTrace004Wrapper(trace4);
+	
+	if (void* engine_tool3 = fn(VENGINETOOL_INTERFACE_VERSION, 0))
+		engine_tool = (IEngineTool*)engine_tool3;
+	
+	if (void* model_render16 = fn("VEngineModel016", 0))
+		model_render = new IVModelRenderWrapperSDK(model_render16);
 
 	if (void* vgui1 = fn(VENGINE_VGUI_VERSION, 0))
 	{
@@ -69,6 +81,18 @@ void Interfaces::CreateInterfaces()
 
 	if (void* vguipanel = fn(VGUI_PANEL_INTERFACE_VERSION, 0))
 		panels = (vgui::IPanel*)vguipanel;
+	
+	// MaterialSystem factory
+	fn = GetFactory("materialsystem.dll");
+
+	if (void* matsystem80 = fn(MATERIAL_SYSTEM_INTERFACE_VERSION, 0))
+		mat_system = new IMaterialSystemWrapperSDK(matsystem80);
+	else if (void* matsystem81 = fn("VMaterialSystem081", 0))
+		mat_system = new IMaterialSystemWrapper081(matsystem81);
+
+	// Studio render //
+	fn = GetFactory("studiorender.dll");
+	studio_render = (IStudioRender*)fn(STUDIO_RENDER_INTERFACE_VERSION, 0);
 
 	AssertInterfacePointer("IEngineClient", engine);
 	AssertInterfacePointer("IClientDLL", hlclient);
@@ -76,6 +100,9 @@ void Interfaces::CreateInterfaces()
 	AssertInterfacePointer("IPanel", panels);
 	AssertInterfacePointer("CEngineVGUI", vgui);
 	AssertInterfacePointer("IEngineTrace", trace);
+	AssertInterfacePointer("IStudioRender", studio_render);
+	AssertInterfacePointer("IVModelRender", model_render);
+	AssertInterfacePointer("CMaterialSystem", mat_system);
 	//if (!engine || !hlclient || !entlist || !panels || !vgui || !trace)
 	//	FATAL("Unsupported game interfaces");
 
