@@ -6,26 +6,16 @@ int IClientModeWrapperSDK::GetOffset(EOffsets Offset)
 {
 	switch (Offset)
 	{
-	case Off_ShouldDrawDetailObjects:
-		return 11;
-	case Off_ShouldDrawEntity:
-		return 12;
-	case Off_ShouldDrawLocalPlayer:
-		return 13;
-	case Off_ShouldDrawParticles:
-		return 14;
-	case Off_OverrideView:
-		return 16;
-	case Off_CreateMove:
-		return 21;
-	case Off_ShouldDrawViewModel:
-		return 24;
-	case Off_ShouldDrawCrosshair:
-		return 25;
-	case Off_PostRender:
-		return 28;
-	case Off_PostRenderVGui:
-		return 29;
+	case Off_ShouldDrawDetailObjects: return 11;
+	case Off_ShouldDrawEntity: return 12;
+	case Off_ShouldDrawLocalPlayer: return 13;
+	case Off_ShouldDrawParticles: return 14;
+	case Off_OverrideView: return 16;
+	case Off_CreateMove: return 21;
+	case Off_ShouldDrawViewModel: return 24;
+	case Off_ShouldDrawCrosshair: return 25;
+	case Off_PostRender: return 28;
+	case Off_PostRenderVGui: return 29;
 	}
 	return -1;
 }
@@ -34,26 +24,16 @@ int IClientModeWrapperCSGO::GetOffset(EOffsets Offset)
 {
 	switch (Offset)
 	{
-	case Off_ShouldDrawDetailObjects:
-		return 13;
-	case Off_ShouldDrawEntity:
-		return 14;
-	case Off_ShouldDrawLocalPlayer:
-		return 15;
-	case Off_ShouldDrawParticles:
-		return 16;
-	case Off_OverrideView:
-		return 18;
-	case Off_CreateMove:
-		return 24;
-	case Off_ShouldDrawViewModel:
-		return 27;
-	case Off_ShouldDrawCrosshair:
-		return 28;
-	case Off_PostRender:
-		return 31;
-	case Off_PostRenderVGui:
-		return 32;
+	case Off_ShouldDrawDetailObjects: return 13;
+	case Off_ShouldDrawEntity: return 14;
+	case Off_ShouldDrawLocalPlayer: return 15;
+	case Off_ShouldDrawParticles: return 16;
+	case Off_OverrideView: return 18;
+	case Off_CreateMove: return 24;
+	case Off_ShouldDrawViewModel: return 27;
+	case Off_ShouldDrawCrosshair: return 28;
+	case Off_PostRender: return 31;
+	case Off_PostRenderVGui: return 32;
 	}
 	return -1;
 }

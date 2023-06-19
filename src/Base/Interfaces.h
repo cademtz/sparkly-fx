@@ -1,8 +1,9 @@
 #pragma once
 #include "Wrappers/Wrappers.h"
-#include <SDK/icliententitylist.h>
-#include <SDK/IPanel.h>
-#include <SDK/vgui_baseui_interface.h>
+
+namespace vgui { class IPanel; }
+class IEngineTool;
+class IStudioRender;
 
 namespace Interfaces
 {
@@ -16,4 +17,8 @@ namespace Interfaces
 	inline vgui::IPanel* panels = nullptr;
 	inline CEngineVGUIWrapper* vgui = nullptr;
 	inline IEngineTraceWrapper* trace = nullptr;
+	inline IEngineTool* engine_tool = nullptr;
+	inline IMaterialSystemWrapper* mat_system;
+	inline IStudioRender* studio_render;
+	inline IVModelRenderWrapper* model_render = nullptr;
 }

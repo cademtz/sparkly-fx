@@ -11,7 +11,13 @@ public:
 	void StartListening() override;
 
 private:
+	int OnMenu();
 	int OnDraw();
+
+	bool ShouldDraw() { return m_draw_players; }
+
+	bool m_draw_players = false;
+	bool m_draw_raytrace = false;
 };
 
 inline CVisuals _g_esp;
