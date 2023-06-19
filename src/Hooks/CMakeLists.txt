@@ -4,4 +4,5 @@ target_sources(xsdk-base PRIVATE
     OverlayHook.cpp
     PaintHook.cpp
     WindowHook.cpp
+    ModelRenderHook.cpp
 )
