@@ -132,6 +132,8 @@ void Interfaces::DestroyInterfaces()
 	delete client;
 	delete trace;
 	delete vgui;
+	delete mat_system;
+	delete model_render;
 	engine = nullptr;
 	hlclient = nullptr;
 	entlist = nullptr;
