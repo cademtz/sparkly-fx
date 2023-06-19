@@ -5,4 +5,6 @@ target_sources(xsdk-base PRIVATE
     EngineTraceWrappers.cpp
     EngineVGUIWrappers.cpp
     EntityListWrappers.cpp
+    ModelRenderWrappers.cpp
+    MaterialSystemWrappers.cpp
 )
