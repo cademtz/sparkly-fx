@@ -1,13 +1,13 @@
 #pragma once
 
-#include "BaseModule.h"
+#include <Modules/BaseModule.h>
 #include <imgui.h>
 #include <SDK/vector.h>
 
-class CVisuals : public CModule
+class TestVisuals : public CModule
 {
 public:
-	CVisuals() { }
+	TestVisuals() { }
 	void StartListening() override;
 
 private:
@@ -19,5 +19,3 @@ private:
 	bool m_draw_players = false;
 	bool m_draw_raytrace = false;
 };
-
-inline CVisuals _g_esp;

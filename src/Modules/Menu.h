@@ -9,6 +9,8 @@ class CMenu : public CModule, CEventManager
 public:
 	CMenu();
 	void StartListening() override;
+	bool IsOpen();
+	void SetOpen(bool Val);
 
 private:
 	bool AcceptMsg(HWND hWnd, UINT uMsg, LPARAM lParam, WPARAM wParam);
@@ -16,8 +18,7 @@ private:
 	int OnImGui();
 	int OnWindowProc();
 
-	bool IsOpen();
-	void SetOpen(bool Val);
+
 
 	bool m_open = false;
 };

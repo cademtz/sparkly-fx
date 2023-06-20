@@ -1,5 +1,5 @@
 #pragma once
-#include "BaseModule.h"
+#include <Modules/BaseModule.h>
 #include <SDK/vector.h>
 #include <unordered_set>
 #include <Base/fnv1a.h>
@@ -17,7 +17,7 @@ enum EPathEdit
 	_PathEdit_EnumEnd,
 };
 
-class CMovement : public CModule
+class TestMovement : public CModule
 {
 public:
 	void StartListening() override;
@@ -56,4 +56,4 @@ private:
 	Vector m_pathStart = Vector(0);
 };
 
-inline CMovement g_movement;
+inline TestMovement g_movement;

@@ -3,7 +3,7 @@
 #include <Hooks/WindowHook.h>
 #include "Draw.h"
 
-#include <imgui/examples/imgui_impl_dx9.h>
+#include <imgui/backends/imgui_impl_dx9.h>
 #include <imgui/imgui_internal.h>
 #include <Base/imgui_impl_win32.h>
 
@@ -73,7 +73,7 @@ int CMenu::OnImGui()
 		return 0;
 
 	ImGui::SetNextWindowSize(ImVec2(300, 200), ImGuiCond_Once);
-	if (ImGui::Begin("My Cool Window"))
+	if (ImGui::Begin("Window"))
 	{
 		if (ImGui::Button("Eject"))
 			CreateThread(0, 0, &UnhookThread, 0, 0, 0);
