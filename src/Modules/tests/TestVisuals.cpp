@@ -1,20 +1,22 @@
-#include "Visuals.h"
+#include "TestVisuals.h"
 #include <Base/Interfaces.h>
 #include <Base/Entity.h>
 #include <SDK/gametrace.h>
 #include <SDK/IEngineTrace.h>
-#include "Draw.h"
-#include "Menu.h"
-#include "Movement.h"
+#include <Modules/Draw.h>
+#include <Modules/Menu.h>
+#include "TestMovement.h"
 #include <string>
 
-void CVisuals::StartListening()
+static TestVisuals g_test_visuals;
+
+void TestVisuals::StartListening()
 {
 	Listen(EVENT_MENU, [this] { return OnMenu(); });
 	Listen(EVENT_DRAW, [this] { return OnDraw(); });
 }
 
-int CVisuals::OnMenu()
+int TestVisuals::OnMenu()
 {
 	if (ImGui::CollapsingHeader("Visuals test"))
 	{
@@ -26,7 +28,7 @@ int CVisuals::OnMenu()
 	return 0;
 }
 
-int CVisuals::OnDraw()
+int TestVisuals::OnDraw()
 {
 	if (!Interfaces::engine->IsInGame())
 		return 0;

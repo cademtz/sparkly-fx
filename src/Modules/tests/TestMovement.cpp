@@ -1,4 +1,4 @@
-#include "Movement.h"
+#include "TestMovement.h"
 #include <SDK/usercmd.h>
 #include <SDK/in_buttons.h>
 #include <SDK/view_shared.h>
@@ -9,14 +9,14 @@
 #include <Base/Entity.h>
 #include <stdio.h>
 #include <stack>
-#include "Menu.h"
-#include "Draw.h"
+#include <Modules/Menu.h>
+#include <Modules/Draw.h>
 
 #define MAX_TRACE 10000
 
 static CTraceFilterWorldOnly worldTraceFilter;
 
-void CMovement::StartListening()
+void TestMovement::StartListening()
 {
 	Listen(EVENT_MENU, [this] { return OnMenu(); });
 	Listen(EVENT_DRAW, [this] { return OnDraw(); });
@@ -24,7 +24,7 @@ void CMovement::StartListening()
 	Listen(EVENT_OVERRIDEVIEW, [this] { return OnOverrideView(); });
 }
 
-int CMovement::OnMenu()
+int TestMovement::OnMenu()
 {
 	if (ImGui::CollapsingHeader("Movement"))
 	{
@@ -56,7 +56,7 @@ int CMovement::OnMenu()
 	return 0;
 }
 
-int CMovement::OnDraw()
+int TestMovement::OnDraw()
 {
 	if (!ShouldDrawPaths())
 		return 0;
@@ -74,7 +74,7 @@ int CMovement::OnDraw()
 	return 0;
 }
 
-int CMovement::OnCreateMove()
+int TestMovement::OnCreateMove()
 {
 	auto ctx = g_hk_client.Context();
 	CUserCmd* cmd = ctx->create_move.cmd;
@@ -142,7 +142,7 @@ int CMovement::OnCreateMove()
 	return 0;
 }
 
-int CMovement::OnOverrideView()
+int TestMovement::OnOverrideView()
 {
 	auto ctx = g_hk_client.Context();
 
@@ -155,12 +155,12 @@ int CMovement::OnOverrideView()
 	return 0;
 }
 
-bool CMovement::ShouldDrawPaths() {
+bool TestMovement::ShouldDrawPaths() {
 	return m_pathDraw && Interfaces::engine->IsInGame();
 }
 
 
-bool CMovement::SurfaceUnderCrosshair(trace_t* out_Trace, bool GoInsideMap, ITraceFilter* Filter)
+bool TestMovement::SurfaceUnderCrosshair(trace_t* out_Trace, bool GoInsideMap, ITraceFilter* Filter)
 {
 	if (!Filter)
 		Filter = &worldTraceFilter;
