@@ -1,6 +1,8 @@
 target_sources(xsdk-base PRIVATE
     Draw.cpp
     Menu.cpp
-    Movement.cpp
-    Visuals.cpp
 )
+
+if (${XSDK_BUILD_EXAMPLES})
+    add_subdirectory(tests)
+endif()

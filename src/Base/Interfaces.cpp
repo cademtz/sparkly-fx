@@ -20,6 +20,8 @@
 #define SIG_CLIENTMODE "8B 0D ? ? ? ? 8B 01"
 #endif
 
+class IKeyValuesSystem;
+
 static CreateInterfaceFn GetFactory(const char* Module)
 {
 	HMODULE hmod = Base::GetModule(Module);
