@@ -3,7 +3,6 @@
 #include <Hooks/WindowHook.h>
 #include "Draw.h"
 
-#include <imgui/examples/imgui_impl_dx9.h>
 #include <imgui/imgui_internal.h>
 #include <Base/imgui_impl_win32.h>
 
