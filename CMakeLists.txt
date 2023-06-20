@@ -32,3 +32,14 @@ set_property(TARGET minhook PROPERTY
 )
 
 target_link_libraries(xsdk-base PRIVATE minhook Zydis)
+
+# ===== sparkly-fx dependencies =====
+add_subdirectory(miniz)
+set_property(TARGET miniz PROPERTY
+  MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+)
+
+target_link_libraries(xsdk-base PRIVATE miniz)
+target_include_directories(xsdk-base PRIVATE libspng/spng)
+target_compile_definitions(xsdk-base PRIVATE SPNG_USE_MINIZ SPNG_STATIC)
+target_sources(xsdk-base PRIVATE libspng/spng/spng.c)

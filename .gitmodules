@@ -7,3 +7,9 @@
 [submodule "minhook"]
 	path = minhook
 	url = https://github.com/TsudaKageyu/minhook
+[submodule "libspng"]
+	path = libspng
+	url = https://github.com/randy408/libspng
+[submodule "miniz"]
+	path = miniz
+	url = https://github.com/richgel999/miniz
