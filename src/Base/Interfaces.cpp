@@ -68,6 +68,8 @@ void Interfaces::CreateInterfaces()
 		vgui = new CEngineVGUIWrapperTF2(vgui2);
 	}
 
+	render_view = (IVRenderView*)fn("VEngineRenderView014", 0);
+
 	// Client factory //
 	fn = GetFactory("client.dll");
 
@@ -105,6 +107,7 @@ void Interfaces::CreateInterfaces()
 	AssertInterfacePointer("IStudioRender", studio_render);
 	AssertInterfacePointer("IVModelRender", model_render);
 	AssertInterfacePointer("CMaterialSystem", mat_system);
+	AssertInterfacePointer("IVRenderView", render_view);
 	//if (!engine || !hlclient || !entlist || !panels || !vgui || !trace)
 	//	FATAL("Unsupported game interfaces");
 
@@ -142,4 +145,6 @@ void Interfaces::DestroyInterfaces()
 	client = nullptr;
 	trace = nullptr;
 	vgui = nullptr;
+	mat_system = nullptr;
+	model_render = nullptr;
 }
