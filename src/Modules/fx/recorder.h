@@ -13,6 +13,7 @@ public:
     bool ShouldRecordFrame();
     bool StartMovie(std::string_view movie_path);
     void StopMovie();
+    void SetFirstMovieError(const char* fmt, ...);
 
 private:
     int OnMenu();
@@ -23,8 +24,10 @@ private:
     bool m_is_recording = false;
     bool m_pause_on_menu = true;
     int m_png_compression_lvl = 1;
+    
     uint32_t m_frame_index;
-    std::string m_movie_path;
+    std::string m_movie_path; // Always ends with a slash
+    std::string m_temp_audio_name; // Path to temp audio file
     std::string m_first_movie_error;
 };
 
