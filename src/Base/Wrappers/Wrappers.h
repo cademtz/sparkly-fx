@@ -183,4 +183,5 @@ public:
 	virtual void* Inst() = 0;
 
 	virtual IMatRenderContext* GetRenderContext() = 0;
+	virtual IMaterial* CreateMaterial(const char *pMaterialName, KeyValues *pVMTKeyValues) = 0;
 };
