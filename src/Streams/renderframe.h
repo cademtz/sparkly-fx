@@ -11,6 +11,7 @@ public:
 
     RenderFrame(std::string&& name) : m_name(std::move(name)) {} 
 
+    std::string& GetName() { return m_name; }
     const std::string& GetName() const { return m_name; }
     const std::vector<ElementType>& GetRenderTweaks() const { return m_tweaks; }
     std::vector<ElementType>& GetRenderTweaks() { return m_tweaks; }
