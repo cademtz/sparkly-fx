@@ -7,5 +7,4 @@ if (${XSDK_BUILD_EXAMPLES})
     add_subdirectory(tests)
 endif()
 
-
 add_subdirectory(fx)
