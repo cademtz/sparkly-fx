@@ -1,5 +1,6 @@
 #include "renderframe-editor.h"
 #include <Modules/Menu.h>
+#include <imgui/misc/cpp/imgui_stdlib.h>
 #include <array>
 
 static const char* POPUP_FRAME_CREATOR = "##popup_frame_creator";
@@ -104,12 +105,11 @@ void RenderFrameEditor::ShowFrameEditor(RenderFrame::Ptr render_frame)
 
     const float child_height = 200;
     static int current_tweak = -1;
-    static std::array<char, 64> input_name = {0};
     {
         ImGui::BeginChild("##frame_editor", ImVec2(150, child_height));
 
         PopupTweakCreator(render_frame);
-        ImGui::InputText("Name##frame", input_name.data(), input_name.size());
+        ImGui::InputText("Name##frame", &render_frame->GetName());
         ImGui::Text("Active tweaks");
         if (ImGui::Button("Add##tweak"))
             ImGui::OpenPopup(POPUP_TWEAK_CREATOR);

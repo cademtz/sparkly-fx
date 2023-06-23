@@ -63,7 +63,6 @@ void EntityRenderTweak::OnMenu()
     ImGui::ListBox("##Excluded entity classes", &current_exclude, classes_getter, &exclude_classes, exclude_classes.size());
 
     // === New entity name popup ==
-
     if (ImGui::BeginPopup(ENTITY_POPUP))
     {
         static std::array<char, 64> input_entity_class;
