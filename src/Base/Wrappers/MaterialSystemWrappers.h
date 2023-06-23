@@ -11,6 +11,7 @@ public:
 
 	void* Inst() override { return m_int; };
 	IMatRenderContext* GetRenderContext() override;
+	IMaterial* CreateMaterial(const char *pMaterialName, KeyValues *pVMTKeyValues) override;
 };
 
 class IMaterialSystemWrapper081 : public IMaterialSystemWrapper
@@ -22,5 +23,6 @@ public:
 
 	void* Inst() override { return m_int; };
 	IMatRenderContext* GetRenderContext() override;
+	IMaterial* CreateMaterial(const char *pMaterialName, KeyValues *pVMTKeyValues) override;
 };
 
