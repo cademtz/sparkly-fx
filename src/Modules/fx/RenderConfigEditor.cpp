@@ -1,4 +1,5 @@
-#include "renderframe-editor.h"
+#include "RenderConfigEditor.h"
+#include "ActiveRenderConfig.h"
 #include <Modules/Menu.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
 #include <array>
@@ -8,27 +9,27 @@ static const char* POPUP_FRAME_EDITOR = "##popup_frame_editor";
 static const char* POPUP_TWEAK_CREATOR = "##popup_tweak_creator";
 static const char* POPUP_TWEAK_EDITOR = "##popup_tweak_editor";
 
-void RenderFrameEditor::StartListening() {
+void RenderConfigEditor::StartListening() {
     Listen(EVENT_MENU, [this]{ return OnMenu(); });
 }
 
-int RenderFrameEditor::OnMenu()
+int RenderConfigEditor::OnMenu()
 {
-    if (ImGui::CollapsingHeader("Frames"))
+    if (ImGui::CollapsingHeader("Streams"))
     {
         ImGui::BeginGroup();
-        ShowFrameListEditor();
+        ShowConfigListEditor();
         ImGui::EndGroup();
     }
 
     return 0;
 }
 
-void RenderFrameEditor::ShowFrameListEditor()
+void RenderConfigEditor::ShowConfigListEditor()
 {
     static auto frame_getter = [](void* data, int index, const char** out_text)
     {
-        auto frames_vec = (const decltype(RenderFrameEditor::m_render_frames)*)data;
+        auto frames_vec = (const decltype(RenderConfigEditor::m_render_configs)*)data;
         if (index >= 0 && index < frames_vec->size())
         {
             *out_text = frames_vec->at(index)->GetName().c_str();
@@ -37,52 +38,64 @@ void RenderFrameEditor::ShowFrameListEditor()
         return false;
     };
 
-    static int current_frame = 0;
+    static int current_cfg = 0;
 
     {
         ImGui::BeginGroup();
 
-        ImGui::SeparatorText("Frames list");
+        ImGui::SeparatorText("Stream list");
         
-        if (ImGui::Button("New##frame"))
+        if (ImGui::Button("Add##frame"))
         ImGui::OpenPopup(POPUP_FRAME_CREATOR);
         ImGui::SameLine();
-        if (ImGui::Button("Delete##frame"))
+        if (ImGui::Button("Remove##frame"))
         {
-            if (current_frame >= 0 && current_frame < m_render_frames.size())
-                m_render_frames.erase(m_render_frames.begin() + current_frame);
+            if (current_cfg >= 0 && current_cfg < m_render_configs.size())
+                m_render_configs.erase(m_render_configs.begin() + current_cfg);
         }
 
-        ImGui::ListBox("##frames_list", &current_frame, frame_getter, &m_render_frames, m_render_frames.size());
-        
+        bool change_selection = ImGui::ListBox("##frames_list", &current_cfg, frame_getter, &m_render_configs, m_render_configs.size());
+        bool change_preview = ImGui::Checkbox("Preview the selected stream", &m_preview);
+
+        if (change_selection || change_preview)
+        {
+            if (!m_preview)
+                g_active_rendercfg.SetNone();
+            else
+            {
+                if (current_cfg >= 0 && current_cfg < m_render_configs.size())
+                    g_active_rendercfg.Set(m_render_configs.at(current_cfg));
+            }
+        }
+
         ImGui::EndGroup();
     }
 
-    if (current_frame >= 0 && current_frame < m_render_frames.size())
+    if (current_cfg >= 0 && current_cfg < m_render_configs.size())
     {
         ImGui::BeginGroup();
 
-        RenderFrame::Ptr render_frame = m_render_frames.at(current_frame);
-        ImGui::SeparatorText(render_frame->GetName().c_str());
-        ShowFrameEditor(render_frame);
+        RenderConfig::Ptr render_config = m_render_configs.at(current_cfg);
+        ImGui::SeparatorText(render_config->GetName().c_str());
+        ShowConfigEditor(render_config);
 
         ImGui::EndGroup();
     }
 
-    PopupFrameCreator();
+    PopupConfigCreator();
 }
 
-void RenderFrameEditor::PopupFrameCreator()
+void RenderConfigEditor::PopupConfigCreator()
 {
     if (ImGui::BeginPopup(POPUP_FRAME_CREATOR))
     {
-        static std::array<char, 64> input_frame_name = { "my frame" };
+        static std::array<char, 64> input_frame_name = { "my stream" };
         ImGui::Text("Choose a name");
         ImGui::PushItemWidth(-1);
         ImGui::InputText("##new_frame_name", input_frame_name.data(), input_frame_name.size());
         ImGui::PopItemWidth();
         if (ImGui::Button("Ok##new_frame")) {
-            m_render_frames.emplace_back(std::make_shared<RenderFrame>(input_frame_name.data()));
+            m_render_configs.emplace_back(std::make_shared<RenderConfig>(input_frame_name.data()));
             ImGui::CloseCurrentPopup();
         }
 
@@ -90,9 +103,9 @@ void RenderFrameEditor::PopupFrameCreator()
     }
 }
 
-void RenderFrameEditor::ShowFrameEditor(RenderFrame::Ptr render_frame)
+void RenderConfigEditor::ShowConfigEditor(RenderConfig::Ptr render_config)
 {
-    auto frame_tweaks = &render_frame->GetRenderTweaks();
+    auto frame_tweaks = &render_config->GetRenderTweaks();
     
     static auto tweaks_getter = [](void* data, int index, const char** out_text)
     {
@@ -106,10 +119,10 @@ void RenderFrameEditor::ShowFrameEditor(RenderFrame::Ptr render_frame)
     const float child_height = 200;
     static int current_tweak = -1;
     {
-        ImGui::BeginChild("##frame_editor", ImVec2(150, child_height));
+        ImGui::BeginChild("##frame_editor", ImVec2(200, child_height));
 
-        PopupTweakCreator(render_frame);
-        ImGui::InputText("Name##frame", &render_frame->GetName());
+        PopupTweakCreator(render_config);
+        ImGui::InputText("Name##frame", &render_config->GetName());
         ImGui::Text("Active tweaks");
         if (ImGui::Button("Add##tweak"))
             ImGui::OpenPopup(POPUP_TWEAK_CREATOR);
@@ -120,6 +133,7 @@ void RenderFrameEditor::ShowFrameEditor(RenderFrame::Ptr render_frame)
                 frame_tweaks->erase(frame_tweaks->begin() + current_tweak);
         }
 
+        ImGui::SetNextItemWidth(-1);
         ImGui::ListBox("##Active tweaks", &current_tweak, tweaks_getter, frame_tweaks, frame_tweaks->size());
         ImGui::EndChild();
     }
@@ -135,7 +149,7 @@ void RenderFrameEditor::ShowFrameEditor(RenderFrame::Ptr render_frame)
     }
 }
 
-void RenderFrameEditor::PopupTweakCreator(RenderFrame::Ptr render_frame)
+void RenderConfigEditor::PopupTweakCreator(RenderConfig::Ptr render_config)
 {
     static auto default_tweaks_getter = [](void* data, int index, const char** out_text)
     {
@@ -156,7 +170,7 @@ void RenderFrameEditor::PopupTweakCreator(RenderFrame::Ptr render_frame)
         if (ok)
         {
             if (choice >= 0 && choice < RenderTweak::default_tweaks.size())
-                render_frame->GetRenderTweaks().emplace_back(RenderTweak::default_tweaks.at(choice)->Clone());
+                render_config->GetRenderTweaks().emplace_back(RenderTweak::default_tweaks.at(choice)->Clone());
         }
 
         if (ok || cancel)
@@ -166,7 +180,6 @@ void RenderFrameEditor::PopupTweakCreator(RenderFrame::Ptr render_frame)
     }
 }
 
-void RenderFrameEditor::ShowTweakEditor(RenderTweak::Ptr render_tweak)
-{
+void RenderConfigEditor::ShowTweakEditor(RenderTweak::Ptr render_tweak) {
     render_tweak->OnMenu();
 }

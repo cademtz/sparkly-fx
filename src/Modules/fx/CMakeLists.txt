@@ -1,6 +1,6 @@
 target_sources(xsdk-base PRIVATE
-    renderframe-editor.cpp
+    RenderConfigEditor.cpp
+    ActiveRenderConfig.cpp
     recorder.cpp
     skybox.cpp
-    world.cpp
 )
