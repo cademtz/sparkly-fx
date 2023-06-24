@@ -52,6 +52,9 @@ struct Ray_t;
 typedef class CGameTrace trace_t;
 class ITraceFilter;
 class IMatRenderContext;
+enum OverrideType_t;
+struct DrawModelState_t;
+struct ModelRenderInfo_t;
 
 class IEngineClientWrapper
 {
@@ -174,6 +177,9 @@ public:
 	virtual ~IVModelRenderWrapper() { }
 	virtual void* Inst() = 0;
 	virtual int GetOffset(EOffsets Offset) = 0;
+
+	virtual void ForcedMaterialOverride(IMaterial* newMaterial, OverrideType_t nOverrideType = OVERRIDE_NORMAL) = 0;
+	virtual void DrawModelExecute(const DrawModelState_t& state, const ModelRenderInfo_t& pInfo, matrix3x4_t* pCustomBoneToWorld = NULL) = 0;
 };
 
 class IMaterialSystemWrapper
