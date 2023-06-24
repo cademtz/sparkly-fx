@@ -97,7 +97,7 @@ bool CRecorder::StartMovie(std::string_view movie_path) {
         m_movie_path.push_back('/');
     
     // We use the engine to record the audio file, but it only accepts relative directories. So:
-    // Make a temporary, relative audio file with a somewhat unique name.
+    // Make a temporary, relative audio file with a somewhat unique name. Then we can move it later.
     {
         std::array<char, 64> buf;
         snprintf(buf.data(), buf.size(), "audio-%X.wav", fnv::calculate_32(m_movie_path.c_str()));
