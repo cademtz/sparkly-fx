@@ -178,7 +178,7 @@ public:
 	virtual void* Inst() = 0;
 	virtual int GetOffset(EOffsets Offset) = 0;
 
-	virtual void ForcedMaterialOverride(IMaterial* newMaterial, OverrideType_t nOverrideType = OVERRIDE_NORMAL) = 0;
+	virtual void ForcedMaterialOverride(IMaterial* newMaterial, OverrideType_t nOverrideType = (OverrideType_t)0) = 0;
 	virtual void DrawModelExecute(const DrawModelState_t& state, const ModelRenderInfo_t& pInfo, matrix3x4_t* pCustomBoneToWorld = NULL) = 0;
 };
 
