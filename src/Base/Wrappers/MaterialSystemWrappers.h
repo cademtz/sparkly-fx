@@ -16,6 +16,7 @@ public:
 	MaterialHandle_t NextMaterial(MaterialHandle_t handle) override;
 	MaterialHandle_t InvalidMaterial() override;
 	IMaterial* GetMaterial(MaterialHandle_t handle) override;
+	ITexture* FindTexture(char const* pTextureName, const char *pTextureGroupName, bool complain, int nAdditionalCreationFlags) override;
 };
 
 class IMaterialSystemWrapper081 : public IMaterialSystemWrapper
@@ -32,5 +33,6 @@ public:
 	MaterialHandle_t NextMaterial(MaterialHandle_t handle) override;
 	MaterialHandle_t InvalidMaterial() override;
 	IMaterial* GetMaterial(MaterialHandle_t handle) override;
+	ITexture* FindTexture(char const* pTextureName, const char *pTextureGroupName, bool complain, int nAdditionalCreationFlags) override;
 };
 

@@ -20,6 +20,9 @@ MaterialHandle_t IMaterialSystemWrapperSDK::InvalidMaterial() {
 IMaterial* IMaterialSystemWrapperSDK::GetMaterial(MaterialHandle_t handle) {
     return m_int->GetMaterial(handle);
 }
+ITexture* IMaterialSystemWrapperSDK::FindTexture(char const* pTextureName, const char *pTextureGroupName, bool complain, int nAdditionalCreationFlags) {
+    return m_int->FindTexture(pTextureName, pTextureGroupName, complain, nAdditionalCreationFlags);
+}
 
 IMatRenderContext* IMaterialSystemWrapper081::GetRenderContext() {
     return m_int->GetRenderContext();
@@ -39,3 +42,7 @@ MaterialHandle_t IMaterialSystemWrapper081::InvalidMaterial() {
 IMaterial* IMaterialSystemWrapper081::GetMaterial(MaterialHandle_t handle) {
     return m_int->GetMaterial(handle);
 }
+ITexture* IMaterialSystemWrapper081::FindTexture(char const* pTextureName, const char *pTextureGroupName, bool complain, int nAdditionalCreationFlags) {
+    return m_int->FindTexture(pTextureName, pTextureGroupName, complain, nAdditionalCreationFlags);
+}
+
