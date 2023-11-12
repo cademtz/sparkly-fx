@@ -55,6 +55,7 @@ class IMatRenderContext;
 enum OverrideType_t;
 struct DrawModelState_t;
 struct ModelRenderInfo_t;
+typedef unsigned short MaterialHandle_t;
 
 class IEngineClientWrapper
 {
@@ -190,4 +191,8 @@ public:
 
 	virtual IMatRenderContext* GetRenderContext() = 0;
 	virtual IMaterial* CreateMaterial(const char *pMaterialName, KeyValues *pVMTKeyValues) = 0;
+	virtual MaterialHandle_t FirstMaterial() = 0;
+	virtual MaterialHandle_t NextMaterial(MaterialHandle_t handle) = 0;
+	virtual MaterialHandle_t InvalidMaterial() = 0;
+	virtual IMaterial* GetMaterial(MaterialHandle_t handle) = 0;
 };

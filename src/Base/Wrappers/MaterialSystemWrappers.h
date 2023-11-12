@@ -12,6 +12,10 @@ public:
 	void* Inst() override { return m_int; };
 	IMatRenderContext* GetRenderContext() override;
 	IMaterial* CreateMaterial(const char *pMaterialName, KeyValues *pVMTKeyValues) override;
+	MaterialHandle_t FirstMaterial() override;
+	MaterialHandle_t NextMaterial(MaterialHandle_t handle) override;
+	MaterialHandle_t InvalidMaterial() override;
+	IMaterial* GetMaterial(MaterialHandle_t handle) override;
 };
 
 class IMaterialSystemWrapper081 : public IMaterialSystemWrapper
@@ -24,5 +28,9 @@ public:
 	void* Inst() override { return m_int; };
 	IMatRenderContext* GetRenderContext() override;
 	IMaterial* CreateMaterial(const char *pMaterialName, KeyValues *pVMTKeyValues) override;
+	MaterialHandle_t FirstMaterial() override;
+	MaterialHandle_t NextMaterial(MaterialHandle_t handle) override;
+	MaterialHandle_t InvalidMaterial() override;
+	IMaterial* GetMaterial(MaterialHandle_t handle) override;
 };
 

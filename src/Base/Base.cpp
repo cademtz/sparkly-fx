@@ -21,7 +21,6 @@ DWORD WINAPI Base::HookThread(LPVOID Args)
 
 #ifdef _DEBUG
 	AllocConsole();
-	SetConsoleTitleA("catnitch baes");
 	freopen("conin$", "r", stdin);
 	freopen("conout$", "w", stdout);
 	freopen("conout$", "w", stderr);
