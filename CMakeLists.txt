@@ -20,23 +20,8 @@ set(XSDK_BUILD_EXAMPLES ${XSDK_BUILD_EXAMPLES_DEFAULT} CACHE STRING "Build examp
 
 # Dependencies
 add_subdirectory(minhook)
-
-# Register Zydis dependency.
-# Disable build of tools, examples, and documentation.
-option(ZYDIS_BUILD_TOOLS "" OFF)
-option(ZYDIS_BUILD_EXAMPLES "" OFF)
-option(ZYDIS_BUILD_DOXYGEN "" OFF)
-set(DOXYGEN_EXECUTABLE "")
-add_subdirectory(zydis)
-
-set_property(TARGET Zydis PROPERTY
-  MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
-)
-set_property(TARGET Zycore PROPERTY
-  MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
-)
 set_property(TARGET minhook PROPERTY
   MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
 )
 
-target_link_libraries(xsdk-base PRIVATE minhook Zydis)
+target_link_libraries(xsdk-base PRIVATE minhook)

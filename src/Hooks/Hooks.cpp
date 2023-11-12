@@ -4,12 +4,6 @@
 #include <Base/Sig.h>
 #include <Base/AsmTools.h>
 
-#define Zydis_EXPORTS // Some hacky crap because lazey
-#define ZYDIS_DISABLE_FORMATTER
-#include <Zydis/Zydis.h>
-
-#pragma comment(lib, "Zydis.lib")
-
 CBaseHook::~CBaseHook()
 {
 	Unhook();
