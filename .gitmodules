@@ -1,9 +1,6 @@
 [submodule "imgui"]
 	path = imgui
 	url = https://github.com/ocornut/imgui.git
-[submodule "zydis"]
-	path = zydis
-	url = https://github.com/zyantific/zydis.git
 [submodule "minhook"]
 	path = minhook
 	url = https://github.com/TsudaKageyu/minhook
