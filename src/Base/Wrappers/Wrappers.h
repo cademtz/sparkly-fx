@@ -25,6 +25,7 @@ enum EOffsets {
 struct model_t;
 class Vector;
 class IMaterial;
+class ITexture;
 struct client_textmessage_t;
 typedef struct player_info_s player_info_t;
 class QAngle;
@@ -195,4 +196,5 @@ public:
 	virtual MaterialHandle_t NextMaterial(MaterialHandle_t handle) = 0;
 	virtual MaterialHandle_t InvalidMaterial() = 0;
 	virtual IMaterial* GetMaterial(MaterialHandle_t handle) = 0;
+	virtual ITexture* FindTexture(char const* pTextureName, const char *pTextureGroupName, bool complain = true, int nAdditionalCreationFlags = 0) = 0;
 };
