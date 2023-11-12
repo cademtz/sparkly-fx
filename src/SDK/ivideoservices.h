@@ -27,9 +27,10 @@
 #endif
 
 
-#ifndef nullptr
+// This breaks standard library implementations
+/*#ifndef nullptr
 	#define nullptr		( 0 )
-#endif
+#endif*/
 #ifndef INT32_MAX
 #define INT32_MAX    (0x7FFFFFFF)
 #endif

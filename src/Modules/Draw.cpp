@@ -108,7 +108,7 @@ int CDraw::OnPresent()
 
 		m_list = new ImDrawList(ImGui::GetDrawListSharedData());
 		data.DisplayPos = ImVec2(0, 0);
-		data.CmdLists = &m_list;
+		data.CmdLists.push_back(m_list);
 		data.CmdListsCount = 1;
 	}
 
