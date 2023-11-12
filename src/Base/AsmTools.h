@@ -42,8 +42,6 @@ namespace AsmTools
 		return (Ret)Relative((void*)PtrToRel, Offset);
 	}
 
-	bool AnalyzeStackBeepBoop(StackSnapshot* Snap, const void* YourFunc);
-
 	extern "C"
 	{
 		void* GetR14();

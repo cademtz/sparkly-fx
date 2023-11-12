@@ -65,29 +65,13 @@ bool CClientHook::OverrideView(CViewSetup* pSetup)
 
 void __stdcall CClientHook::Hooked_HLCreateMove(UNCRAP int sequence_number, float input_sample_frametime, bool active)
 {
-	bool bSendPacket;
+	bool bSendPacket = true;
 	UINT_PTR* baseptr = (UINT_PTR*)_AddressOfReturnAddress() - 1;
 	static int off = -1;
 
 	if constexpr (Base::Win64)
 		bSendPacket = AsmTools::GetR14();
-	else if (Interfaces::engine->GetAppID() == AppId_CSGO)
-	{
-		static bool bSnap = false;
-		if (!bSnap)
-		{
-			// https://i.imgur.com/yNbgIbl.png
-			static StackSnapshot snap;
-			AsmTools::AnalyzeStackBeepBoop(&snap, &CClientHook::Hooked_HLCreateMove);
-			off = snap.regs[RegIndex_B].off;
-
-			printf("Stack off: %X\n", off);
-			bSnap = true;
-		}
-
-		bSendPacket = *(bool*)((UINT_PTR)baseptr + off);
-	}
-	else
+	else if (Interfaces::engine->GetAppID() != AppId_CSGO)
 		bSendPacket = *(*(bool**)baseptr - 1);
 
 	auto ctx = &g_hk_client.Context()->hl_create_move;
@@ -100,9 +84,7 @@ void __stdcall CClientHook::Hooked_HLCreateMove(UNCRAP int sequence_number, floa
 
 	if constexpr (Base::Win64)
 		AsmTools::SetR14((void*)ctx->bSendPacket);
-	else if (Interfaces::engine->GetAppID() == AppId_CSGO)
-		*(bool*)((UINT_PTR)baseptr + off) = ctx->bSendPacket;
-	else
+	else if (Interfaces::engine->GetAppID() != AppId_CSGO)
 		*(*(bool**)baseptr + off) = ctx->bSendPacket;
 }
 
