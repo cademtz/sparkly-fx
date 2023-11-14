@@ -10,13 +10,7 @@ set_property(TARGET xsdk-base PROPERTY
 target_include_directories(xsdk-base PRIVATE src/ imgui/ ${CMAKE_CURRENT_SOURCE_DIR}/)
 add_subdirectory(src)
 
-if (${CMAKE_BUILD_TYPE} AND ${CMAKE_BUILD_TYPE} STREQUAL "Release")
-  set(XSDK_BUILD_EXAMPLES_DEFAULT OFF)
-else()
-  set(XSDK_BUILD_EXAMPLES_DEFAULT ON)
-endif()
-
-set(XSDK_BUILD_EXAMPLES ${XSDK_BUILD_EXAMPLES_DEFAULT} CACHE STRING "Build example code, such as test features that can be used in the menu.")
+set(XSDK_BUILD_EXAMPLES 0 CACHE STRING "Build example modules and tests that can be used in-game.")
 
 # Dependencies
 add_subdirectory(minhook)

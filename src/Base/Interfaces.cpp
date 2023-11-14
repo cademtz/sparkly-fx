@@ -35,6 +35,9 @@ static void AssertInterfacePointer(const char* name, void* value) {
 
 void Interfaces::CreateInterfaces()
 {
+	while (!GetModuleHandleA("client.dll"))
+		Sleep(100); // Wait for client.dll to load
+	
 	// Engine factory //
 	CreateInterfaceFn fn = GetFactory("engine.dll");
 
@@ -118,7 +121,11 @@ void Interfaces::CreateInterfaces()
 	if (!clientref)
 		FATAL("Failed signature to g_pClientModeShared");
 
-	void* clientmode = *AsmTools::Relative<void**>(clientref, 2);
+	void* volatile* pp_clientmode = AsmTools::Relative<void**>(clientref, 2);
+	while (!*pp_clientmode)
+		Sleep(100); // Wait for clientmode to be to be initialized
+	
+	void* clientmode = *pp_clientmode;
 	switch (engine->GetAppID())
 	{
 	case AppId_CSGO:
