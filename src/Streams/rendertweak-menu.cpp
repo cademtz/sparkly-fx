@@ -1,4 +1,27 @@
+/**
+ * @file
+ * @brief Implements the IMGUI menu for all @ref RenderTweak subclasses.
+ * 
+ * Thread safey
+ * ------------
+ * Acquire a write lock before modifying any dynamic collection (list, vector, set, string, ...):
+ * ```cpp
+ *      auto lock = g_active_rendercfg.WriteLock();
+ * ```
+ * This avoids crashes where another thread is iterating the collection.
+ * 
+ * It's often unnecessary to synchronize primitives because most are read-once and only modified inside `OnMenu()`.
+ * The nature of IMGUI also makes this difficult. However, it is still encouraged and sometimes necessary.
+ * 
+ * Updating the preview
+ * --------------------
+ * Some tweaks (like @ref MaterialTweak) are read by @ref ActiveRenderConfig only when necessary.
+ * If such special tweaks/values are modified, call @ref ActiveRenderConfig::SignalUpdate to make it re-apply them.
+ */
+
 #include "rendertweak.h"
+#include <Modules/fx/ActiveRenderConfig.h>
+#include <SDK/texture_group_names.h>
 #include <imgui.h>
 #include <Helper/imgui.h>
 #include <array>
@@ -10,8 +33,7 @@ void PropRenderTweak::OnMenu()
 
 void EntityFilterTweak::OnMenu()
 {
-    static const char* ENTITY_POPUP = "##popup_add_class";
-    static std::unordered_set<std::string>* new_class_destination = nullptr;
+    const char* const ENTITY_POPUP = "##popup_add_class";
     
     // === Helper functions ===
     auto classes_getter = [](void* data, int index, const char** out_text) -> bool
@@ -28,7 +50,10 @@ void EntityFilterTweak::OnMenu()
         }
         return false;
     };
-    auto classes_remove = [](decltype(classes)& set, size_t index) {
+    auto classes_remove = [](decltype(classes)& set, size_t index)
+    {
+        std::unique_lock lock = g_active_rendercfg.WriteLock();
+        
         if (index < 0 || index >= set.size())
             return;
         auto it = set.begin();
@@ -56,20 +81,17 @@ void EntityFilterTweak::OnMenu()
     ImGui::RadioButton("All", (int*)&filter_choice, (int)FilterChoice::ALL);
     ImGui::RadioButton("Entities in the list", (int*)&filter_choice, (int)FilterChoice::WHITELIST);
     ImGui::RadioButton("Entities not in the list", (int*)&filter_choice, (int)FilterChoice::BLACKLIST);
-    
-    if (filter_choice == FilterChoice::ALL)
-        ImGui::BeginDisabled();
 
     // === Include entities ===
     static int current_class = 0;
+
+    if (filter_choice == FilterChoice::ALL)
+        ImGui::BeginDisabled();
     
     ImGui::Text("Entity list:");
     ImGui::SameLine(); Helper::ImGuiHelpMarker("List of entity types to include/exclude");
     if (ImGui::Button("Add##include"))
-    {
-        new_class_destination = &classes;
         ImGui::OpenPopup(ENTITY_POPUP);
-    }
     ImGui::SameLine();
     if (ImGui::Button("Remove##include"))
         classes_remove(classes, current_class);
@@ -91,9 +113,63 @@ void EntityFilterTweak::OnMenu()
         bool cancel = ImGui::Button("Cancel##input_class");
 
         if (ok)
-            new_class_destination->emplace(input_entity_class.data());
+        {
+            auto lock = g_active_rendercfg.WriteLock();
+            classes.emplace(input_entity_class.data());
+        }
         if (ok || cancel)
             ImGui::CloseCurrentPopup();
         ImGui::EndPopup();
     }
+}
+
+void MaterialTweak::OnMenu()
+{
+    bool set_is_updated = false; // Acquire a read lock and set `is_updated = true`
+
+    set_is_updated |= ImGui::ColorEdit4("Color multiply", color_multiply.data());
+    ImGui::SameLine(); Helper::ImGuiHelpMarker("Use with the matte effect to get a solid color.");
+
+    ImGui::TextUnformatted("Affected material groups:");
+    
+    FilterChoice past_filter_choice = filter_choice;
+    ImGui::RadioButton("All", (int*)&filter_choice, (int)FilterChoice::ALL);
+    ImGui::RadioButton("Materials in the list", (int*)&filter_choice, (int)FilterChoice::WHITELIST);
+    ImGui::RadioButton("Materials not in the list", (int*)&filter_choice, (int)FilterChoice::BLACKLIST);
+    set_is_updated |= past_filter_choice != filter_choice;
+
+    // === Include material groups ===
+    if (filter_choice == FilterChoice::ALL)
+        ImGui::BeginDisabled();
+    
+    ImGui::Text("Material group list:");
+    ImGui::SameLine(); Helper::ImGuiHelpMarker("List of material groups to include/exclude");
+    
+    const int max_lines = 10;
+    ImGui::SetNextWindowSizeConstraints(ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 1), ImVec2(FLT_MAX, FLT_MAX));
+    if (ImGui::BeginChild("ConstrainedChild", ImVec2(0, 0), true, 0))
+    {
+        for (size_t i = 0; i < groups.size(); ++i)
+            set_is_updated |= ImGui::Checkbox(MaterialTweak::TEXTURE_GROUPS[i], &groups[i]);
+    }
+    ImGui::EndChild();
+
+    if (filter_choice == FilterChoice::ALL)
+        ImGui::EndDisabled();
+
+    if (set_is_updated)
+        g_active_rendercfg.SignalUpdate();
+}
+
+void CameraTweak::OnMenu()
+{
+    ImGui::Checkbox("FOV override", &fov_override);
+
+    if (!fov_override)
+        ImGui::BeginDisabled();
+
+    ImGui::SliderFloat("FOV", &fov, 0, 180);
+
+    if (!fov_override)
+        ImGui::EndDisabled();
 }

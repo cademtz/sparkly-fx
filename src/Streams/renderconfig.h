@@ -13,7 +13,6 @@ public:
 
     std::string& GetName() { return m_name; }
     const std::string& GetName() const { return m_name; }
-    const std::vector<ElementType>& GetRenderTweaks() const { return m_tweaks; }
     std::vector<ElementType>& GetRenderTweaks() { return m_tweaks; }
     
     template <class T>
@@ -30,7 +29,7 @@ public:
         const_type_iterator& operator++() {
             do {
                 ++ptr;
-            } while (ptr < ptr_end && std::dynamic_pointer_cast<T>(*ptr) != nullptr);
+            } while (ptr < ptr_end && std::dynamic_pointer_cast<T>(*ptr) == nullptr);
             return *this;
         }
 
@@ -39,7 +38,7 @@ public:
         bool operator==(const const_type_iterator<T>& other) const {
             return this->ptr == other.ptr;
         }
-        bool operator!=(const const_type_iterator<T> other) const {
+        bool operator!=(const const_type_iterator<T>& other) const {
             return !(*this == other);
         }
 
@@ -60,7 +59,7 @@ public:
         
         static const ElementType* get_end_ptr(const RenderConfig& r) {
             auto& tweaks = r.GetRenderTweaks();
-            return tweaks.empty() ? tweaks.data() : (&tweaks.back() + 1);
+            return tweaks.empty() ? nullptr : (&tweaks.back() + 1);
         }
 
         const ElementType* ptr;
@@ -68,11 +67,18 @@ public:
     };
 
     template <class T>
+    const_type_iterator<const T> begin() const { return const_type_iterator<const T>::begin(*this); }
+    template <class T>
+    const const_type_iterator<const T> end() const { return const_type_iterator<const T>::end(*this); }
+
+    template <class T>
     const_type_iterator<T> begin() { return const_type_iterator<T>::begin(*this); }
     template <class T>
     const const_type_iterator<T> end() { return const_type_iterator<T>::end(*this); }
 
 protected:
+    const std::vector<ElementType>& GetRenderTweaks() const { return m_tweaks; }
+    
     std::string m_name;
     std::vector<ElementType> m_tweaks;
 };

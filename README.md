@@ -1,3 +1,11 @@
+# Sparkly FX
+A video recording tool for Team Fortress 2, developed using xsdk-base.
+
+Please read [known-bugs.md](known-bugs.md). This software is in early development.
+
+Below are the original README contents for xsdk-base.
+When configuring CMake, the `-A Win32` flag is required for Team Fortress 2.
+
 # xsdk-base
 An SDK compatible with multiple Windows versions of Source Engine.
 

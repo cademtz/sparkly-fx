@@ -33,6 +33,6 @@ set_property(TARGET miniz PROPERTY
 )
 
 target_link_libraries(xsdk-base PRIVATE miniz)
-target_include_directories(xsdk-base PRIVATE libspng/spng)
+target_include_directories(xsdk-base PRIVATE libspng/spng qoi)
 target_compile_definitions(xsdk-base PRIVATE SPNG_USE_MINIZ SPNG_STATIC)
 target_sources(xsdk-base PRIVATE libspng/spng/spng.c)
