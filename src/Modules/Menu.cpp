@@ -21,6 +21,7 @@ void CMenu::StartListening()
 DWORD WINAPI UnhookThread(LPVOID)
 {
 	printf("Unhooking...\n");
+	CBaseEvent::ShutdownAll();
 	CBaseHook::UnHookAll();
 
 	printf("Waiting for any hooked calls to end...\n");

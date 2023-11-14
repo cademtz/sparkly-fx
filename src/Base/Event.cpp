@@ -8,6 +8,9 @@ CEventCallback* CBaseEvent::AddCallback(const CallbackFunc_t& Func)
 
 int CBaseEvent::Push()
 {
+	if (m_is_closed)
+		return 0;
+	
 	int flags = 0;
 	for (auto& callback : m_listeners)
 	{

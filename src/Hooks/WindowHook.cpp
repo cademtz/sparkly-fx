@@ -21,7 +21,7 @@ void CWindowHook::Hook()
 
 void CWindowHook::Unhook()
 {
-	SetWindowLongPtr(m_hwnd, GWLP_WNDPROC, (LONG_PTR)m_oldproc);
+	SetWindowLongPtrA(m_hwnd, GWLP_WNDPROC, (LONG_PTR)m_oldproc);
 	m_hkcurpos.UnHook();
 	m_hkshowcur.UnHook();
 	m_hksetcur.UnHook();

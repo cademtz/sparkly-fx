@@ -47,7 +47,7 @@ void CVMTHook::Hook(void* Instance, bool AllInstances)
 
 void CVMTHook::Unhook()
 {
-	if (IsHooked())
+	if (!IsHooked())
 		return;
 
 	size_t size = sizeof(m_oldvmt[0]) * m_count;

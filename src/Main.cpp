@@ -4,14 +4,14 @@
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReasonForCall, LPVOID lpReserved)
 {
-    switch (dwReasonForCall)
-    {
-    case DLL_PROCESS_ATTACH:
-		Base::OnAttach(hModule);
-		break;
-    case DLL_PROCESS_DETACH:
-        break;
-    }
+  switch (dwReasonForCall)
+  {
+  case DLL_PROCESS_ATTACH:
+    Base::OnAttach(hModule);
+    break;
+  case DLL_PROCESS_DETACH:
+    break;
+  }
 
-    return TRUE;
+  return TRUE;
 }
