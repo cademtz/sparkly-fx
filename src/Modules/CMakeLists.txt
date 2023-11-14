@@ -3,7 +3,7 @@ target_sources(xsdk-base PRIVATE
     Menu.cpp
 )
 
-if (${XSDK_BUILD_EXAMPLES})
+if ($CACHE{XSDK_BUILD_EXAMPLES})
     add_subdirectory(tests)
 endif()
 
