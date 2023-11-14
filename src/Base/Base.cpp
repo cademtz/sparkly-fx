@@ -38,7 +38,15 @@ DWORD WINAPI Base::HookThread(LPVOID Args)
 #endif
 
 	Interfaces::CreateInterfaces();
-	//Logger_Hook();
+	
+	// At this point, the game engine is fully initialized.
+	// Now we can insert our exception handlers and hooks.
+	LoadLibraryA("IMAGEHLP.DLL");
+	// This won't have an effect, because Source-Engine/Steam catches all crashes. (But just in case...)
+	SetUnhandledExceptionFilter(UnhandledFilter);
+	// This works, because we add a new "first" handler after all others have been set up.
+	AddVectoredExceptionHandler(TRUE, MyVectoredHandler);
+
 	Netvars::GetNetvars();
 	CBaseHook::HookAll();
 	CModule::StartAll();
@@ -248,10 +256,9 @@ static LONG WINAPI UnhandledFilter(struct _EXCEPTION_POINTERS* info) {
 	Backtrace(msg, info->ContextRecord);
 	MessageBoxA(NULL, msg.c_str(), "Unhandled exception", MB_OK);
 
-	return EXCEPTION_CONTINUE_SEARCH; /* TODO: different flag */
+	return EXCEPTION_EXECUTE_HANDLER; /* TODO: different flag */
 }
 
-static LONG NTAPI MyVectoredHandler(struct _EXCEPTION_POINTERS *ExceptionInfo)
-{
+static LONG NTAPI MyVectoredHandler(struct _EXCEPTION_POINTERS *ExceptionInfo) {
 	return UnhandledFilter(ExceptionInfo);
 }
