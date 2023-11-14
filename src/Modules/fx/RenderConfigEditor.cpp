@@ -1,13 +1,15 @@
 #include "RenderConfigEditor.h"
 #include "ActiveRenderConfig.h"
+#include "recorder.h"
 #include <Modules/Menu.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
 #include <array>
+#include <algorithm>
 
-static const char* POPUP_FRAME_CREATOR = "##popup_frame_creator";
-static const char* POPUP_FRAME_EDITOR = "##popup_frame_editor";
-static const char* POPUP_TWEAK_CREATOR = "##popup_tweak_creator";
-static const char* POPUP_TWEAK_EDITOR = "##popup_tweak_editor";
+#define POPUP_STREAM_RENAMER "##popup_stream_renamer"
+#define POPUP_STREAM_EDITOR "##popup_stream_editor"
+#define POPUP_TWEAK_CREATOR "##popup_tweak_creator"
+#define POPUP_TWEAK_EDITOR "##popup_tweak_editor"
 
 void RenderConfigEditor::StartListening() {
     Listen(EVENT_MENU, [this]{ return OnMenu(); });
@@ -15,11 +17,21 @@ void RenderConfigEditor::StartListening() {
 
 int RenderConfigEditor::OnMenu()
 {
+    bool is_recording = g_recorder.IsRecordingMovie();
     if (ImGui::CollapsingHeader("Streams"))
     {
+        if (is_recording)
+        {
+            ImGui::BeginDisabled();
+            m_preview = false;
+        }
+        
         ImGui::BeginGroup();
         ShowConfigListEditor();
         ImGui::EndGroup();
+        
+        if (is_recording)
+            ImGui::EndDisabled();
     }
 
     return 0;
@@ -27,123 +39,176 @@ int RenderConfigEditor::OnMenu()
 
 void RenderConfigEditor::ShowConfigListEditor()
 {
-    static auto frame_getter = [](void* data, int index, const char** out_text)
+    static auto config_getter = [](void* data, int index, const char** out_text)
     {
-        auto frames_vec = (const decltype(RenderConfigEditor::m_render_configs)*)data;
-        if (index >= 0 && index < frames_vec->size())
-        {
-            *out_text = frames_vec->at(index)->GetName().c_str();
-            return true;
-        }
-        return false;
+        auto& config_vec = *(const std::vector<RenderConfig::Ptr>*)data;
+        if (index >= config_vec.size())
+            return false;
+        *out_text = config_vec[index]->GetName().c_str();
+        return true;
     };
 
-    static int current_cfg = 0;
+    RenderConfig::Ptr selected = nullptr;
+    if (m_config_index < m_render_configs.size())
+        selected = m_render_configs[m_config_index];
 
     {
         ImGui::BeginGroup();
 
         ImGui::SeparatorText("Stream list");
+
+        RenderConfig::Ptr prev_selected = selected;
         
-        if (ImGui::Button("Add##frame"))
-        ImGui::OpenPopup(POPUP_FRAME_CREATOR);
-        ImGui::SameLine();
-        if (ImGui::Button("Remove##frame"))
+        if (ImGui::Button("Add##stream"))
         {
-            if (current_cfg >= 0 && current_cfg < m_render_configs.size())
-                m_render_configs.erase(m_render_configs.begin() + current_cfg);
+            std::string new_name;
+            for (size_t i = m_render_configs.size() + 1; true; ++i)
+            {
+                new_name = std::string("new stream ") + std::to_string(i);
+                if (!IsDuplicateName(new_name))
+                    break;
+            }
+            m_render_configs.push_back(std::make_shared<RenderConfig>(std::move(new_name)));
+            m_config_index = m_render_configs.size() - 1;
+            selected = m_render_configs.back();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Remove##stream"))
+        {
+            if (selected)
+                m_render_configs.erase(m_render_configs.begin() + m_config_index);
+            // Intentionally leave config_index unchanged
+            selected = nullptr;
+            if (m_config_index < m_render_configs.size())
+                selected = m_render_configs[m_config_index];
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Rename##stream"))
+            ImGui::OpenPopup(POPUP_STREAM_RENAMER);
+
+        int new_config_index = (int)m_config_index;
+        bool changed_selection = ImGui::ListBox("##streams_list", &new_config_index, config_getter, &m_render_configs, m_render_configs.size());
+        bool changed_preview = ImGui::Checkbox("Preview the selected stream", &m_preview);
+        changed_selection |= prev_selected != selected;
+
+        if (changed_selection || changed_preview)
+        {
+            selected = nullptr;
+            m_config_index = (size_t)new_config_index;
+            if (m_config_index < m_render_configs.size())
+                selected = m_render_configs[m_config_index];
+            g_active_rendercfg.Set(m_preview ? selected : nullptr);
         }
 
-        bool change_selection = ImGui::ListBox("##frames_list", &current_cfg, frame_getter, &m_render_configs, m_render_configs.size());
-        bool change_preview = ImGui::Checkbox("Preview the selected stream", &m_preview);
+        ImGui::EndGroup();
+    }
 
-        if (change_selection || change_preview)
+    if (selected)
+    {
+        ImGui::BeginGroup();
+        ImGui::SeparatorText(selected->GetName().c_str());
+        ShowConfigEditor(selected);
+        ImGui::EndGroup();
+    }
+
+    PopupConfigRenamer(selected);
+}
+
+void RenderConfigEditor::PopupConfigRenamer(RenderConfig::Ptr render_config)
+{
+    static std::array<char, 64> input = {0};
+    static auto input_filter = [](ImGuiInputTextCallbackData* data) -> int
+    {
+        // Filter reserved filename characters
+        switch (data->EventChar)
         {
-            if (!m_preview)
-                g_active_rendercfg.SetNone();
-            else
+        case '<': case '>': case ':': case '"':
+        case '/': case '\\': case '|': case '?':
+        case '*':
+            return 1;
+        }
+        return 0;
+    };
+
+    if (render_config && ImGui::BeginPopup(POPUP_STREAM_RENAMER))
+    {
+        if (!input[0])
+            strncpy_s(input.data(), input.size(), render_config->GetName().c_str(), input.size() - 1);
+
+        // Focus on the following text input
+        if ((ImGui::IsWindowFocused() || !ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow)) && !ImGui::IsAnyItemActive())
+            ImGui::SetKeyboardFocusHere(0);
+        
+        bool ok = ImGui::InputText("New name", input.data(), input.size(), ImGuiInputTextFlags_CallbackCharFilter | ImGuiInputTextFlags_EnterReturnsTrue, input_filter);
+        ok |= ImGui::Button("Ok"); ImGui::SameLine();
+        bool cancel = ImGui::Button("Cancel");
+        bool accepted = false;
+
+        if (ok) // Validate the final name before accepting it
+        {
+            if (input[0])
             {
-                if (current_cfg >= 0 && current_cfg < m_render_configs.size())
-                    g_active_rendercfg.Set(m_render_configs.at(current_cfg));
+                if (!IsDuplicateName(input.data()))
+                    accepted = true;
+                else if (input.data() == render_config->GetName())
+                    cancel |= true;
             }
         }
 
-        ImGui::EndGroup();
-    }
+        if (accepted)
+            render_config->GetName() = input.data();
 
-    if (current_cfg >= 0 && current_cfg < m_render_configs.size())
-    {
-        ImGui::BeginGroup();
-
-        RenderConfig::Ptr render_config = m_render_configs.at(current_cfg);
-        ImGui::SeparatorText(render_config->GetName().c_str());
-        ShowConfigEditor(render_config);
-
-        ImGui::EndGroup();
-    }
-
-    PopupConfigCreator();
-}
-
-void RenderConfigEditor::PopupConfigCreator()
-{
-    if (ImGui::BeginPopup(POPUP_FRAME_CREATOR))
-    {
-        static std::array<char, 64> input_frame_name = { "my stream" };
-        ImGui::Text("Choose a name");
-        ImGui::PushItemWidth(-1);
-        ImGui::InputText("##new_frame_name", input_frame_name.data(), input_frame_name.size());
-        ImGui::PopItemWidth();
-        if (ImGui::Button("Ok##new_frame")) {
-            m_render_configs.emplace_back(std::make_shared<RenderConfig>(input_frame_name.data()));
+        if (accepted || cancel)
             ImGui::CloseCurrentPopup();
-        }
-
         ImGui::EndPopup();
     }
+    else
+        input[0] = 0;
 }
 
 void RenderConfigEditor::ShowConfigEditor(RenderConfig::Ptr render_config)
 {
-    auto frame_tweaks = &render_config->GetRenderTweaks();
+    auto tweaks_list = &render_config->GetRenderTweaks();
     
     static auto tweaks_getter = [](void* data, int index, const char** out_text)
     {
-        auto tweaks = (decltype(frame_tweaks))data;
+        auto tweaks = (decltype(tweaks_list))data;
         if (index < 0 || index >= tweaks->size())
             return false;
         *out_text = tweaks->at(index)->GetName();
         return true;
     };
 
-    const float child_height = 200;
+    const float child_height = 0;
     static int current_tweak = -1;
     {
-        ImGui::BeginChild("##frame_editor", ImVec2(200, child_height));
+        ImGui::BeginChild("##stream_editor", ImVec2(200, child_height));
 
         PopupTweakCreator(render_config);
-        ImGui::InputText("Name##frame", &render_config->GetName());
         ImGui::Text("Active tweaks");
         if (ImGui::Button("Add##tweak"))
             ImGui::OpenPopup(POPUP_TWEAK_CREATOR);
         ImGui::SameLine();
         if (ImGui::Button("Remove##tweak"))
         {
-            if (current_tweak >= 0 && current_tweak < frame_tweaks->size())
-                frame_tweaks->erase(frame_tweaks->begin() + current_tweak);
+            if (current_tweak >= 0 && current_tweak < tweaks_list->size())
+                tweaks_list->erase(tweaks_list->begin() + current_tweak);
+            // The removed tweak may have included semi-permanent effect.
+            // Signal an update to ensure any semi-permanent effects are reset/recalculated.
+            g_active_rendercfg.SignalUpdate(render_config);
         }
 
         ImGui::SetNextItemWidth(-1);
-        ImGui::ListBox("##Active tweaks", &current_tweak, tweaks_getter, frame_tweaks, frame_tweaks->size());
+        ImGui::ListBox("##Active tweaks", &current_tweak, tweaks_getter, tweaks_list, tweaks_list->size());
         ImGui::EndChild();
     }
 
-    if (current_tweak >= 0 && current_tweak < frame_tweaks->size())
+    if (current_tweak >= 0 && current_tweak < tweaks_list->size())
     {
         ImGui::SameLine();
         ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5);
-        ImGui::BeginChild("##tweak_editor", ImVec2(0, child_height), true);
-        ShowTweakEditor(frame_tweaks->at(current_tweak));
+        if (ImGui::BeginChild("##tweak_editor", ImVec2(0, child_height), true, ImGuiWindowFlags_MenuBar))
+            ShowTweakEditor(tweaks_list->at(current_tweak));
         ImGui::EndChild();
         ImGui::PopStyleVar();
     }
@@ -170,7 +235,10 @@ void RenderConfigEditor::PopupTweakCreator(RenderConfig::Ptr render_config)
         if (ok)
         {
             if (choice >= 0 && choice < RenderTweak::default_tweaks.size())
+            {
+                auto lock = g_active_rendercfg.WriteLock();
                 render_config->GetRenderTweaks().emplace_back(RenderTweak::default_tweaks.at(choice)->Clone());
+            }
         }
 
         if (ok || cancel)
@@ -182,4 +250,12 @@ void RenderConfigEditor::PopupTweakCreator(RenderConfig::Ptr render_config)
 
 void RenderConfigEditor::ShowTweakEditor(RenderTweak::Ptr render_tweak) {
     render_tweak->OnMenu();
+}
+
+bool RenderConfigEditor::IsDuplicateName(const std::string& name) const
+{
+    auto existing = std::find_if(m_render_configs.begin(), m_render_configs.end(), [&](auto& cfg) {
+        return cfg->GetName() == name;
+    });
+    return existing != m_render_configs.end();
 }

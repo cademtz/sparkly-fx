@@ -1,6 +1,5 @@
 #include <Modules/Menu.h>
 #include <Base/Sig.h>
-#include <array>
 #include "skybox.h"
 
 SkyboxModule g_skybox;

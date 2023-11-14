@@ -10,3 +10,6 @@
 [submodule "miniz"]
 	path = miniz
 	url = https://github.com/richgel999/miniz
+[submodule "qoi"]
+	path = qoi
+	url = https://github.com/phoboslab/qoi

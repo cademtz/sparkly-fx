@@ -1,5 +1,6 @@
 #include "Modules/BaseModule.h"
 #include <array>
+#include <string>
 
 class SkyboxModule : public CModule {
 public:

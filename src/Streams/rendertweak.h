@@ -5,12 +5,15 @@
 #include <memory>
 #include <array>
 
+enum class FilterChoice : int { ALL, WHITELIST, BLACKLIST, _COUNT };
+
 /// @brief Configurable variables for one part of the rendering process.
 /// Each subclass will typically provide settings for a specific, hooked render function.
 class RenderTweak
 {
 public:
     using Ptr = std::shared_ptr<RenderTweak>;
+    using ConstPtr = std::shared_ptr<const RenderTweak>;
     
     virtual ~RenderTweak() {}
     
@@ -22,7 +25,7 @@ public:
 
     /// @brief An array of every RenderTweak subclass.
     /// Useful for displaying all types.
-    static const std::vector<std::shared_ptr<const RenderTweak>> default_tweaks;
+    static const std::vector<ConstPtr> default_tweaks;
 };
 
 class PropRenderTweak : public RenderTweak
@@ -34,16 +37,16 @@ public:
     }
     void OnMenu() override;
 
+    /// @brief Hide all props
     bool hide = false;
 };
 
 class EntityFilterTweak : public RenderTweak
 {
 public:
-    enum class FilterChoice : int { ALL, WHITELIST, BLACKLIST, _COUNT };
     enum class RenderEffect : int { NORMAL, MATTE, INVISIBLE, _COUNT };
 
-    const char* GetName() const override { return "Entity effects"; }
+    const char* GetName() const override { return "Entities"; }
     std::shared_ptr<RenderTweak> Clone() const override {
         return std::make_shared<EntityFilterTweak>(*this);
     }
@@ -54,7 +57,6 @@ public:
     /// @return `true` if the effect will make an entity invisible
     bool IsEffectInvisible() const;
 
-    static const char* FilterChoiceName(FilterChoice value);
     static const char* RenderEffectName(RenderEffect value);
 
     /// @brief Chooses whether entities should be filtered, and which ones
@@ -68,7 +70,42 @@ public:
     std::unordered_set<std::string> classes;
 };
 
-inline const std::vector<std::shared_ptr<const RenderTweak>> RenderTweak::default_tweaks = {
+class MaterialTweak : public RenderTweak
+{
+public:
+    static const std::array<const char*, 27> TEXTURE_GROUPS;
+
+    const char* GetName() const override { return "Materials"; }
+    std::shared_ptr<RenderTweak> Clone() const override {
+        return std::make_shared<MaterialTweak>(*this);
+    }
+    void OnMenu() override;
+
+    bool IsMaterialAffected(class IMaterial* material) const;
+
+    /// @brief A color multiply given to each material
+    std::array<float, 4> color_multiply = { 1,1,1,1 };
+    /// @brief A fixed array containing `true` or `false` for each texture group
+    std::array<bool, TEXTURE_GROUPS.size()> groups;
+    FilterChoice filter_choice = FilterChoice::ALL;
+};
+
+class CameraTweak : public RenderTweak
+{
+public:
+    const char* GetName() const override { return "Camera"; }
+    std::shared_ptr<RenderTweak> Clone() const override {
+        return std::make_shared<CameraTweak>(*this);
+    }
+    void OnMenu() override;
+
+    float fov = 90;
+    bool fov_override = false;
+};
+
+inline const std::vector<RenderTweak::ConstPtr> RenderTweak::default_tweaks = {
     std::make_shared<PropRenderTweak>(),
     std::make_shared<EntityFilterTweak>(),
+    std::make_shared<MaterialTweak>(),
+    std::make_shared<CameraTweak>(),
 };
