@@ -14,7 +14,6 @@
 #include <iomanip>
 #include <chrono>
 #include <cstdint>
-#include <shellapi.h>
 #define DBGHELP_TRANSLATE_TCHAR
 #include <DbgHelp.h>
 #pragma comment(lib, "DbgHelp.lib")
@@ -30,6 +29,15 @@ void Base::OnAttach(HMODULE Module)
 {
 	hInst = Module;
 	CreateThread(0, 0, &Base::HookThread, 0, 0, 0);
+}
+
+void Base::OnDetach()
+{
+	// Call this to free the handle on our PDB file.
+	// This allows re-compilation after ejecting xsdk.
+	SymCleanup(GetCurrentProcess());
+	// TODO: Make interfaces and other memory use smart pointers, which will self-destruct automatically.
+	Interfaces::DestroyInterfaces();
 }
 
 DWORD WINAPI Base::HookThread(LPVOID Args)
@@ -312,22 +320,16 @@ static LONG WINAPI UnhandledFilter(struct _EXCEPTION_POINTERS* info) {
 		auto log_path_string = absolute_log_path.string();
 #endif
 
-		msg << "The program is going to crash. Crash details were written to:" << std::endl;
+		msg << "An error occured. The program may crash." << std::endl;
+		msg << "Details were written to:" << std::endl;
 		msg << log_path_string << std::endl;
-		msg << std::endl;
-		msg << "Would you like to open the crash log?";
 
-		int response = MessageBox(
+		MessageBox(
 			NULL, 
 			msg.str().c_str(),
 			TEXT("Unhandled exception"),
-			MB_YESNO
+			MB_OK | MB_ICONWARNING
 		);
-		if (response == IDYES)
-		{
-			(void)(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE));
-			ShellExecute(NULL, TEXT("open"), log_path_string.c_str(), NULL, NULL, SW_SHOWDEFAULT);
-		}
 	}
 
 	return EXCEPTION_EXECUTE_HANDLER;
