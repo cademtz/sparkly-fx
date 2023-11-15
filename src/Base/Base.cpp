@@ -5,13 +5,22 @@
 #include <SDK/mathlib.h>
 #include "Interfaces.h"
 #include "Netvars.h"
+#include <array>
 
 // Stack trace code
-#include <string>
+#include <fstream>
+#include <sstream>
+#include <filesystem>
+#include <iomanip>
+#include <chrono>
 #include <cstdint>
+#include <shellapi.h>
+#define DBGHELP_TRANSLATE_TCHAR
 #include <DbgHelp.h>
 #pragma comment(lib, "DbgHelp.lib")
+
 #define MAX_BACKTRACE_FRAMES 50
+#define CRASHLOG_NAME "xsdk-crashlog.txt"
 
 LONG WINAPI UnhandledFilter(struct _EXCEPTION_POINTERS* info);
 LONG NTAPI MyVectoredHandler(struct _EXCEPTION_POINTERS *ExceptionInfo);
@@ -41,7 +50,20 @@ DWORD WINAPI Base::HookThread(LPVOID Args)
 	
 	// At this point, the game engine is fully initialized.
 	// Now we can insert our exception handlers and hooks.
+
+	// Load symbols for nicer stack traces
 	LoadLibraryA("IMAGEHLP.DLL");
+	std::array<TCHAR, MAX_PATH + 1> module_filename = {0};
+	if (GetModuleFileName(hInst, module_filename.data(), module_filename.size()))
+	{
+		// We found our module's path. Load symbols with its folder as a search path.
+		std::filesystem::path module_path = module_filename.data();
+		module_path = module_path.parent_path();
+		SymInitialize(GetCurrentProcess(), module_path.c_str(), TRUE);
+	}
+	else // We can't find our module's path, so we pass a NULL search path.
+		SymInitialize(GetCurrentProcess(), NULL, TRUE);
+	
 	// This won't have an effect, because Source-Engine/Steam catches all crashes. (But just in case...)
 	SetUnhandledExceptionFilter(UnhandledFilter);
 	// This works, because we add a new "first" handler after all others have been set up.
@@ -130,30 +152,24 @@ static int GetFrames(CONTEXT* ctx, uintptr_t* addrs, int max)
 	return count;
 }
 
-static void PrintFrame(std::string& str, uintptr_t addr, uintptr_t symAddr, const char* symName, const char* modName) {
-	std::string module;
+static void PrintFrame(std::stringstream& str, uintptr_t addr, uintptr_t symAddr, const char* symName, const char* modName) {
 	int offset;
-	if (modName)
-		module = std::string(modName) + ".dll";
-	else
-		module = "???";
 
-	// This trims the full path down
-	//Utils_UNSAFE_GetFilename(&module);
-	char buf[128];
-	sprintf_s(buf, sizeof(buf), "%p - %s", (void*)addr, module.c_str());
-	str += buf;
+	str << (void*)addr << " - ";
+	if (modName && modName[0])
+		str << modName << ".dll";
+	else
+		str << "???";
 	
 	if (symName && symName[0]) {
 		offset = (int)(addr - symAddr);
-		sprintf_s(buf, sizeof(buf), "(%s+0x%x)", symName, offset);
-		str += buf;
+		str << '(' << symName << '+' << (void*)offset << ')';
 	}
-	str += '\n';
+	str << std::endl;
 }
 
 struct SymbolAndName { IMAGEHLP_SYMBOL symbol; char name[256]; };
-static void DumpFrame(std::string& str, HANDLE process, uintptr_t addr) {
+static void DumpFrame(std::stringstream& str, HANDLE process, uintptr_t addr) {
 
 	struct SymbolAndName s = { 0 };
 	s.symbol.MaxNameLength = 255;
@@ -165,7 +181,22 @@ static void DumpFrame(std::string& str, HANDLE process, uintptr_t addr) {
 	m.SizeOfStruct    = sizeof(IMAGEHLP_MODULE);
 	SymGetModuleInfo(process, addr, &m);
 
-	PrintFrame(str, addr, s.symbol.Address, s.symbol.Name, m.ModuleName);
+	const size_t module_name_len = sizeof(m.ModuleName) / sizeof(m.ModuleName[0]);
+	char module_name_ascii[module_name_len] = {0};
+	for (size_t i = 0; i < module_name_len; ++i)
+	{
+		auto ch = m.ModuleName[i];
+		if (ch == 0)
+		{
+			module_name_ascii[i] = 0;
+			break;
+		}
+
+		if (ch < 32 || ch > 126)
+			ch = '?';
+		module_name_ascii[i] = (char)ch;
+	}
+	PrintFrame(str, addr, s.symbol.Address, s.symbol.Name, module_name_ascii);
 
 	/* This function only works for .pdb debug info anyways */
 	/* This function is also missing on Windows 9X */
@@ -173,16 +204,15 @@ static void DumpFrame(std::string& str, HANDLE process, uintptr_t addr) {
 	IMAGEHLP_LINE line = { 0 }; DWORD lineOffset;
 	line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
 	if (SymGetLineFromAddr(process, addr, &lineOffset, &line)) {
-		str += "  line " + std::to_string(line.LineNumber) + " in " + line.FileName + '\n';
+		str << "  line " << line.LineNumber << " in " << line.FileName << std::endl;
 	}
 #endif
 }
 
-static void Backtrace(std::string& str, CONTEXT* ctx) {
+static void Backtrace(std::stringstream& str, CONTEXT* ctx) {
 	uintptr_t addrs[MAX_BACKTRACE_FRAMES];
 	int i, frames;
 
-	SymInitialize(GetCurrentProcess(), NULL, TRUE); /* TODO only in MSVC.. */
 	frames  = GetFrames(ctx, addrs, MAX_BACKTRACE_FRAMES);
 
 	for (i = 0; i < frames; i++) {
@@ -221,42 +251,82 @@ static const char* ExceptionDescribe(uint32_t code) {
 }
 
 static LONG WINAPI UnhandledFilter(struct _EXCEPTION_POINTERS* info) {
-	std::string msg;
+	std::stringstream trace;
 	const char* desc;
 	uint32_t code;
 	uintptr_t addr;
 	DWORD i, numArgs;
-	char buf[128];
+
+	{
+		auto time_now = std::chrono::system_clock::now();
+		std::time_t rawtime = std::chrono::system_clock::to_time_t(time_now);
+		trace << "--------------------------------------------------" << std::endl;
+		trace << std::put_time(std::gmtime(&rawtime), "%c %Z") << std::endl;
+		trace << "--------------------------------------------------" << std::endl;
+	}
 
 	code = (uint32_t)info->ExceptionRecord->ExceptionCode;
 	addr = (uintptr_t)info->ExceptionRecord->ExceptionAddress;
 	desc = ExceptionDescribe(code);
 
-	if (desc) {
-		sprintf_s(buf, sizeof(buf), "Unhandled %s error at %p", desc, (void*)addr);
-	} else {
-		sprintf_s(buf, sizeof(buf), "Unhandled exception 0x%x at %p", code, (void*)addr);
-	}
-	msg += buf;
+	if (desc)
+		trace << "Unhandled " << desc << " error at " << (void*)addr;
+	else
+		trace << "Unhandled exception 0x" << std::hex << code << std::dec << " at " << (void*)addr;
 
 	numArgs = info->ExceptionRecord->NumberParameters;
 	if (numArgs) {
 		numArgs = min(numArgs, EXCEPTION_MAXIMUM_PARAMETERS);
-		msg += '[';
+		trace << '[';
 
-		for (i = 0; i < numArgs; i++) {
-			sprintf_s(buf, sizeof(buf), "%p,", (void*)info->ExceptionRecord->ExceptionInformation[i]);
-			msg += buf;
-		}
-		msg += ']';
+		for (i = 0; i < numArgs; i++)
+			trace << (void*)info->ExceptionRecord->ExceptionInformation[i] << ',';
+		trace << ']';
 	}
 
-	msg += "\n\n";
-	
-	Backtrace(msg, info->ContextRecord);
-	MessageBoxA(NULL, msg.c_str(), "Unhandled exception", MB_OK);
+	trace << std::endl << std::endl;
+	Backtrace(trace, info->ContextRecord);
+	trace << std::endl;
 
-	return EXCEPTION_EXECUTE_HANDLER; /* TODO: different flag */
+	std::filesystem::path log_path = std::filesystem::current_path() / CRASHLOG_NAME;
+	std::fstream log_file = std::fstream(log_path, std::ios::out | std::ios::app);
+	if (log_file)
+	{
+		log_file << trace.rdbuf();
+		log_file.close();
+	}
+
+	static bool is_first_time = true;
+	if (is_first_time)
+	{
+		std::basic_stringstream<TCHAR> msg;
+		is_first_time = false;
+
+#ifdef UNICODE
+		auto log_path_string = log_path.wstring();
+#else
+		auto log_path_string = log_path.string();
+#endif
+
+		msg << "The program is going to crash. Crash details were written to:" << std::endl;
+		msg << log_path_string << std::endl;
+		msg << std::endl;
+		msg << "Would you like to open the crash log?";
+
+		int response = MessageBox(
+			NULL, 
+			msg.str().c_str(),
+			TEXT("Unhandled exception"),
+			MB_YESNO
+		);
+		if (response == IDYES)
+		{
+			(void)(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE));
+			ShellExecute(NULL, TEXT("open"), log_path_string.c_str(), NULL, NULL, SW_SHOWDEFAULT);
+		}
+	}
+
+	return EXCEPTION_EXECUTE_HANDLER;
 }
 
 static LONG NTAPI MyVectoredHandler(struct _EXCEPTION_POINTERS *ExceptionInfo) {

@@ -78,6 +78,11 @@ int CMenu::OnImGui()
 	{
 		if (ImGui::Button("Eject"))
 			CreateThread(0, 0, &UnhookThread, 0, 0, 0);
+		if (ImGui::Button("Crash"))
+		{
+			volatile int* evil = 0;
+			*evil = 99;
+		}
 
 		PushEvent(EVENT_MENU);
 	}
