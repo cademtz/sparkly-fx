@@ -8,6 +8,7 @@ set_property(TARGET xsdk-base PROPERTY
   MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
 )
 target_include_directories(xsdk-base PRIVATE src/ imgui/ ${CMAKE_CURRENT_SOURCE_DIR}/)
+target_compile_definitions(xsdk-base PRIVATE UNICODE)
 add_subdirectory(src)
 
 set(XSDK_BUILD_EXAMPLES 0 CACHE STRING "Build example modules and tests that can be used in-game.")
