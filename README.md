@@ -29,9 +29,12 @@ cmake <xsdk-base-folder> .. -D XSDK_BUILD_EXAMPLES=1
 # This will use 32-bit, specifically
 cmake <xsdk-base-folder> .. -D XSDK_BUILD_EXAMPLES=1 -A Win32
 ```
-3. Build
+3. Build a debug or release binary
 ```sh
+# This builds the default config (Debug)
 cmake --build .
+# This builds a release binary with debug info. This improves the symbols in stack traces.
+cmake --build . --config RelWithDebInfo
 ```
 
 ### Visual Studio

@@ -31,6 +31,12 @@ public:
 	int Push();
 
 	static CBaseEvent* GetEvent(const EventHandle Event) { return m_events[Event.hash]; }
+	/// @brief Permanently stop all (currently-registered) events.
+	/// Part of a hack to help "eject" the cheat.
+	static void ShutdownAll() {
+		for (auto entry : m_events)
+			entry.second->m_is_closed = true;
+	}
 
 protected:
 	friend CEventCallback;
@@ -40,6 +46,7 @@ private:
 	CBaseEvent(CBaseEvent&&);
 
 	uint32_t m_hash;
+	bool m_is_closed = false;
 	std::list<CEventCallback*> m_listeners;
 	inline static std::unordered_map<uint32_t, CBaseEvent*> m_events;
 };
