@@ -57,9 +57,8 @@ DWORD WINAPI Base::HookThread(LPVOID Args)
 	if (GetModuleFileName(hInst, module_filename.data(), module_filename.size()))
 	{
 		// We found our module's path. Load symbols with its folder as a search path.
-		std::filesystem::path module_path = module_filename.data();
-		module_path = module_path.parent_path();
-		SymInitialize(GetCurrentProcess(), module_path.c_str(), TRUE);
+		module_dir = std::filesystem::path(module_filename.data()).parent_path();
+		SymInitialize(GetCurrentProcess(), module_dir.c_str(), TRUE);
 	}
 	else // We can't find our module's path, so we pass a NULL search path.
 		SymInitialize(GetCurrentProcess(), NULL, TRUE);
@@ -288,7 +287,7 @@ static LONG WINAPI UnhandledFilter(struct _EXCEPTION_POINTERS* info) {
 	Backtrace(trace, info->ContextRecord);
 	trace << std::endl;
 
-	std::filesystem::path log_path = std::filesystem::current_path() / CRASHLOG_NAME;
+	std::filesystem::path log_path = Base::module_dir / CRASHLOG_NAME;
 	std::fstream log_file = std::fstream(log_path, std::ios::out | std::ios::app);
 	if (log_file)
 	{
@@ -302,10 +301,15 @@ static LONG WINAPI UnhandledFilter(struct _EXCEPTION_POINTERS* info) {
 		std::basic_stringstream<TCHAR> msg;
 		is_first_time = false;
 
+		std::error_code err;
+		auto absolute_log_path = std::filesystem::absolute(log_path, err);
+		if (err)
+			absolute_log_path = log_path;
+
 #ifdef UNICODE
-		auto log_path_string = log_path.wstring();
+		auto log_path_string = absolute_log_path.wstring();
 #else
-		auto log_path_string = log_path.string();
+		auto log_path_string = absolute_log_path.string();
 #endif
 
 		msg << "The program is going to crash. Crash details were written to:" << std::endl;
