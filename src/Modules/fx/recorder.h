@@ -36,6 +36,7 @@ private:
     bool m_is_recording = false;
     bool m_pause_on_menu = true;
     int m_png_compression_lvl = 1;
+    int m_framerate = 60;
     VideoFormat m_video_format = VideoFormat::PNG;
     
     uint32_t m_frame_index;

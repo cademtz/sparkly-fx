@@ -1,6 +1,7 @@
 #include "recorder.h"
 #include <imgui.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
+#include <Helper/imgui.h>
 #include <Hooks/ClientHook.h>
 #include <Modules/Menu.h>
 #include "ActiveRenderConfig.h"
@@ -62,6 +63,12 @@ int CRecorder::OnMenu()
             ImGui::BeginDisabled();
 
         ImGui::InputText("Output folder", &m_input_movie_path);
+        ImGui::SameLine();
+        Helper::ImGuiHelpMarker(
+            "This folder will contain the movie files.\n"
+            "The folder will be created automatically, if it doesn't exist."
+        );
+        ImGui::InputInt("Framerate", &m_framerate);
 
         if (ImGui::BeginCombo("Video format", VideoFormatName(m_video_format)))
         {
@@ -92,11 +99,18 @@ int CRecorder::OnMenu()
         
         ImGui::Checkbox("Pause if menu is open", &m_pause_on_menu);
         
-        ImGui::TextDisabled("Game directory: %s", game_dir.string().c_str());
-        ImGui::TextDisabled("Working directory: %s", working_dir.string().c_str());
+        // Disabled text has less visual clutter
+        ImGui::BeginDisabled();
+        ImGui::TextWrapped("Game directory: %s", game_dir.string().c_str());
+        ImGui::TextWrapped("Working directory: %s", working_dir.string().c_str());
+        ImGui::EndDisabled();
         
         if (!m_first_movie_error.empty())
+        {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
             ImGui::TextColored(ImVec4(1,1,0,1), "[Error] %s", m_first_movie_error.c_str());
+            ImGui::PopStyleColor();
+        }
 
         ImGui::EndGroup();
     }
@@ -133,6 +147,14 @@ bool CRecorder::StartMovie(const std::string& path)
     m_movie_path = path;
 
     // Create the movie directory structure
+    std::error_code err;
+    std::filesystem::create_directory(m_movie_path, err);
+    if (err)
+    {
+        SetFirstMovieError("Failed to create folder (%s): '%s'", err.message().c_str(), m_movie_path.string().c_str());
+        return false;
+    }
+
     if (g_render_frame_editor.GetConfigs().empty()) // Default video folder
     {
         std::filesystem::path dir = m_movie_path / DEFAULT_STREAM_NAME;
@@ -167,6 +189,7 @@ bool CRecorder::StartMovie(const std::string& path)
 
     movie_params->SetString("filename", m_temp_audio_name.c_str());
     movie_params->SetInt("outputwav", 1);
+    movie_params->SetFloat("framerate", m_framerate); // This one is a float. Dunno why.
 
     Interfaces::engine_tool->StartMovieRecording(movie_params);
 
