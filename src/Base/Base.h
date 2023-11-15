@@ -25,6 +25,7 @@ enum EAppID
 namespace Base
 {
 	void OnAttach(HMODULE Module);
+	void OnDetach();
 	DWORD WINAPI HookThread(LPVOID Args);
 
 	// Use these if failure to get a handle is not an option
