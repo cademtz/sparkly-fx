@@ -105,7 +105,6 @@ int CDraw::OnPresent()
 		ImGui_ImplDX9_Init(g_hk_overlay.Device());
 		ImGui_ImplWin32_Init(Base::hWnd);
 
-
 		m_list = new ImDrawList(ImGui::GetDrawListSharedData());
 		data.DisplayPos = ImVec2(0, 0);
 		data.CmdLists.push_back(m_list);
