@@ -3,6 +3,8 @@
 #include <imgui.h>
 
 DECL_EVENT(EVENT_MENU);
+/// @brief This runs after IMGUI reads input. It can also hide input from the game.
+DECL_EVENT(EVENT_POST_IMGUI_INPUT);
 
 class CMenu : public CModule, CEventManager
 {
