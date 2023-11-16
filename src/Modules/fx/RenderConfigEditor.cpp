@@ -71,6 +71,7 @@ void RenderConfigEditor::ShowConfigListEditor()
             m_render_configs.push_back(std::make_shared<RenderConfig>(std::move(new_name)));
             m_config_index = m_render_configs.size() - 1;
             selected = m_render_configs.back();
+            ImGui::OpenPopup(POPUP_STREAM_RENAMER);
         }
         ImGui::SameLine();
         if (ImGui::Button("Remove##stream"))
@@ -130,40 +131,41 @@ void RenderConfigEditor::PopupConfigRenamer(RenderConfig::Ptr render_config)
         return 0;
     };
 
-    if (render_config && ImGui::BeginPopup(POPUP_STREAM_RENAMER))
+    if (!render_config || !ImGui::BeginPopup(POPUP_STREAM_RENAMER))
     {
-        if (!input[0])
-            strncpy_s(input.data(), input.size(), render_config->GetName().c_str(), input.size() - 1);
-
-        // Focus on the following text input
-        if ((ImGui::IsWindowFocused() || !ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow)) && !ImGui::IsAnyItemActive())
-            ImGui::SetKeyboardFocusHere(0);
-        
-        bool ok = ImGui::InputText("New name", input.data(), input.size(), ImGuiInputTextFlags_CallbackCharFilter | ImGuiInputTextFlags_EnterReturnsTrue, input_filter);
-        ok |= ImGui::Button("Ok"); ImGui::SameLine();
-        bool cancel = ImGui::Button("Cancel");
-        bool accepted = false;
-
-        if (ok) // Validate the final name before accepting it
-        {
-            if (input[0])
-            {
-                if (!IsDuplicateName(input.data()))
-                    accepted = true;
-                else if (input.data() == render_config->GetName())
-                    cancel |= true;
-            }
-        }
-
-        if (accepted)
-            render_config->GetName() = input.data();
-
-        if (accepted || cancel)
-            ImGui::CloseCurrentPopup();
-        ImGui::EndPopup();
-    }
-    else
         input[0] = 0;
+        return;
+    }
+    
+    if (!input[0])
+        strncpy_s(input.data(), input.size(), render_config->GetName().c_str(), input.size() - 1);
+
+    // Focus on the following text input
+    if ((ImGui::IsWindowFocused() || !ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow)) && !ImGui::IsAnyItemActive())
+        ImGui::SetKeyboardFocusHere(0);
+    
+    bool ok = ImGui::InputText("New name", input.data(), input.size(), ImGuiInputTextFlags_CallbackCharFilter | ImGuiInputTextFlags_EnterReturnsTrue, input_filter);
+    ok |= ImGui::Button("Ok"); ImGui::SameLine();
+    bool cancel = ImGui::Button("Cancel");
+    bool accepted = false;
+
+    if (ok) // Validate the final name before accepting it
+    {
+        if (input[0])
+        {
+            if (!IsDuplicateName(input.data()))
+                accepted = true;
+            else if (input.data() == render_config->GetName())
+                cancel |= true;
+        }
+    }
+
+    if (accepted)
+        render_config->GetName() = input.data();
+
+    if (accepted || cancel)
+        ImGui::CloseCurrentPopup();
+    ImGui::EndPopup();
 }
 
 void RenderConfigEditor::ShowConfigEditor(RenderConfig::Ptr render_config)
@@ -180,18 +182,23 @@ void RenderConfigEditor::ShowConfigEditor(RenderConfig::Ptr render_config)
     };
 
     const float child_height = 0;
-    static int current_tweak = -1;
+    static int current_tweak = 0;
     {
         ImGui::BeginChild("##stream_editor", ImVec2(200, child_height));
 
         PopupTweakCreator(render_config);
         ImGui::Text("Active tweaks");
         if (ImGui::Button("Add##tweak"))
+        {
             ImGui::OpenPopup(POPUP_TWEAK_CREATOR);
+            // If the user adds a tweak, then this will focus it.
+            // Otherwise, it will deselect the current tweak. Overall, it's less disorienting.
+            current_tweak = render_config->GetRenderTweaks().size();
+        }
         ImGui::SameLine();
         if (ImGui::Button("Remove##tweak"))
         {
-            if (current_tweak >= 0 && current_tweak < tweaks_list->size())
+            if (current_tweak < tweaks_list->size())
                 tweaks_list->erase(tweaks_list->begin() + current_tweak);
             // The removed tweak may have included semi-permanent effect.
             // Signal an update to ensure any semi-permanent effects are reset/recalculated.
@@ -203,7 +210,7 @@ void RenderConfigEditor::ShowConfigEditor(RenderConfig::Ptr render_config)
         ImGui::EndChild();
     }
 
-    if (current_tweak >= 0 && current_tweak < tweaks_list->size())
+    if (current_tweak < tweaks_list->size())
     {
         ImGui::SameLine();
         ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5);
