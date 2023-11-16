@@ -60,6 +60,7 @@ bool CClientHook::CreateMove(float flInputSampleTime, CUserCmd* cmd)
 bool CClientHook::OverrideView(CViewSetup* pSetup)
 {
 	static auto original = m_clhook.Get<OverrideViewFn_t>(Interfaces::client->GetOffset(Off_OverrideView));
+	original(Interfaces::hlclient->Inst(), pSetup);
 	return false;
 }
 
@@ -125,6 +126,7 @@ void __stdcall CClientHook::Hooked_OverrideView(UNCRAP CViewSetup* pSetup)
 	
 	ctx->pSetup = pSetup;
 
-	g_hk_client.PushEvent(EVENT_OVERRIDEVIEW);
-
+	if (g_hk_client.PushEvent(EVENT_OVERRIDEVIEW) & Return_NoOriginal)
+		return;
+	g_hk_client.OverrideView(pSetup);
 }

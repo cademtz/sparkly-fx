@@ -23,6 +23,7 @@
 
 LONG WINAPI UnhandledFilter(struct _EXCEPTION_POINTERS* info);
 LONG NTAPI MyVectoredHandler(struct _EXCEPTION_POINTERS *ExceptionInfo);
+static PVOID my_vectored_handler = nullptr;
 //
 
 void Base::OnAttach(HMODULE Module)
@@ -38,6 +39,7 @@ void Base::OnDetach()
 	SymCleanup(GetCurrentProcess());
 	// TODO: Make interfaces and other memory use smart pointers, which will self-destruct automatically.
 	Interfaces::DestroyInterfaces();
+	RemoveVectoredExceptionHandler(my_vectored_handler);
 }
 
 DWORD WINAPI Base::HookThread(LPVOID Args)
@@ -71,10 +73,11 @@ DWORD WINAPI Base::HookThread(LPVOID Args)
 	else // We can't find our module's path, so we pass a NULL search path.
 		SymInitialize(GetCurrentProcess(), NULL, TRUE);
 	
-	// This won't have an effect, because Source-Engine/Steam catches all crashes. (But just in case...)
-	SetUnhandledExceptionFilter(UnhandledFilter);
+	// This won't have an effect, because Source-Engine/Steam catches all crashes.
+	//SetUnhandledExceptionFilter(UnhandledFilter);
+	
 	// This works, because we add a new "first" handler after all others have been set up.
-	AddVectoredExceptionHandler(TRUE, MyVectoredHandler);
+	my_vectored_handler = AddVectoredExceptionHandler(TRUE, MyVectoredHandler);
 
 	Netvars::GetNetvars();
 	CBaseHook::HookAll();

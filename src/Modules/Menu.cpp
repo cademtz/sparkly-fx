@@ -10,6 +10,7 @@
 CMenu::CMenu()
 {
 	RegisterEvent(EVENT_MENU);
+	RegisterEvent(EVENT_POST_IMGUI_INPUT);
 }
 
 void CMenu::StartListening()
@@ -48,24 +49,24 @@ bool CMenu::AcceptMsg(HWND hWnd, UINT uMsg, LPARAM lParam, WPARAM wParam)
 		}
 	}
 
-	if (IsOpen())
-	{
-		ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
+	ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
+	bool hide_input = PushEvent(EVENT_POST_IMGUI_INPUT) & Return_NoOriginal;
+	hide_input |= IsOpen();
 
+	if (hide_input)
+	{
 		switch (uMsg)
 		{
 		case WM_KEYDOWN:
-			if (!ImGui::GetIO().WantTextInput)
-				return false; // Let users continue walking in-game unless typing inside IMGUI
+			break;
 		case WM_KEYUP:
 		case WM_LBUTTONUP:
 		case WM_RBUTTONUP:
 		case WM_XBUTTONUP:
 			return false; // Prevent "stuck" input by allowing game to recieve key up
 		}
-		return true;
 	}
-	return false;
+	return hide_input;
 }
 
 int CMenu::OnImGui()
@@ -73,7 +74,7 @@ int CMenu::OnImGui()
 	if (!IsOpen())
 		return 0;
 
-	ImGui::SetNextWindowSize(ImVec2(300, 200), ImGuiCond_Once);
+	ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_Once);
 	if (ImGui::Begin("Window"))
 	{
 		if (ImGui::Button("Eject"))
