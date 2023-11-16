@@ -5,3 +5,4 @@ add_subdirectory(Modules)
 add_subdirectory(SDK)
 
 add_subdirectory(Streams)
+add_subdirectory(Helper)

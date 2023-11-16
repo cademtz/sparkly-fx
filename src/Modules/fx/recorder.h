@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
+#include <Helper/imgui.h>
 
 class CRecorder : public CModule
 {
@@ -28,17 +29,28 @@ public:
     static const char* VideoFormatDesc(VideoFormat format);
 
 private:
+    int OnPostImguiInput();
+    int OnDraw();
     int OnMenu();
     int OnFrameStageNotify();
     /// @brief Write the current frame to the stream
     void WriteFrame(const std::string& stream_name);
 
+    void ToggleRecording() {
+        IsRecordingMovie() ? StopMovie() : StartMovie(m_input_movie_path);
+    }
+
+    // === Menu options === //
+
+    Helper::KeyBind m_record_bind;
     bool m_is_recording = false;
     bool m_pause_on_menu = true;
     int m_png_compression_lvl = 1;
     int m_framerate = 60;
     VideoFormat m_video_format = VideoFormat::PNG;
     
+    // === Current movie info === //
+
     uint32_t m_frame_index;
     std::string m_input_movie_path;
     std::filesystem::path m_movie_path;

@@ -1,9 +1,9 @@
 #include "recorder.h"
 #include <imgui.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
-#include <Helper/imgui.h>
 #include <Hooks/ClientHook.h>
 #include <Modules/Menu.h>
+#include <Modules/Draw.h>
 #include "ActiveRenderConfig.h"
 #include "RenderConfigEditor.h"
 #include <Base/Interfaces.h>
@@ -46,8 +46,46 @@ void CRecorder::StartListening()
     
     m_input_movie_path = game_dir.string();
 
+    Listen(EVENT_POST_IMGUI_INPUT, [this]{ return OnPostImguiInput(); });
+    Listen(EVENT_DRAW, [this]{ return OnDraw(); });
     Listen(EVENT_MENU, [this]{ return OnMenu(); });
     Listen(EVENT_FRAMESTAGENOTIFY, [this]{ return OnFrameStageNotify(); });
+}
+
+int CRecorder::OnPostImguiInput()
+{
+    if (m_record_bind.Poll())
+    {
+        if (!g_menu.IsOpen() && !Interfaces::engine->Con_IsVisible())
+            ToggleRecording();
+    }
+    return 0;
+}
+
+int CRecorder::OnDraw()
+{
+    if (IsRecordingMovie())
+    {
+        const std::string_view text = "Recording";
+        const ImU32 text_color = 0xFF0000FF;
+        const ImU32 bkg_color = 0x40000000;
+        const float padding = 8;
+        const float text_space = 4; // Leave 4px space between circle and text
+        const ImVec2 corner = ImVec2(10, 10);
+
+        float text_height = ImGui::GetTextLineHeight();
+        float rect_rounding = (text_height + padding) / 2;
+        float text_width = ImGui::CalcTextSize(text.data()).x + text_height + text_space + rect_rounding/4;
+        ImVec2 text_corner = ImVec2(padding / 2 + corner.x, padding / 2 + corner.y);
+        ImVec2 rect_end = ImVec2(corner.x + padding + text_width, corner.y + padding + text_height);
+
+        gDraw.List()->AddRectFilled(corner, rect_end, bkg_color, rect_rounding);
+        gDraw.List()->AddRect(corner, rect_end, text_color, rect_rounding);
+        gDraw.List()->AddCircleFilled(ImVec2(text_corner.x + text_height/2, text_corner.y + text_height/2), text_height/2, text_color);
+        gDraw.List()->AddText(ImVec2(text_corner.x + text_height + text_space, text_corner.y), text_color, text.data());
+    }
+
+    return 0;
 }
 
 int CRecorder::OnMenu()
@@ -57,7 +95,9 @@ int CRecorder::OnMenu()
         ImGui::BeginGroup();
 
         if (ImGui::Button(IsRecordingMovie() ? "Stop" : "Start"))
-            IsRecordingMovie() ? StopMovie() : StartMovie(m_input_movie_path);
+            ToggleRecording();
+        
+        m_record_bind.OnMenu("Record hotkey");
 
         if (m_is_recording)
             ImGui::BeginDisabled();
