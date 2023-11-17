@@ -1,6 +1,11 @@
 # Sparkly FX
 A video recording tool for Team Fortress 2, developed using xsdk-base.
 
+Features:
+- Record compressed image formats (QOI, PNG)
+- Output multiple streams/layers
+- Highly customizeable streams (Multiple mattes, visibility filters, color adjustment, unlimited FOV)
+
 Please read [known-bugs.md](known-bugs.md). This software is in early development.
 
 Below are the original README contents for xsdk-base.
