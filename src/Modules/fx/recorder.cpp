@@ -20,18 +20,28 @@
 #include <array>
 #include <cassert>
 
-// Libraries for writing movie data
+// Libraries for threading/writing movie data 
 #include <fstream>
 #include <spng.h>
 #define QOI_IMPLEMENTATION
 #define QOI_NO_STDIO
 #include <qoi.h>
+#include <thread>
 //
 
 static const std::string DEFAULT_STREAM_NAME = "video";
 
 static std::filesystem::path game_dir;
 static std::filesystem::path working_dir;
+
+CRecorder::CRecorder()
+{
+    // By default, allocate 1 frame for every thread/core.
+    m_framepool_size = std::thread::hardware_concurrency();
+    if (m_framepool_size < 1)
+        m_framepool_size = 1;
+    m_framepool_size += 1;
+}
 
 void CRecorder::StartListening()
 {
@@ -134,6 +144,20 @@ int CRecorder::OnMenu()
             ImGui::SliderInt("PNG compression", &m_png_compression_lvl, 0, 9);
         }
 
+
+        ImGui::SliderInt("Frame pool size", &m_framepool_size, 1, 128, "%d", ImGuiSliderFlags_AlwaysClamp);
+        ImGui::SameLine();
+        Helper::ImGuiHelpMarker(
+            "The maximum number of frames that can be encoded at once.\n"
+            "If your CPU has 8 cores, you may want a pool with 9 or 12 frames.\n"
+            "Setting this value too high or too low can make it slower.\n"
+        );
+
+        int screen_w, screen_h;
+        Interfaces::engine->GetScreenSize(screen_w, screen_h);
+        float framepool_ram = screen_w * screen_h * FrameBufferRGB::NUM_CHANNELS * FrameBufferRGB::NUM_BYTES;
+        framepool_ram = framepool_ram * m_framepool_size / (1024 * 1024);
+
         if (m_is_recording)
             ImGui::EndDisabled();
         
@@ -141,6 +165,8 @@ int CRecorder::OnMenu()
         
         // Disabled text has less visual clutter
         ImGui::BeginDisabled();
+        ImGui::Text("Framepool RAM: %f MB", framepool_ram);
+        ImGui::Text("Framepool threads: %u", std::thread::hardware_concurrency());
         ImGui::TextWrapped("Game directory: %s", game_dir.string().c_str());
         ImGui::TextWrapped("Working directory: %s", working_dir.string().c_str());
         ImGui::EndDisabled();
@@ -198,7 +224,8 @@ bool CRecorder::StartMovie(const std::string& path)
     if (g_render_frame_editor.GetConfigs().empty()) // Default video folder
     {
         std::filesystem::path dir = m_movie_path / DEFAULT_STREAM_NAME;
-        if (!std::filesystem::create_directory(dir))
+        std::filesystem::create_directory(dir, err);
+        if (err)
         {
             SetFirstMovieError("Failed to create folder: '%s'", dir.string().c_str());
             return false;
@@ -209,7 +236,8 @@ bool CRecorder::StartMovie(const std::string& path)
         for (auto stream : g_render_frame_editor.GetConfigs())
         {
             std::filesystem::path dir = m_movie_path / stream->GetName();
-            if (!std::filesystem::create_directory(dir))
+            std::filesystem::create_directory(dir, err);
+            if (err)
             {
                 SetFirstMovieError("Failed to create folder: '%s'", dir.string().c_str());
                 return false;
@@ -231,8 +259,15 @@ bool CRecorder::StartMovie(const std::string& path)
     movie_params->SetInt("outputwav", 1);
     movie_params->SetFloat("framerate", m_framerate); // This one is a float. Dunno why.
 
-    Interfaces::engine_tool->StartMovieRecording(movie_params);
+    int screen_w, screen_h;
+    Interfaces::engine->GetScreenSize(screen_w, screen_h);
 
+    m_framepool = std::make_shared<FramePool>(
+        std::thread::hardware_concurrency(), m_framepool_size,
+        m_video_format, m_png_compression_lvl,
+        screen_w, screen_h
+    );
+    Interfaces::engine_tool->StartMovieRecording(movie_params);
     m_is_recording = true;
     return true;
 }
@@ -241,6 +276,7 @@ void CRecorder::StopMovie()
 {
     m_is_recording = false;
     Interfaces::engine_tool->EndMovieRecording();
+    m_framepool->Finish();
     g_active_rendercfg.Set(nullptr);
     
     // Move the audio file from its temp path to its official destination.
@@ -275,43 +311,21 @@ void CRecorder::SetFirstMovieError(const char* fmt, ...)
 
 void CRecorder::WriteFrame(const std::string& stream_name)
 {
-    int screen_w, screen_h;
-    Interfaces::engine->GetScreenSize(screen_w, screen_h);
-
-    static FrameBufferRGB frame_buf(screen_w, screen_h);
-    std::filesystem::path frame_path;
+    FramePool::FramePtr frame = m_framepool->PopEmptyFrame();
+    if (!frame) // We're done recording
+        return;
     
-    if (frame_buf.GetWidth() != screen_w || frame_buf.GetHeight() != screen_h)
-        frame_buf.Resize(screen_w, screen_h);
-
     {
         std::string frame_name = "frame_" + std::to_string(m_frame_index) + '.' + VideoFormatName(m_video_format);
-        frame_path = m_movie_path / stream_name / frame_name;
-    }
-
-    std::fstream file = std::fstream(frame_path, std::ios::out | std::ios::binary);
-    if (!file)
-    {
-        SetFirstMovieError("Failed to open file for writing: '%s'", frame_path.string().c_str());
-        return;
+        frame->path = m_movie_path / stream_name / frame_name;
     }
 
     IMatRenderContext* render_ctx = Interfaces::mat_system->GetRenderContext();
-    render_ctx->ReadPixels(0, 0, screen_w, screen_h, frame_buf.GetData(), IMAGE_FORMAT_RGB888);
-
-    bool result = false;
-    switch (m_video_format)
-    {
-    case VideoFormat::PNG: result = frame_buf.WritePNG(file, m_png_compression_lvl); break;
-    case VideoFormat::QOI: result = frame_buf.WriteQOI(file); break;
-    default:
-        assert(0 && "Unknown VideoFormat. A switch case may be missing.");
-    }
+    render_ctx->ReadPixels(
+        0, 0, frame->buffer.GetWidth(), frame->buffer.GetHeight(), frame->buffer.GetData(), IMAGE_FORMAT_RGB888
+    );
     
-    if (!file)
-        SetFirstMovieError("Failed to write frame: '%s'", frame_path.c_str());
-    else if (!result)
-        SetFirstMovieError("Failed to encode frame: '%s'", frame_path.c_str());
+    m_framepool->PushFullFrame(frame);
 }
 
 int CRecorder::OnFrameStageNotify()
@@ -324,7 +338,6 @@ int CRecorder::OnFrameStageNotify()
         // Don't record unless a movie is started and the console is closed (TODO: and no loading screen)
         if (ShouldRecordFrame())
         {
-            
             // We don't explicitly lock any mutex.
             // Assume that nothing is modified while recording.
             if (g_render_frame_editor.GetConfigs().empty())
@@ -338,7 +351,7 @@ int CRecorder::OnFrameStageNotify()
                 } dummy;
                 Interfaces::hlclient->GetPlayerView(dummy.view_setup);
                 float default_fov = dummy.view_setup.fov;
-                    
+                
                 for (auto config : g_render_frame_editor.GetConfigs())
                 {
                     float fov = default_fov;
@@ -405,6 +418,9 @@ bool FrameBufferRGB::WriteQOI(std::ostream& output) const
     desc.width = GetWidth();
     desc.height = GetHeight();
 
+    // TODO: Redefine QOI_MALLOC to allocate from a reuseable vector.
+    //  It will have to be thread-safe.
+
     int encoded_len;
     void* encoded = qoi_encode(m_data, &desc, &encoded_len);
     if (!encoded)
@@ -431,4 +447,130 @@ const char* CRecorder::VideoFormatDesc(VideoFormat format)
         "PNG image sequence\nlossless compression\nSlow",
     };
     return table[(int)format];
+}
+
+FramePool::FramePool(
+    size_t num_threads, size_t num_frames,
+    CRecorder::VideoFormat format, int png_compression,
+    uint32_t frame_width, uint32_t frame_height
+) : m_format(format), m_png_compression(png_compression)
+{
+    assert(num_frames > 0 && "Frame pool must contain at least 1 frame");
+
+    m_threads.reserve(num_threads);
+    m_all.reserve(num_frames);
+    m_full.reserve(num_frames);
+    m_empty.reserve(num_frames);
+
+    for (size_t i = 0; i < num_frames; ++i)
+    {
+        m_all.push_back(std::make_shared<Frame>(frame_width, frame_height));
+        m_empty.push_back(m_all.back());
+    }
+
+    for (size_t i = 0; i < num_threads; ++i)
+        m_threads.emplace_back(&WorkerLoop, this);
+}
+
+void FramePool::Finish()
+{
+    {
+        std::lock_guard lock{m_mutex};
+        m_all.clear();
+        m_empty.clear();
+    }
+    m_cv_empty.notify_all();
+    m_cv_full.notify_all();
+    
+    for (auto& thread : m_threads)
+        thread.join();
+    m_threads.clear();
+}
+
+void FramePool::PushFullFrame(FramePtr frame)
+{
+    assert(!frame->path.empty() && "Frame path must be set before call to PushFullFrame()");
+    {
+        std::lock_guard lock{m_mutex};
+        assert((m_all.empty() || m_full.size() < m_all.size()) && "More frames are being pushed than exists in the pool");
+        m_full.push_back(frame);
+    }
+    m_cv_full.notify_one();
+}
+
+FramePool::FramePtr FramePool::PopFullFrame()
+{
+    while (true)
+    {
+        FramePtr back;
+        {
+            std::unique_lock lock{m_mutex};
+            m_cv_full.wait(lock, [this]{ return m_all.empty() || !m_full.empty(); });
+            if (m_all.empty())
+                return nullptr;
+
+            back = m_full.back();
+            m_full.pop_back();
+        }
+        m_cv_full.notify_one();
+        return back;
+    }
+}
+
+void FramePool::PushEmptyFrame(FramePtr frame)
+{
+    frame->path.clear();
+
+    {
+        std::lock_guard lock{m_mutex};
+        assert((m_all.empty() || m_empty.size() < m_all.size()) && "More frames are being pushed than exists in the pool");
+        m_empty.push_back(frame);
+    }
+    m_cv_empty.notify_one();
+}
+
+FramePool::FramePtr FramePool::PopEmptyFrame()
+{
+    while (true)
+    {
+        FramePtr back;
+        {
+            std::unique_lock lock{m_mutex};
+            m_cv_empty.wait(lock, [this]{ return m_all.empty() || !m_empty.empty(); });
+            if (m_all.empty())
+                return nullptr;
+
+            back = m_empty.back();
+            m_empty.pop_back();
+        }
+        m_cv_empty.notify_one();
+        return back;
+    }
+}
+
+void FramePool::WorkerLoop(FramePool* pool)
+{
+    while (FramePtr frame = pool->PopFullFrame())
+    {
+        std::fstream file = std::fstream(frame->path, std::ios::out | std::ios::binary);
+        if (!file)
+        {
+            //SetFirstMovieError("Failed to open file for writing: '%s'", frame->path.string().c_str());
+            pool->PushEmptyFrame(frame);
+            break;
+        }
+        
+        bool result = false;
+        switch (pool->m_format)
+        {
+        case CRecorder::VideoFormat::PNG: result = frame->buffer.WritePNG(file, pool->m_png_compression); break;
+        case CRecorder::VideoFormat::QOI: result = frame->buffer.WriteQOI(file); break;
+        default:
+            assert(0 && "Unknown VideoFormat. A switch case may be missing.");
+        }
+        
+        pool->PushEmptyFrame(frame);
+        if (!result)
+            break;
+    }
 }

@@ -5,10 +5,17 @@
 #include <cstdlib>
 #include <filesystem>
 #include <Helper/imgui.h>
+#include <vector>
+#include <mutex>
+#include <condition_variable>
+
+class FramePool;
 
 class CRecorder : public CModule
 {
 public:
+    CRecorder();
+
     /// @brief A video format.
     /// Update @ref VideoFormatName and @ref VideoFormatDesc when changed!
     enum class VideoFormat : int
@@ -48,6 +55,7 @@ private:
     int m_png_compression_lvl = 1;
     int m_framerate = 60;
     VideoFormat m_video_format = VideoFormat::PNG;
+    int m_framepool_size = 1;
     
     // === Current movie info === //
 
@@ -56,6 +64,7 @@ private:
     std::filesystem::path m_movie_path;
     std::string m_temp_audio_name; // Path to temp audio file
     std::string m_first_movie_error;
+    std::shared_ptr<FramePool> m_framepool;
 };
 
 inline CRecorder g_recorder;
@@ -63,8 +72,8 @@ inline CRecorder g_recorder;
 class FrameBufferRGB
 {
 public:
-    const int NUM_CHANNELS = 3;
-    const int NUM_BYTES = 1;
+    static constexpr int NUM_CHANNELS = 3;
+    static constexpr int NUM_BYTES = 1;
 
     FrameBufferRGB(uint32_t width, uint32_t height)
         : m_width(width), m_height(height), m_data((uint8_t*)malloc(width * height * NUM_CHANNELS * NUM_BYTES)) { }
@@ -89,6 +98,72 @@ private:
     uint32_t m_width;
     uint32_t m_height;
     uint8_t* m_data;
+};
+
+/**
+ * @brief A thread-safe, adjustable pool of frames.
+ * 
+ * Threads are spawned in the constructor and do not stop until either the destructor or @ref Finish is called.
+ */
+class FramePool
+{
+public:
+    struct Frame
+    {
+        Frame(uint32_t width, uint32_t height) : buffer(width, height) {}
+        FrameBufferRGB buffer;
+        /// @brief Frame path. Must include file name and extension.
+        std::filesystem::path path;
+    };
+    using FramePtr = std::shared_ptr<Frame>;
+
+    FramePool(
+        size_t num_threads, size_t num_frames,
+        CRecorder::VideoFormat format, int png_compression,
+        uint32_t frame_width, uint32_t frame_height
+    );
+    ~FramePool() { Finish(); }
+
+    /// @brief Wait for all threads to end and drain the pool
+    void Finish();
+    /// @brief Free a frame, returning it to the pool
+    void PushEmptyFrame(FramePtr frame);
+    /**
+     * @brief Block indefinitely until an empty frame can be popped, or work has finished.
+     * 
+     * Fill this frame and pass it to @ref PushFullFrame.
+     * @return `nullptr` if all work is finished.
+     */
+    FramePtr PopEmptyFrame();
+    /// @brief Push a frame for a worker thread to pop and use
+    void PushFullFrame(FramePtr frame);
+    /**
+     * @brief Block indefinitely until a full frame can be popped, or work has finished.
+     * 
+     * Work on this frame and then pass it to @ref PushEmptyFrame.
+     * @return `nullptr` if all work is finished.
+     */
+    FramePtr PopFullFrame();
+
+private:
+    static void WorkerLoop(FramePool* pool);
+
+    const CRecorder::VideoFormat m_format;
+    const int m_png_compression;
+
+    std::vector<std::thread> m_threads;
+    /// @brief All frames in the pool.
+    /// This vector is cleared to indicate that no further work shall be added.
+    std::vector<FramePtr> m_all;
+    /// @brief Frames that are ready to be filled with pixels
+    std::vector<FramePtr> m_empty;
+    /// @brief Frames that are filled with pixels
+    std::vector<FramePtr> m_full;
+    /// @brief The list of threads waiting on @ref m_empty
+    std::condition_variable m_cv_empty;
+    /// @brief The list of threads waiting on @ref m_full
+    std::condition_variable m_cv_full;
+    std::mutex m_mutex;
 };
 
 template <class T, void(TFree)(T*)>
