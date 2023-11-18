@@ -2,6 +2,8 @@
 #include <Modules/BaseModule.h>
 #include <Streams/renderconfig.h>
 #include <shared_mutex>
+#include <unordered_map>
+#include <string>
 #include <mutex>
 
 class IMaterial;
@@ -25,7 +27,10 @@ public:
     void Set(RenderConfig::Ptr config);
     /**
      * @brief Signal that a config updated and should be re-applied. This calls @ref WriteLock.
-     * @param config The config that was updated. If valid, the signal will be raised if it is the active config.
+     * 
+     * The signal is raised when `config == nullptr` or `config == Get()`.
+     * The signal is not be raised when there is no active config.
+     * @param config The config that was updated, or `nullptr`
      */
     void SignalUpdate(RenderConfig::Ptr config = nullptr);
     /**
@@ -55,6 +60,19 @@ private:
         OverrideType_t mat_override_type = (OverrideType_t )0;
     };
 
+    struct OldMaterialParams
+    {
+        std::string name;
+        std::array<float, 4> color;
+    };
+
+    /// @brief Store a material's original params (if not already stored)
+    void StoreMaterialParams(IMaterial* mat);
+    /// @brief Restore the original parameters to a material
+    void RestoreMaterialParams(IMaterial* mat);
+    /// @brief Override the material's color
+    void SetMaterialColor(IMaterial* mat, const std::array<float, 4>& col);
+
     static IMaterial* CreateMatteMaterial();
     
     /// @brief Was the last DrawModelExecute call affected?
@@ -65,6 +83,13 @@ private:
     LastDrawParams m_last_dme_params;
     /// @brief A matte material
     IMaterial* m_matte_material = nullptr;
+    /**
+     * @brief Affected materials.
+     * 
+     * There is no guarantee that pointers remain valid, or that the pointer hasn't been re-occupied.
+     * If a material is found in the map, check that their strings match.
+     */
+    std::unordered_map<IMaterial*, OldMaterialParams> m_affected_materials;
     /// @brief Pretty please don't access this without a @ref ReadLock and @ref WriteLock!
     RenderConfig::Ptr m_config;
     std::shared_mutex m_mtx;

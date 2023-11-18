@@ -54,19 +54,21 @@ void ActiveRenderConfig::UpdateMaterials()
             handle = Interfaces::mat_system->NextMaterial(handle)
         )
     {
-        // TODO: Store original color modulation. Some materials (like shadow) actually rely on it.
         IMaterial* mat = Interfaces::mat_system->GetMaterial(handle);
-        std::array<float, 4> col = { 1,1,1,1 };
+        bool was_affected = false;
         if (m_config)
         {
             for (auto tweak = m_config->begin<MaterialTweak>(); tweak != m_config->end<MaterialTweak>(); ++tweak)
             {
                 if (tweak->IsMaterialAffected(mat))
-                    col = tweak->color_multiply;
+                {
+                    was_affected = true;
+                    SetMaterialColor(mat, tweak->color_multiply);
+                }
             }
         }
-        mat->ColorModulate(col[0], col[1], col[2]);
-        mat->AlphaModulate(col[3]);
+        if (!was_affected)
+            RestoreMaterialParams(mat);
     }
 }
 
@@ -166,6 +168,47 @@ int ActiveRenderConfig::OnOverrideView()
             view_setup->fov = tweak->fov;
     }
     return 0;
+}
+
+void ActiveRenderConfig::StoreMaterialParams(IMaterial* mat)
+{
+    auto it = m_affected_materials.find(mat);
+    if (it == m_affected_materials.end()) // Material will be added
+        it = m_affected_materials.insert(std::pair<IMaterial*, OldMaterialParams>(mat, {})).first;
+    else // Material will be validated
+    {
+        const auto& old_params = it->second;
+        if (mat->GetName() == old_params.name)
+            return; // The material already exists
+    }
+    
+    OldMaterialParams& params = it->second;
+    params.name = mat->GetName();
+    mat->GetColorModulation(&params.color[0], &params.color[1], &params.color[2]);
+    params.color[3] = mat->GetAlphaModulation();
+}
+
+void ActiveRenderConfig::RestoreMaterialParams(IMaterial* mat)
+{
+    auto it = m_affected_materials.find(mat);
+    if (it == m_affected_materials.end())
+        return;
+
+    const auto& old_params = it->second;
+    if (mat->GetName() == old_params.name)
+    {
+        mat->ColorModulate(old_params.color[0], old_params.color[1], old_params.color[2]);
+        mat->AlphaModulate(old_params.color[3]);
+    }
+    
+    m_affected_materials.erase(it);
+}
+
+void ActiveRenderConfig::SetMaterialColor(IMaterial* mat, const std::array<float, 4>& col)
+{
+    StoreMaterialParams(mat);
+    mat->ColorModulate(col[0], col[1], col[2]);
+    mat->AlphaModulate(col[3]);
 }
 
 IMaterial* ActiveRenderConfig::CreateMatteMaterial()
