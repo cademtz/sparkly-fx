@@ -3,13 +3,13 @@
 #include <string>
 
 /// @brief A combination of render tweaks to be used while rendering a frame
-class RenderConfig
+class Stream
 {
 public:
-    using Ptr = std::shared_ptr<RenderConfig>;
+    using Ptr = std::shared_ptr<Stream>;
     using ElementType = RenderTweak::Ptr;
 
-    RenderConfig(std::string&& name) : m_name(std::move(name)) {} 
+    Stream(std::string&& name) : m_name(std::move(name)) {} 
 
     std::string& GetName() { return m_name; }
     const std::string& GetName() const { return m_name; }
@@ -19,10 +19,10 @@ public:
     class const_type_iterator
     {
     public:
-        static const_type_iterator begin(const RenderConfig& r) {
+        static const_type_iterator begin(const Stream& r) {
             return const_type_iterator::const_type_iterator(get_begin_ptr(r), get_end_ptr(r));
         }
-        static const_type_iterator end(const RenderConfig& r) {
+        static const_type_iterator end(const Stream& r) {
             return const_type_iterator::const_type_iterator(get_end_ptr(r), get_end_ptr(r));
         }
         
@@ -46,7 +46,7 @@ public:
         const_type_iterator(const ElementType* next, const ElementType* end)
             : ptr(next), ptr_end(end) {}
         
-        static const ElementType* get_begin_ptr(const RenderConfig& r)
+        static const ElementType* get_begin_ptr(const Stream& r)
         {
             auto& tweaks = r.GetRenderTweaks();
             for (auto& tweak : tweaks)
@@ -57,7 +57,7 @@ public:
             return get_end_ptr(r);
         }
         
-        static const ElementType* get_end_ptr(const RenderConfig& r) {
+        static const ElementType* get_end_ptr(const Stream& r) {
             auto& tweaks = r.GetRenderTweaks();
             return tweaks.empty() ? nullptr : (&tweaks.back() + 1);
         }
