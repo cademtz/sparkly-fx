@@ -154,7 +154,7 @@ void MaterialTweak::OnMenu()
     bool set_is_updated = false; // Acquire a read lock and set `is_updated = true`
 
     set_is_updated |= ImGui::ColorEdit4("Color multiply", color_multiply.data());
-    ImGui::SameLine(); Helper::ImGuiHelpMarker("Use with the matte effect to get a solid color.");
+    ImGui::SameLine(); Helper::ImGuiHelpMarker("\"Tints\" the color of a material.");
 
     ImGui::TextUnformatted("Affected material groups:");
     
