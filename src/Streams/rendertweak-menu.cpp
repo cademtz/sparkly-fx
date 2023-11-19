@@ -22,9 +22,21 @@
 #include "rendertweak.h"
 #include <Modules/fx/ActiveRenderConfig.h>
 #include <SDK/texture_group_names.h>
-#include <imgui.h>
+#include <SDK/client_class.h>
 #include <Helper/imgui.h>
+#include <Helper/str.h>
+#include <Base/Interfaces.h>
+#include <imgui.h>
 #include <array>
+
+static std::vector<const char*> GetAllClassNames()
+{
+    std::vector<const char*> names;
+    ClientClass* client_class = Interfaces::hlclient->GetAllClasses();
+    for (; client_class; client_class = client_class->m_pNext)
+        names.emplace_back(client_class->m_pNetworkName);
+    return names;
+}
 
 void PropRenderTweak::OnMenu()
 {
@@ -34,8 +46,9 @@ void PropRenderTweak::OnMenu()
 void EntityFilterTweak::OnMenu()
 {
     const char* const ENTITY_POPUP = "##popup_add_class";
+    static std::vector<const char*> class_names = GetAllClassNames();
     
-    // === Helper functions ===
+    // === Helper functions === //
     auto classes_getter = [](void* data, int index, const char** out_text) -> bool
     {
         auto set = (decltype(classes)*)data;
@@ -82,7 +95,7 @@ void EntityFilterTweak::OnMenu()
     ImGui::RadioButton("Entities in the list", (int*)&filter_choice, (int)FilterChoice::WHITELIST);
     ImGui::RadioButton("Entities not in the list", (int*)&filter_choice, (int)FilterChoice::BLACKLIST);
 
-    // === Include entities ===
+    // === Include entities === //
     static int current_class = 0;
 
     if (filter_choice == FilterChoice::ALL)
@@ -103,21 +116,34 @@ void EntityFilterTweak::OnMenu()
     if (filter_choice == FilterChoice::ALL)
         ImGui::EndDisabled();
 
-    // === New entity popup ==
+    // === New entity popup == //
     if (ImGui::BeginPopup(ENTITY_POPUP))
     {
-        static std::array<char, 64> input_entity_class;
-        ImGui::InputText("Class name##input_class", input_entity_class.data(), input_entity_class.size());
-        bool ok = ImGui::Button("Ok##input_class");
-        ImGui::SameLine();
-        bool cancel = ImGui::Button("Cancel##input_class");
+        static std::array<char, 64> search_input = {0};
+        ImGui::InputText("Search", search_input.data(), search_input.size() - 1);
 
-        if (ok)
+        const char* selected = nullptr;
+        if (ImGui::BeginListBox("Class names"))
+        {
+            for (size_t i = 0; i < class_names.size(); ++i)
+            {
+                if (!search_input[0] || Helper::strcasestr(class_names[i], search_input.data()))
+                {
+                    if (ImGui::Selectable(class_names[i], false, ImGuiSelectableFlags_DontClosePopups))
+                        selected = class_names[i];
+                }
+            }
+            ImGui::EndListBox();
+        }
+
+        bool close = ImGui::Button("Close");
+
+        if (selected)
         {
             auto lock = g_active_rendercfg.WriteLock();
-            classes.emplace(input_entity_class.data());
+            classes.emplace(selected);
         }
-        if (ok || cancel)
+        if (close)
             ImGui::CloseCurrentPopup();
         ImGui::EndPopup();
     }
@@ -138,7 +164,7 @@ void MaterialTweak::OnMenu()
     ImGui::RadioButton("Materials not in the list", (int*)&filter_choice, (int)FilterChoice::BLACKLIST);
     set_is_updated |= past_filter_choice != filter_choice;
 
-    // === Include material groups ===
+    // === Include material groups === //
     if (filter_choice == FilterChoice::ALL)
         ImGui::BeginDisabled();
     
