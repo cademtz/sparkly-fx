@@ -28,13 +28,13 @@ public:
     /**
      * @brief Signal that a config updated and should be re-applied. This calls @ref WriteLock.
      * 
-     * The signal is raised when `config == nullptr` or `config == Get()`.
-     * The signal is not be raised when there is no active config.
-     * @param config The config that was updated, or `nullptr`
+     * The signal only raises if a config is active.
+     * @param config The config that was updated, or `nullptr` to update with the current one.
      */
     void SignalUpdate(RenderConfig::Ptr config = nullptr);
     /**
      * @brief Immediately update material colors.
+     * 
      * Only the recorder should use this to update materials many times in a single frame.
      * This calls @ref ReadLock.
      */

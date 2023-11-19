@@ -1,13 +1,14 @@
 #pragma once
 
-/*	Comments:
- *		Hold on:
- *			Thanks Altimor!
- *			https://www.unknowncheats.me/forum/counterstrike-global-offensive/137398-very-fast-and-elegant-netvar-class.html
+/**
+ * @file
+ * @brief A search tree of networked variables by name
+ * 
+ * Code written by Altimor:
+ * https://www.unknowncheats.me/forum/counterstrike-global-offensive/137398-very-fast-and-elegant-netvar-class.html
  */
 
 #include <string>
-#include <vector>
 #include <unordered_map>
 #include <memory>
 
