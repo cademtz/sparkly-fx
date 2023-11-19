@@ -1,4 +1,4 @@
-#include "ActiveRenderConfig.h"
+#include "ActiveStream.h"
 #include <Hooks/ModelRenderHook.h>
 #include <Hooks/ClientHook.h>
 #include <Base/Interfaces.h>
@@ -9,7 +9,7 @@
 #include <SDK/cdll_int.h>
 #include <SDK/view_shared.h>
 
-void ActiveRenderConfig::StartListening()
+void ActiveStream::StartListening()
 {
     m_matte_material = CreateMatteMaterial();
     if (!m_matte_material)
@@ -23,28 +23,28 @@ void ActiveRenderConfig::StartListening()
     Listen(EVENT_OVERRIDEVIEW, [this] { return OnOverrideView(); });
 }
 
-RenderConfig::Ptr ActiveRenderConfig::Get()
+Stream::Ptr ActiveStream::Get()
 {
     auto lock = ReadLock();
-    return m_config;
+    return m_stream;
 }
 
-void ActiveRenderConfig::Set(RenderConfig::Ptr config)
+void ActiveStream::Set(Stream::Ptr stream)
 {
     auto lock = WriteLock();
-    m_should_update_materials = m_config != config;
-    m_config = config;
+    m_should_update_materials = m_stream != stream;
+    m_stream = stream;
 }
 
-void ActiveRenderConfig::SignalUpdate(RenderConfig::Ptr config)
+void ActiveStream::SignalUpdate(Stream::Ptr stream)
 {
     auto lock = WriteLock();
-    if (m_config == nullptr)
+    if (m_stream == nullptr)
         return;
-    m_should_update_materials = config == nullptr || m_config == config;
+    m_should_update_materials = stream == nullptr || m_stream == stream;
 }
 
-void ActiveRenderConfig::UpdateMaterials()
+void ActiveStream::UpdateMaterials()
 {
     auto lock = ReadLock();
     m_should_update_materials = false;
@@ -56,9 +56,9 @@ void ActiveRenderConfig::UpdateMaterials()
     {
         IMaterial* mat = Interfaces::mat_system->GetMaterial(handle);
         bool was_affected = false;
-        if (m_config)
+        if (m_stream)
         {
-            for (auto tweak = m_config->begin<MaterialTweak>(); tweak != m_config->end<MaterialTweak>(); ++tweak)
+            for (auto tweak = m_stream->begin<MaterialTweak>(); tweak != m_stream->end<MaterialTweak>(); ++tweak)
             {
                 if (tweak->IsMaterialAffected(mat))
                 {
@@ -72,14 +72,14 @@ void ActiveRenderConfig::UpdateMaterials()
     }
 }
 
-int ActiveRenderConfig::OnDrawProp()
+int ActiveStream::OnDrawProp()
 {
     auto lock = ReadLock();
-    if (!m_config)
+    if (!m_stream)
         return 0;
 
-    auto tweak = m_config->begin<PropRenderTweak>();
-    if (tweak == m_config->end<PropRenderTweak>())
+    auto tweak = m_stream->begin<PropRenderTweak>();
+    if (tweak == m_stream->end<PropRenderTweak>())
         return 0;
     
     if (tweak->hide)
@@ -87,14 +87,14 @@ int ActiveRenderConfig::OnDrawProp()
     return 0;
 }
 
-int ActiveRenderConfig::OnDrawPropArray() {
+int ActiveStream::OnDrawPropArray() {
     return OnDrawProp();
 }
 
-int ActiveRenderConfig::PreDrawModelExecute()
+int ActiveStream::PreDrawModelExecute()
 {
     auto lock = ReadLock();
-    if (!m_config)
+    if (!m_stream)
         return 0;
     
     auto* ctx = &g_hk_model_render.Context()->model_execute;
@@ -103,7 +103,7 @@ int ActiveRenderConfig::PreDrawModelExecute()
     if (entity == nullptr || entity->GetClientClass() == nullptr)
         return 0;
 
-    for (auto tweak = m_config->begin<EntityFilterTweak>(); tweak != m_config->end<EntityFilterTweak>(); ++tweak)
+    for (auto tweak = m_stream->begin<EntityFilterTweak>(); tweak != m_stream->end<EntityFilterTweak>(); ++tweak)
     {
         if (!tweak->IsEntityAffected(entity->GetClientClass()->GetName()))
             continue;
@@ -128,7 +128,7 @@ int ActiveRenderConfig::PreDrawModelExecute()
     return 0;
 }
 
-int ActiveRenderConfig::PostDrawModelExecute()
+int ActiveStream::PostDrawModelExecute()
 {
     auto lock = ReadLock();
 
@@ -143,7 +143,7 @@ int ActiveRenderConfig::PostDrawModelExecute()
     return 0;
 }
 
-int ActiveRenderConfig::OnFrameStageNotify()
+int ActiveStream::OnFrameStageNotify()
 {
     ClientFrameStage_t stage = g_hk_client.Context()->curStage;
     if (stage == FRAME_RENDER_START)
@@ -155,14 +155,14 @@ int ActiveRenderConfig::OnFrameStageNotify()
     return 0;
 }
 
-int ActiveRenderConfig::OnOverrideView()
+int ActiveStream::OnOverrideView()
 {
     auto lock = ReadLock();
-    if (!m_config)
+    if (!m_stream)
         return 0;
     
     auto view_setup = g_hk_client.Context()->pSetup;
-    for (auto tweak = m_config->begin<CameraTweak>(); tweak != m_config->end<CameraTweak>(); ++tweak)
+    for (auto tweak = m_stream->begin<CameraTweak>(); tweak != m_stream->end<CameraTweak>(); ++tweak)
     {
         if (tweak->fov_override)
             view_setup->fov = tweak->fov;
@@ -170,7 +170,7 @@ int ActiveRenderConfig::OnOverrideView()
     return 0;
 }
 
-void ActiveRenderConfig::StoreMaterialParams(IMaterial* mat)
+void ActiveStream::StoreMaterialParams(IMaterial* mat)
 {
     auto it = m_affected_materials.find(mat);
     if (it == m_affected_materials.end()) // Material will be added
@@ -188,7 +188,7 @@ void ActiveRenderConfig::StoreMaterialParams(IMaterial* mat)
     params.color[3] = mat->GetAlphaModulation();
 }
 
-void ActiveRenderConfig::RestoreMaterialParams(IMaterial* mat)
+void ActiveStream::RestoreMaterialParams(IMaterial* mat)
 {
     auto it = m_affected_materials.find(mat);
     if (it == m_affected_materials.end())
@@ -204,14 +204,14 @@ void ActiveRenderConfig::RestoreMaterialParams(IMaterial* mat)
     m_affected_materials.erase(it);
 }
 
-void ActiveRenderConfig::SetMaterialColor(IMaterial* mat, const std::array<float, 4>& col)
+void ActiveStream::SetMaterialColor(IMaterial* mat, const std::array<float, 4>& col)
 {
     StoreMaterialParams(mat);
     mat->ColorModulate(col[0], col[1], col[2]);
     mat->AlphaModulate(col[3]);
 }
 
-IMaterial* ActiveRenderConfig::CreateMatteMaterial()
+IMaterial* ActiveStream::CreateMatteMaterial()
 {
     KeyValues* vmt_values = new KeyValues("UnlitGeneric");
     vmt_values->SetString("$basetexture", "vgui/white_additive");

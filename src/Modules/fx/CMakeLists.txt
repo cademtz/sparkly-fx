@@ -1,6 +1,6 @@
 target_sources(xsdk-base PRIVATE
-    RenderConfigEditor.cpp
-    ActiveRenderConfig.cpp
+    StreamEditor.cpp
+    ActiveStream.cpp
     recorder.cpp
     skybox.cpp
 )

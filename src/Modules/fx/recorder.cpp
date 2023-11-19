@@ -4,8 +4,8 @@
 #include <Hooks/ClientHook.h>
 #include <Modules/Menu.h>
 #include <Modules/Draw.h>
-#include "ActiveRenderConfig.h"
-#include "RenderConfigEditor.h"
+#include "ActiveStream.h"
+#include "StreamEditor.h"
 #include <Base/Interfaces.h>
 #include <Base/fnv1a.h>
 #include <SDK/cdll_int.h>
@@ -221,7 +221,7 @@ bool CRecorder::StartMovie(const std::string& path)
         return false;
     }
 
-    if (g_render_frame_editor.GetConfigs().empty()) // Default video folder
+    if (g_render_frame_editor.GetStreams().empty()) // Default video folder
     {
         std::filesystem::path dir = m_movie_path / DEFAULT_STREAM_NAME;
         std::filesystem::create_directory(dir, err);
@@ -233,7 +233,7 @@ bool CRecorder::StartMovie(const std::string& path)
     }
     else // Video folders named after each stream
     {
-        for (auto stream : g_render_frame_editor.GetConfigs())
+        for (auto stream : g_render_frame_editor.GetStreams())
         {
             std::filesystem::path dir = m_movie_path / stream->GetName();
             std::filesystem::create_directory(dir, err);
@@ -340,7 +340,7 @@ int CRecorder::OnFrameStageNotify()
         {
             // We don't explicitly lock any mutex.
             // Assume that nothing is modified while recording.
-            if (g_render_frame_editor.GetConfigs().empty())
+            if (g_render_frame_editor.GetStreams().empty())
                 WriteFrame(DEFAULT_STREAM_NAME);
             else
             {
@@ -352,7 +352,7 @@ int CRecorder::OnFrameStageNotify()
                 Interfaces::hlclient->GetPlayerView(dummy.view_setup);
                 float default_fov = dummy.view_setup.fov;
                 
-                for (auto config : g_render_frame_editor.GetConfigs())
+                for (auto config : g_render_frame_editor.GetStreams())
                 {
                     float fov = default_fov;
                     for (auto tweak = config->begin<CameraTweak>(); tweak != config->end<CameraTweak>(); ++tweak)

@@ -1,6 +1,6 @@
 #pragma once
 #include <Modules/BaseModule.h>
-#include <Streams/renderconfig.h>
+#include <Streams/Stream.h>
 #include <shared_mutex>
 #include <unordered_map>
 #include <string>
@@ -10,28 +10,28 @@ class IMaterial;
 enum OverrideType_t;
 
 /**
- * @brief Store and apply the active render config.
+ * @brief Store and apply the active render stream.
  * 
  * Some tweaks and properties (like @ref MaterialTweak) are applied once, when necessary.
- * If such special tweaks/values are modified, call @ref ActiveRenderConfig::SignalUpdate to make it re-apply them.
+ * If such special tweaks/values are modified, call @ref ActiveStream::SignalUpdate to make it re-apply them.
  */
-class ActiveRenderConfig : public CModule
+class ActiveStream : public CModule
 {
 public:
     void StartListening() override;
     
-    /// @brief Get the active config. This calls @ref ReadLock. 
-    RenderConfig::Ptr Get();
-    /// @brief Set the active config. This calls @ref WriteLock.
-    /// @param config Use `nullptr` to clear the active config
-    void Set(RenderConfig::Ptr config);
+    /// @brief Get the active stream. This calls @ref ReadLock. 
+    Stream::Ptr Get();
+    /// @brief Set the active stream. This calls @ref WriteLock.
+    /// @param stream Use `nullptr` to clear the active stream
+    void Set(Stream::Ptr stream);
     /**
-     * @brief Signal that a config updated and should be re-applied. This calls @ref WriteLock.
+     * @brief Signal that a stream updated and should be re-applied. This calls @ref WriteLock.
      * 
-     * The signal only raises if a config is active.
-     * @param config The config that was updated, or `nullptr` to update with the current one.
+     * The signal only raises if a stream is active.
+     * @param stream The stream that was updated, or `nullptr` to update with the current one.
      */
-    void SignalUpdate(RenderConfig::Ptr config = nullptr);
+    void SignalUpdate(Stream::Ptr stream = nullptr);
     /**
      * @brief Immediately update material colors.
      * 
@@ -39,9 +39,9 @@ public:
      * This calls @ref ReadLock.
      */
     void UpdateMaterials();
-    /// @brief Acquire a lock for editing the active config 
+    /// @brief Acquire a lock for editing the active stream 
     std::unique_lock<std::shared_mutex> WriteLock() { return std::unique_lock{m_mtx};}
-    /// @brief Acquire a lock for reading the active config
+    /// @brief Acquire a lock for reading the active stream
     std::shared_lock<std::shared_mutex> ReadLock() { return std::shared_lock{m_mtx};}
 
 protected:
@@ -91,8 +91,8 @@ private:
      */
     std::unordered_map<IMaterial*, OldMaterialParams> m_affected_materials;
     /// @brief Pretty please don't access this without a @ref ReadLock and @ref WriteLock!
-    RenderConfig::Ptr m_config;
+    Stream::Ptr m_stream;
     std::shared_mutex m_mtx;
 };
 
-inline ActiveRenderConfig g_active_rendercfg;
+inline ActiveStream g_active_rendercfg;

@@ -15,12 +15,12 @@
  * 
  * Updating the preview
  * --------------------
- * Some tweaks (like @ref MaterialTweak) are read by @ref ActiveRenderConfig only when necessary.
- * If such special tweaks/values are modified, call @ref ActiveRenderConfig::SignalUpdate to make it re-apply them.
+ * Some tweaks (like @ref MaterialTweak) are read by @ref ActiveStream only when necessary.
+ * If such special tweaks/values are modified, call @ref ActiveStream::SignalUpdate to make it re-apply them.
  */
 
 #include "rendertweak.h"
-#include <Modules/fx/ActiveRenderConfig.h>
+#include <Modules/fx/ActiveStream.h>
 #include <SDK/texture_group_names.h>
 #include <SDK/client_class.h>
 #include <Helper/imgui.h>
