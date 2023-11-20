@@ -5,6 +5,7 @@ namespace vgui { class IPanel; }
 class IEngineTool;
 class IStudioRender;
 class IVRenderView;
+class ICvar;
 
 namespace Interfaces
 {
@@ -23,4 +24,5 @@ namespace Interfaces
 	inline IStudioRender* studio_render;
 	inline IVModelRenderWrapper* model_render = nullptr;
 	inline IVRenderView* render_view = nullptr;
+	inline ICvar* cvar = nullptr;
 }

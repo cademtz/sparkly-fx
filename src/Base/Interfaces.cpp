@@ -13,6 +13,7 @@
 #include <SDK/IPanel.h>
 #include <SDK/vgui_baseui_interface.h>
 #include <SDK/ienginetool.h>
+#include <SDK/icvar.h>
 
 #ifdef _WIN64
 #define SIG_CLIENTMODE "8B 0D ? ? ? ? 48 8B 01"
@@ -101,6 +102,10 @@ void Interfaces::CreateInterfaces()
 	fn = GetFactory("studiorender.dll");
 	studio_render = (IStudioRender*)fn(STUDIO_RENDER_INTERFACE_VERSION, 0);
 
+	// vstdlib //
+	fn = GetFactory("vstdlib.dll");
+	cvar = (ICvar*)fn(CVAR_INTERFACE_VERSION, 0);
+
 	AssertInterfacePointer("IEngineClient", engine);
 	AssertInterfacePointer("IClientDLL", hlclient);
 	AssertInterfacePointer("IClientEntityList", entlist);
@@ -111,8 +116,7 @@ void Interfaces::CreateInterfaces()
 	AssertInterfacePointer("IVModelRender", model_render);
 	AssertInterfacePointer("CMaterialSystem", mat_system);
 	AssertInterfacePointer("IVRenderView", render_view);
-	//if (!engine || !hlclient || !entlist || !panels || !vgui || !trace)
-	//	FATAL("Unsupported game interfaces");
+	AssertInterfacePointer("ICvar", cvar);
 
 	// Misc //
 
