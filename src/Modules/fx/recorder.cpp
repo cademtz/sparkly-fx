@@ -280,19 +280,31 @@ void CRecorder::StopMovie()
     m_framepool->Finish();
     g_active_rendercfg.Set(nullptr);
     
-    // Move the audio file from its temp path to its official destination.
-    // FIXME: Sometimes this fails. I don't know why yet. Maybe the engine is still writing to it?
+    // Sometimes the audio file cannot be renamed because the engine is still writing to it.
+    // The solution? Retry a couple times in another thread.
+
     std::filesystem::path new_audio_path = m_movie_path / "audio.wav";
     std::filesystem::path old_audio_path = game_dir / m_temp_audio_name;
-    std::error_code err;
-    std::filesystem::rename(old_audio_path, new_audio_path, err);
-    if (err)
+    std::thread([](std::filesystem::path&& old_path, std::filesystem::path&& new_path)
     {
-        SetFirstMovieError("Failed to move temp audio file (%s): '%s' -> '%s'",
+        const int WAIT_MS = 200;
+        const int TIMEOUT_MS = 10'000;
+
+        std::error_code err;
+        for (int attempts = 0; attempts * WAIT_MS < TIMEOUT_MS; ++attempts)
+        {
+            std::filesystem::rename(old_path, new_path, err);
+            if (!err)
+                return;
+            std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_MS));
+        }
+
+        g_recorder.SetFirstMovieError("Failed to move temp audio file (%s): '%s' -> '%s'",
             err.message().c_str(),
-            old_audio_path.string().c_str(),
-            new_audio_path.string().c_str());
-    }
+            old_path.string().c_str(),
+            new_path.string().c_str()
+        );
+    }, std::move(old_audio_path), std::move(new_audio_path)).detach();
 }
 
 void CRecorder::SetFirstMovieError(const char* fmt, ...)
