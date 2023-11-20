@@ -20,6 +20,14 @@ void StreamEditor::StartListening()
     Listen(EVENT_MENU, [this]{ return OnMenu(); });
 }
 
+void StreamEditor::OnEndMovie()
+{
+    Stream::Ptr stream = nullptr;
+    if (m_preview && m_stream_index < m_streams.size())
+        stream = m_streams[m_stream_index];
+    g_active_stream.Set(stream);
+}
+
 int StreamEditor::OnMenu()
 {
     bool is_recording = g_recorder.IsRecordingMovie();

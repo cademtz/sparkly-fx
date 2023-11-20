@@ -8,6 +8,8 @@
 #include <SDK/client_class.h>
 #include <SDK/cdll_int.h>
 #include <SDK/view_shared.h>
+#include <SDK/icvar.h>
+#include <SDK/convar.h>
 
 void ActiveStream::StartListening()
 {
@@ -30,14 +32,19 @@ void ActiveStream::Set(Stream::Ptr stream)
     auto lock = WriteLock();
     m_should_update_materials = m_stream != stream;
     m_stream = stream;
+    UpdateFog();
 }
 
-void ActiveStream::SignalUpdate(Stream::Ptr stream)
+void ActiveStream::SignalUpdate(Stream::Ptr stream, bool materials)
 {
     auto lock = WriteLock();
     if (m_stream == nullptr)
         return;
-    m_should_update_materials = stream == nullptr || m_stream == stream;
+    if (stream == nullptr || m_stream == stream)
+    {
+        m_should_update_materials |= materials;
+        UpdateFog();
+    }
 }
 
 void ActiveStream::UpdateMaterials()
@@ -66,6 +73,52 @@ void ActiveStream::UpdateMaterials()
         if (!was_affected)
             RestoreMaterialParams(mat);
     }
+}
+
+void ActiveStream::UpdateFog()
+{
+    static ConVar* fog_override = Interfaces::cvar->FindVar("fog_override");
+    static ConVar* fog_enable = Interfaces::cvar->FindVar("fog_enable");
+    static ConVar* fog_start = Interfaces::cvar->FindVar("fog_start");
+    static ConVar* fog_end = Interfaces::cvar->FindVar("fog_end");
+    static ConVar* fog_color = Interfaces::cvar->FindVar("fog_color");
+
+    static ConVar* skyfog_enable = Interfaces::cvar->FindVar("fog_enableskybox");
+    static ConVar* skyfog_start = Interfaces::cvar->FindVar("fog_startskybox");
+    static ConVar* skyfog_end = Interfaces::cvar->FindVar("fog_endskybox");
+    static ConVar* skyfog_color = Interfaces::cvar->FindVar("fog_colorskybox");
+
+    if (!m_stream)
+    {
+        fog_override->SetValue(0);
+        return;
+    }
+    
+    auto tweak = m_stream->begin<FogTweak>();
+    if (tweak == m_stream->end<FogTweak>())
+    {
+        fog_override->SetValue(0);
+        return;
+    }
+    fog_override->SetValue(1);
+
+    std::array<char, 16> textbuf;
+    
+    sprintf_s(textbuf.data(), textbuf.size(), "%d %d %d",
+        (int)(tweak->fog_color[0] * 255), (int)(tweak->fog_color[1] * 255), (int)(tweak->fog_color[2] * 255)
+    );
+    fog_enable->SetValue(tweak->fog_enabled);
+    fog_start->SetValue(tweak->fog_start);
+    fog_end->SetValue(tweak->fog_end);
+    fog_color->SetValue(textbuf.data());
+
+    sprintf_s(textbuf.data(), textbuf.size(), "%d %d %d",
+        (int)(tweak->skyfog_color[0] * 255), (int)(tweak->skyfog_color[1] * 255), (int)(tweak->skyfog_color[2] * 255)
+    );
+    skyfog_enable->SetValue(tweak->skyfog_enabled);
+    skyfog_start->SetValue(tweak->skyfog_start);
+    skyfog_end->SetValue(tweak->skyfog_end);
+    skyfog_color->SetValue(textbuf.data());
 }
 
 int ActiveStream::OnDrawProp()

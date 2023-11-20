@@ -199,6 +199,11 @@ bool CRecorder::StartMovie(const std::string& path)
 {
     if (IsRecordingMovie())
         return false;
+    if (!Interfaces::engine->IsInGame())
+    {
+        SetFirstMovieError("Must be in-game to record");
+        return false;
+    }
     
     auto lock = g_active_stream.ReadLock();
 
@@ -278,7 +283,7 @@ void CRecorder::StopMovie()
     m_is_recording = false;
     Interfaces::engine_tool->EndMovieRecording();
     m_framepool->Finish();
-    g_active_stream.Set(nullptr);
+    g_stream_editor.OnEndMovie(); // This just sets the preview stream again
     
     // Sometimes the audio file cannot be renamed because the engine is still writing to it.
     // The solution? Retry a couple times in another thread.
@@ -366,29 +371,26 @@ int CRecorder::OnFrameStageNotify()
                 WriteFrame(DEFAULT_STREAM_NAME);
             else
             {
-                // TODO: Get rid of this test struct
-                struct
-                {
-                    CViewSetup view_setup;
-                } dummy;
-                Interfaces::hlclient->GetPlayerView(dummy.view_setup);
-                float default_fov = dummy.view_setup.fov;
+                CViewSetup view_setup;
+                Interfaces::hlclient->GetPlayerView(view_setup);
+                float default_fov = view_setup.fov;
                 
-                for (auto config : g_stream_editor.GetStreams())
+                for (auto stream : g_stream_editor.GetStreams())
                 {
                     float fov = default_fov;
-                    for (auto tweak = config->begin<CameraTweak>(); tweak != config->end<CameraTweak>(); ++tweak)
+                    for (auto tweak = stream->begin<CameraTweak>(); tweak != stream->end<CameraTweak>(); ++tweak)
                     {
                         if (tweak->fov_override)
                             fov = tweak->fov;
                     }
 
-                    g_active_stream.Set(config);
+                    g_active_stream.Set(stream);
+                    g_active_stream.SignalUpdate();
                     // Update the materials right now, instead of waiting for the next frame.
                     g_active_stream.UpdateMaterials();
-                    dummy.view_setup.fov = fov;
-                    Interfaces::hlclient->RenderView(dummy.view_setup, VIEW_CLEAR_DEPTH, RENDERVIEW_DRAWVIEWMODEL | RENDERVIEW_DRAWHUD);
-                    WriteFrame(config->GetName());
+                    view_setup.fov = fov;
+                    Interfaces::hlclient->RenderView(view_setup, VIEW_CLEAR_COLOR, RENDERVIEW_DRAWVIEWMODEL | RENDERVIEW_DRAWHUD);
+                    WriteFrame(stream->GetName());
                 }
             }
 

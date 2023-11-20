@@ -104,9 +104,30 @@ public:
     bool fov_override = false;
 };
 
+class FogTweak : public RenderTweak
+{
+public:
+    const char* GetName() const override { return "Fog"; }
+    std::shared_ptr<RenderTweak> Clone() const override {
+        return std::make_shared<FogTweak>(*this);
+    }
+    void OnMenu() override;
+
+    bool fog_enabled;
+    int fog_start;
+    int fog_end;
+    std::array<float, 3> fog_color;
+
+    bool skyfog_enabled;
+    int skyfog_start;
+    int skyfog_end;
+    std::array<float, 3> skyfog_color;
+};
+
 inline const std::vector<RenderTweak::ConstPtr> RenderTweak::default_tweaks = {
     std::make_shared<PropRenderTweak>(),
     std::make_shared<EntityFilterTweak>(),
     std::make_shared<MaterialTweak>(),
     std::make_shared<CameraTweak>(),
+    std::make_shared<FogTweak>(),
 };

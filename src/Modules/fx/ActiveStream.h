@@ -31,8 +31,9 @@ public:
      * 
      * The signal only raises if a stream is active.
      * @param stream The stream that was updated, or `nullptr` to update with the current one.
+     * @param materials If false, the materials signal is not set
      */
-    void SignalUpdate(Stream::Ptr stream = nullptr);
+    void SignalUpdate(Stream::Ptr stream = nullptr, bool materials = true /* TODO: Add explciit flags, instead of this */);
     /**
      * @brief Immediately update material colors.
      * 
@@ -40,6 +41,7 @@ public:
      * This calls @ref ReadLock.
      */
     void UpdateMaterials();
+    void UpdateFog();
     /// @brief Acquire a lock for editing the active stream 
     std::unique_lock<std::shared_mutex> WriteLock() { return std::unique_lock{m_mtx};}
     /// @brief Acquire a lock for reading the active stream
@@ -80,6 +82,7 @@ private:
     bool m_is_dme_affected = false;
     /// @brief Should we iterate all materials and update them?
     bool m_should_update_materials = false;
+    bool m_should_update_fog = false;
     /// @brief Parameters stored during the last DrawModelExecute call
     LastDrawParams m_last_dme_params;
     /**
