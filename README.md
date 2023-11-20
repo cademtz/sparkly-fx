@@ -34,9 +34,9 @@ cd build
 2. Configure a 32-bit or 64-bit build (depending on the game)
 ```sh
 # This will use the default architecture
-cmake <xsdk-base-folder> .. -D XSDK_BUILD_EXAMPLES=1
+cmake <xsdk-base-folder> -D XSDK_BUILD_EXAMPLES=1
 # This will use 32-bit, specifically
-cmake <xsdk-base-folder> .. -D XSDK_BUILD_EXAMPLES=1 -A Win32
+cmake <xsdk-base-folder> -D XSDK_BUILD_EXAMPLES=1 -A Win32
 ```
 3. Build a debug or release binary
 ```sh
