@@ -6,7 +6,7 @@
  * ------------
  * Acquire a write lock before modifying any dynamic collection (list, vector, set, string, ...):
  * ```cpp
- *      auto lock = g_active_rendercfg.WriteLock();
+ *      auto lock = g_active_stream.WriteLock();
  * ```
  * This avoids crashes where another thread is iterating the collection.
  * 
@@ -20,7 +20,9 @@
  */
 
 #include "rendertweak.h"
+#include "materials.h"
 #include <Modules/fx/ActiveStream.h>
+#include <Modules/fx/StreamEditor.h>
 #include <SDK/texture_group_names.h>
 #include <SDK/client_class.h>
 #include <Helper/imgui.h>
@@ -65,7 +67,7 @@ void EntityFilterTweak::OnMenu()
     };
     auto classes_remove = [](decltype(classes)& set, size_t index)
     {
-        std::unique_lock lock = g_active_rendercfg.WriteLock();
+        std::unique_lock lock = g_active_stream.WriteLock();
         
         if (index < 0 || index >= set.size())
             return;
@@ -75,12 +77,28 @@ void EntityFilterTweak::OnMenu()
         set.erase(it);
     };
 
-    if (ImGui::BeginCombo("Render effect", RenderEffectName(render_effect)))
+    if (ImGui::BeginCombo("Material", custom_material ? custom_material->name.c_str() : MaterialChoiceName(render_effect)))
     {
-        for (int i = 0; i < (int)RenderEffect::_COUNT; ++i)
+        for (int i = 0; i < (int)MaterialChoice::_COUNT; ++i)
         {
-            if (ImGui::Selectable(RenderEffectName((RenderEffect)i), i == (int)render_effect))
-                render_effect = (RenderEffect)i;
+            if (ImGui::Selectable(MaterialChoiceName((MaterialChoice)i), i == (int)render_effect))
+            {
+                render_effect = (MaterialChoice)i;
+                custom_material = nullptr;
+            }
+        }
+
+        size_t i = 0;
+        for (auto mat : g_stream_editor.GetCustomMaterials())
+        {
+            ImGui::PushID(i);
+            if (ImGui::Selectable(mat->name.c_str(), custom_material == mat))
+            {
+                render_effect = MaterialChoice::CUSTOM;
+                custom_material = mat;
+            }
+            ImGui::PopID();
+            ++i;
         }
         ImGui::EndCombo();
     }
@@ -140,7 +158,7 @@ void EntityFilterTweak::OnMenu()
 
         if (selected)
         {
-            auto lock = g_active_rendercfg.WriteLock();
+            auto lock = g_active_stream.WriteLock();
             classes.emplace(selected);
         }
         if (close)
@@ -184,7 +202,7 @@ void MaterialTweak::OnMenu()
         ImGui::EndDisabled();
 
     if (set_is_updated)
-        g_active_rendercfg.SignalUpdate();
+        g_active_stream.SignalUpdate();
 }
 
 void CameraTweak::OnMenu()

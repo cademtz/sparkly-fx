@@ -200,7 +200,7 @@ bool CRecorder::StartMovie(const std::string& path)
     if (IsRecordingMovie())
         return false;
     
-    auto lock = g_active_rendercfg.ReadLock();
+    auto lock = g_active_stream.ReadLock();
 
     m_first_movie_error.clear();
     m_movie_path.clear();
@@ -222,7 +222,7 @@ bool CRecorder::StartMovie(const std::string& path)
         return false;
     }
 
-    if (g_render_frame_editor.GetStreams().empty()) // Default video folder
+    if (g_stream_editor.GetStreams().empty()) // Default video folder
     {
         std::filesystem::path dir = m_movie_path / DEFAULT_STREAM_NAME;
         std::filesystem::create_directory(dir, err);
@@ -234,7 +234,7 @@ bool CRecorder::StartMovie(const std::string& path)
     }
     else // Video folders named after each stream
     {
-        for (auto stream : g_render_frame_editor.GetStreams())
+        for (auto stream : g_stream_editor.GetStreams())
         {
             std::filesystem::path dir = m_movie_path / stream->GetName();
             std::filesystem::create_directory(dir, err);
@@ -278,7 +278,7 @@ void CRecorder::StopMovie()
     m_is_recording = false;
     Interfaces::engine_tool->EndMovieRecording();
     m_framepool->Finish();
-    g_active_rendercfg.Set(nullptr);
+    g_active_stream.Set(nullptr);
     
     // Sometimes the audio file cannot be renamed because the engine is still writing to it.
     // The solution? Retry a couple times in another thread.
@@ -362,7 +362,7 @@ int CRecorder::OnFrameStageNotify()
         {
             // We don't explicitly lock any mutex.
             // Assume that nothing is modified while recording.
-            if (g_render_frame_editor.GetStreams().empty())
+            if (g_stream_editor.GetStreams().empty())
                 WriteFrame(DEFAULT_STREAM_NAME);
             else
             {
@@ -374,7 +374,7 @@ int CRecorder::OnFrameStageNotify()
                 Interfaces::hlclient->GetPlayerView(dummy.view_setup);
                 float default_fov = dummy.view_setup.fov;
                 
-                for (auto config : g_render_frame_editor.GetStreams())
+                for (auto config : g_stream_editor.GetStreams())
                 {
                     float fov = default_fov;
                     for (auto tweak = config->begin<CameraTweak>(); tweak != config->end<CameraTweak>(); ++tweak)
@@ -383,9 +383,9 @@ int CRecorder::OnFrameStageNotify()
                             fov = tweak->fov;
                     }
 
-                    g_active_rendercfg.Set(config);
+                    g_active_stream.Set(config);
                     // Update the materials right now, instead of waiting for the next frame.
-                    g_active_rendercfg.UpdateMaterials();
+                    g_active_stream.UpdateMaterials();
                     dummy.view_setup.fov = fov;
                     Interfaces::hlclient->RenderView(dummy.view_setup, VIEW_CLEAR_DEPTH, RENDERVIEW_DRAWVIEWMODEL | RENDERVIEW_DRAWHUD);
                     WriteFrame(config->GetName());

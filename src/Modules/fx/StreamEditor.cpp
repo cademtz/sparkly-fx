@@ -2,7 +2,10 @@
 #include "ActiveStream.h"
 #include "recorder.h"
 #include <Modules/Menu.h>
+#include <Streams/materials.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
+#include <SDK/KeyValues.h>
+#include <Base/Interfaces.h>
 #include <array>
 #include <algorithm>
 
@@ -11,7 +14,9 @@
 #define POPUP_TWEAK_CREATOR "##popup_tweak_creator"
 #define POPUP_TWEAK_EDITOR "##popup_tweak_editor"
 
-void StreamEditor::StartListening() {
+void StreamEditor::StartListening()
+{
+    CreateDefaultMaterials();
     Listen(EVENT_MENU, [this]{ return OnMenu(); });
 }
 
@@ -51,7 +56,7 @@ void StreamEditor::ShowStreamListEditor()
     Stream::Ptr selected = nullptr;
     if (m_stream_index < m_streams.size())
         selected = m_streams[m_stream_index];
-    Stream::Ptr prev_selected = selected;
+    static Stream::Ptr prev_selected = selected;
     
     if (ImGui::Button("Add##stream"))
     {
@@ -71,8 +76,9 @@ void StreamEditor::ShowStreamListEditor()
 
     selected = m_stream_index < m_streams.size() ? m_streams[m_stream_index] : nullptr;
     changed_selection |= prev_selected != selected;
+    prev_selected = selected;
     if (changed_selection || changed_preview)
-        g_active_rendercfg.Set(m_preview ? selected : nullptr);
+        g_active_stream.Set(m_preview ? selected : nullptr);
 
     if (selected)
     {
@@ -131,8 +137,21 @@ void StreamEditor::PopupStreamRenamer(Stream::Ptr stream)
         return;
     }
     
-    if (stream && !input[0])
-        strncpy_s(input.data(), input.size(), stream->GetName().c_str(), input.size() - 1);
+    if (!input[0])
+    {
+        if (stream)
+            strncpy_s(input.data(), input.size(), stream->GetName().c_str(), input.size() - 1);
+        else
+        {
+            // Find a good default name
+            for (size_t i = m_streams.size(); ; ++i)
+            {
+                sprintf_s(input.data(), input.size(), "new stream %d", i);
+                if (!IsDuplicateName(std::string_view(input.data())))
+                    break;
+            }
+        }
+    }
 
     // Focus on the following text input
     if ((ImGui::IsWindowFocused() || !ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow)) && !ImGui::IsAnyItemActive())
@@ -147,7 +166,7 @@ void StreamEditor::PopupStreamRenamer(Stream::Ptr stream)
     {
         if (input[0])
         {
-            if (!IsDuplicateName(input.data()))
+            if (!IsDuplicateName(std::string_view(input.data())))
                 accepted = true;
             else if (stream && input.data() == stream->GetName())
                 cancel |= true;
@@ -201,7 +220,7 @@ void StreamEditor::ShowStreamEditor(Stream::Ptr stream)
             tweaks_list->erase(tweaks_list->begin() + current_tweak);
         // The removed tweak may have included semi-permanent effect.
         // Signal an update to ensure any semi-permanent effects are reset/recalculated.
-        g_active_rendercfg.SignalUpdate(stream);
+        g_active_stream.SignalUpdate(stream);
     }
 
     ImGui::SetNextItemWidth(-1);
@@ -239,7 +258,7 @@ void StreamEditor::PopupTweakCreator(Stream::Ptr stream)
         {
             if (choice >= 0 && choice < RenderTweak::default_tweaks.size())
             {
-                auto lock = g_active_rendercfg.WriteLock();
+                auto lock = g_active_stream.WriteLock();
                 stream->GetRenderTweaks().emplace_back(RenderTweak::default_tweaks.at(choice)->Clone());
             }
         }
@@ -255,10 +274,73 @@ void StreamEditor::ShowTweakEditor(RenderTweak::Ptr render_tweak) {
     render_tweak->OnMenu();
 }
 
-bool StreamEditor::IsDuplicateName(const std::string& name) const
+bool StreamEditor::IsDuplicateName(std::string_view& name) const
 {
     auto existing = std::find_if(m_streams.begin(), m_streams.end(), [&](auto& cfg) {
         return cfg->GetName() == name;
     });
     return existing != m_streams.end();
+}
+
+void StreamEditor::CreateDefaultMaterials()
+{
+    KeyValues* vmt_values = new KeyValues("UnlitGeneric");
+    vmt_values->SetString("$basetexture", "vgui/white_additive");
+    vmt_values->SetBool("$model", true);
+    vmt_values->SetBool("$flat", true);
+    vmt_values->SetBool("$selfillum", true);
+    vmt_values->SetBool("$znearer", true);
+    
+    // The KeyValues instance is owned by the new material, and should not be deleted
+    IMaterial* mat = Interfaces::mat_system->CreateMaterial("sparklyfx_solid.vmt", vmt_values);
+    if (mat)
+        m_custom_mats.emplace_back(std::make_shared<CustomMaterial>("Solid", mat));
+    else
+        vmt_values->deleteThis();
+
+    vmt_values = new KeyValues("UnlitGeneric");
+    vmt_values->SetString("$basetexture", "vgui/white_additive");
+    vmt_values->SetBool("$model", true);
+    vmt_values->SetBool("$flat", true);
+    vmt_values->SetBool("$selfillum", true);
+    vmt_values->SetBool("$nofog", true);
+    vmt_values->SetBool("$znearer", true);
+    
+    // The KeyValues instance is owned by the new material, and should not be deleted
+    mat = Interfaces::mat_system->CreateMaterial("sparklyfx_matte.vmt", vmt_values);
+    if (mat)
+        m_custom_mats.emplace_back(std::make_shared<CustomMaterial>("Matte", mat));
+    else
+        vmt_values->deleteThis();
+
+    vmt_values = new KeyValues("UnlitGeneric");
+    vmt_values->SetString("$basetexture", "vgui/white_additive");
+    vmt_values->SetBool("$model", true);
+    vmt_values->SetBool("$flat", true);
+    //vmt_values->SetBool("$nocull", true);
+    vmt_values->SetBool("$selfillum", true);
+    vmt_values->SetBool("$nofog", true);
+    vmt_values->SetBool("$znearer", true);
+    vmt_values->SetBool("$wireframe", true);
+
+    mat = Interfaces::mat_system->CreateMaterial("sparklyfx_matte_wireframe.vmt", vmt_values);
+    if (mat)
+        m_custom_mats.emplace_back(std::make_shared<CustomMaterial>("Matte wireframe", mat));
+    else
+        vmt_values->deleteThis();
+    
+    vmt_values = new KeyValues("UnlitGeneric");
+    vmt_values->SetString("$basetexture", "vgui/white_additive");
+    vmt_values->SetBool("$model", true);
+    vmt_values->SetBool("$flat", true);
+    //vmt_values->SetBool("$nocull", true);
+    vmt_values->SetBool("$selfillum", true);
+    vmt_values->SetBool("$znearer", true);
+    vmt_values->SetBool("$wireframe", true);
+
+    mat = Interfaces::mat_system->CreateMaterial("sparklyfx_wireframe.vmt", vmt_values);
+    if (mat)
+        m_custom_mats.emplace_back(std::make_shared<CustomMaterial>("Wireframe", mat));
+    else
+        vmt_values->deleteThis();
 }

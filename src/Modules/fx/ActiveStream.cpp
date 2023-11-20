@@ -1,20 +1,16 @@
 #include "ActiveStream.h"
+#include <Streams/materials.h>
 #include <Hooks/ModelRenderHook.h>
 #include <Hooks/ClientHook.h>
 #include <Base/Interfaces.h>
 #include <Base/Entity.h>
 #include <SDK/ivrenderview.h>
 #include <SDK/client_class.h>
-#include <SDK/KeyValues.h>
 #include <SDK/cdll_int.h>
 #include <SDK/view_shared.h>
 
 void ActiveStream::StartListening()
 {
-    m_matte_material = CreateMatteMaterial();
-    if (!m_matte_material)
-        printf(__FUNCTION__ ": Couldn't create matte material");
-    
     Listen(EVENT_DRAW_PROP, [this]{ return OnDrawProp(); });
     Listen(EVENT_DRAW_PROP_ARRAY, [this] { return OnDrawPropArray(); });
     Listen(EVENT_PRE_DRAW_MODEL_EXECUTE, [this] { return PreDrawModelExecute(); });
@@ -121,9 +117,8 @@ int ActiveStream::PreDrawModelExecute()
         Interfaces::render_view->SetColorModulation(tweak->color_multiply.data());
         Interfaces::render_view->SetBlend(tweak->color_multiply[3]);
 
-        // TODO: If tweak->render_effect == RenderEffect::MATTE, apply a special matte material
-        if (tweak->render_effect == EntityFilterTweak::RenderEffect::MATTE)
-            Interfaces::model_render->ForcedMaterialOverride(m_matte_material);
+        if (tweak->custom_material)
+            Interfaces::model_render->ForcedMaterialOverride(tweak->custom_material->material);
     }
     return 0;
 }
@@ -209,23 +204,4 @@ void ActiveStream::SetMaterialColor(IMaterial* mat, const std::array<float, 4>& 
     StoreMaterialParams(mat);
     mat->ColorModulate(col[0], col[1], col[2]);
     mat->AlphaModulate(col[3]);
-}
-
-IMaterial* ActiveStream::CreateMatteMaterial()
-{
-    KeyValues* vmt_values = new KeyValues("UnlitGeneric");
-    vmt_values->SetString("$basetexture", "vgui/white_additive");
-    vmt_values->SetBool("$model", true);
-    vmt_values->SetBool("$flat", true);
-    vmt_values->SetBool("$nocull", false);
-    vmt_values->SetBool("$selfillum", true);
-    vmt_values->SetBool("$halflambert", true);
-    vmt_values->SetBool("$nofog", true);
-    vmt_values->SetBool("$znearer", true);
-    
-    // The KeyValues instance is owned by the new material, and should not be deleted
-    IMaterial* mat = Interfaces::mat_system->CreateMaterial("sparklyfx_matte.vmt", vmt_values);
-    if (!mat)
-        vmt_values->deleteThis();
-    return mat;
 }
