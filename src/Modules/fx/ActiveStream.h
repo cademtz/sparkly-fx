@@ -3,6 +3,7 @@
 #include <Streams/Stream.h>
 #include <shared_mutex>
 #include <unordered_map>
+#include <list>
 #include <string>
 #include <mutex>
 
@@ -10,7 +11,7 @@ class IMaterial;
 enum OverrideType_t;
 
 /**
- * @brief Store and apply the active render stream.
+ * @brief Store and apply the active stream.
  * 
  * Some tweaks and properties (like @ref MaterialTweak) are applied once, when necessary.
  * If such special tweaks/values are modified, call @ref ActiveStream::SignalUpdate to make it re-apply them.
@@ -73,7 +74,7 @@ private:
     /// @brief Override the material's color
     void SetMaterialColor(IMaterial* mat, const std::array<float, 4>& col);
 
-    static IMaterial* CreateMatteMaterial();
+    IMaterial* CreateMatteMaterial();
     
     /// @brief Was the last DrawModelExecute call affected?
     bool m_is_dme_affected = false;
@@ -81,8 +82,6 @@ private:
     bool m_should_update_materials = false;
     /// @brief Parameters stored during the last DrawModelExecute call
     LastDrawParams m_last_dme_params;
-    /// @brief A matte material
-    IMaterial* m_matte_material = nullptr;
     /**
      * @brief Affected materials.
      * 
@@ -95,4 +94,4 @@ private:
     std::shared_mutex m_mtx;
 };
 
-inline ActiveStream g_active_rendercfg;
+inline ActiveStream g_active_stream;

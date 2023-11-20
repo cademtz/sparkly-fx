@@ -2,6 +2,9 @@
 #include <Modules/BaseModule.h>
 #include <Streams/Stream.h>
 #include <memory>
+#include <list>
+
+class CustomMaterial;
 
 /**
  * @brief Add, remove, and edit video streams.
@@ -15,6 +18,9 @@ class StreamEditor : public CModule
 {
 public:
     void StartListening() override;
+    std::list<std::shared_ptr<CustomMaterial>>& GetCustomMaterials() {
+        return m_custom_mats;
+    }
     
 protected:
     int OnMenu();
@@ -25,7 +31,7 @@ protected:
     void PopupTweakCreator(Stream::Ptr stream);
     void ShowTweakEditor(RenderTweak::Ptr render_tweak);
     /// @brief True if the name already exists 
-    bool IsDuplicateName(const std::string& name) const;
+    bool IsDuplicateName(std::string_view& name) const;
 
     friend class CRecorder;
     /**
@@ -36,11 +42,15 @@ protected:
     const std::vector<Stream::Ptr>& GetStreams() const { return m_streams; }
 
 private:
+    void CreateDefaultMaterials();
+
     /// @brief A list of every stream. No duplicate names are allowed.
     std::vector<Stream::Ptr> m_streams;
+    /// @brief Default and user-created materials
+    std::list<std::shared_ptr<CustomMaterial>> m_custom_mats;
     /// @brief The selected stream index, or a value >= `m_streams.size()`
     int m_stream_index;
     bool m_preview = false;
 };
 
-inline StreamEditor g_render_frame_editor;
+inline StreamEditor g_stream_editor;

@@ -42,16 +42,16 @@ bool EntityFilterTweak::IsEntityAffected(const std::string& class_name) const
 }
 
 bool EntityFilterTweak::IsEffectInvisible() const {
-    return render_effect == RenderEffect::INVISIBLE || color_multiply[3] == 0;
+    return render_effect == MaterialChoice::INVISIBLE || color_multiply[3] == 0;
 }
 
-const char* EntityFilterTweak::RenderEffectName(RenderEffect value)
+const char* EntityFilterTweak::MaterialChoiceName(MaterialChoice value)
 {
     switch (value)
     {
-    case RenderEffect::NORMAL: return "Normal";
-    case RenderEffect::MATTE: return "Matte";
-    case RenderEffect::INVISIBLE: return "Invisible";
+    case MaterialChoice::NORMAL: return "Normal";
+    case MaterialChoice::CUSTOM: return "Custom";
+    case MaterialChoice::INVISIBLE: return "Invisible";
     }
     return nullptr;
 }

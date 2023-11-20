@@ -44,7 +44,7 @@ public:
 class EntityFilterTweak : public RenderTweak
 {
 public:
-    enum class RenderEffect : int { NORMAL, MATTE, INVISIBLE, _COUNT };
+    enum class MaterialChoice : int { NORMAL, INVISIBLE, CUSTOM, _COUNT = CUSTOM };
 
     const char* GetName() const override { return "Entities"; }
     std::shared_ptr<RenderTweak> Clone() const override {
@@ -57,12 +57,13 @@ public:
     /// @return `true` if the effect will make an entity invisible
     bool IsEffectInvisible() const;
 
-    static const char* RenderEffectName(RenderEffect value);
+    static const char* MaterialChoiceName(MaterialChoice value);
 
     /// @brief Chooses whether entities should be filtered, and which ones
     FilterChoice filter_choice = FilterChoice::ALL;
     /// @brief An effect given to each entity
-    RenderEffect render_effect = RenderEffect::MATTE;
+    MaterialChoice render_effect = MaterialChoice::NORMAL;
+    std::shared_ptr<class CustomMaterial> custom_material = nullptr;
     /// @brief A color multiply given to each entity
     std::array<float, 4> color_multiply = { 1,1,1,1 };
 
