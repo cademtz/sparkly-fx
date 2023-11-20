@@ -31,7 +31,10 @@ public:
     bool ShouldRecordFrame();
     bool StartMovie(const std::string& path);
     void StopMovie();
+    /// @brief Set the movie error, if one doesn't exist yet. Locks @ref m_mutex_error.
     void SetFirstMovieError(const char* fmt, ...);
+    /// @brief Get the first movie error, or `nullptr` if it hasn't been set. Locks @ref m_mutex_error.
+    const char* GetFirstMovieError();
     static const char* VideoFormatName(VideoFormat format);
     static const char* VideoFormatDesc(VideoFormat format);
 
@@ -64,6 +67,8 @@ private:
     std::filesystem::path m_movie_path;
     std::string m_temp_audio_name; // Path to temp audio file
     std::string m_first_movie_error;
+    /// @brief Locked in order to read/write @ref m_first_movie_error
+    std::mutex m_mutex_error;
     std::shared_ptr<FramePool> m_framepool;
 };
 
