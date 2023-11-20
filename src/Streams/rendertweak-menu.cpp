@@ -217,3 +217,21 @@ void CameraTweak::OnMenu()
     if (!fov_override)
         ImGui::EndDisabled();
 }
+
+void FogTweak::OnMenu()
+{
+    const int FOG_STEP = 50;
+    bool should_update = false;
+    should_update |= ImGui::Checkbox("Enable fog", &fog_enabled);
+    should_update |= ImGui::InputInt("Fog start", &fog_start, FOG_STEP);
+    should_update |= ImGui::InputInt("Fog end", &fog_end, FOG_STEP);
+    should_update |= ImGui::ColorEdit3("Fog color", fog_color.data(), ImGuiColorEditFlags_InputRGB | ImGuiColorEditFlags_Uint8);
+
+    should_update |= ImGui::Checkbox("Enable sky fog", &skyfog_enabled);
+    should_update |= ImGui::InputInt("Sky fog start", &skyfog_start, FOG_STEP);
+    should_update |= ImGui::InputInt("Sky fog end", &skyfog_end, FOG_STEP);
+    should_update |= ImGui::ColorEdit3("Sky fog color", skyfog_color.data(), ImGuiColorEditFlags_InputRGB | ImGuiColorEditFlags_Uint8);
+
+    if (should_update)
+        g_active_stream.SignalUpdate(nullptr, false);
+}

@@ -18,6 +18,8 @@ class StreamEditor : public CModule
 {
 public:
     void StartListening() override;
+    /// @brief Sets appropriate preview stream again
+    void OnEndMovie();
     std::list<std::shared_ptr<CustomMaterial>>& GetCustomMaterials() {
         return m_custom_mats;
     }
@@ -50,7 +52,7 @@ private:
     std::list<std::shared_ptr<CustomMaterial>> m_custom_mats;
     /// @brief The selected stream index, or a value >= `m_streams.size()`
     int m_stream_index;
-    bool m_preview = false;
+    bool m_preview = true;
 };
 
 inline StreamEditor g_stream_editor;
