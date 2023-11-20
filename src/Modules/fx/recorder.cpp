@@ -171,10 +171,11 @@ int CRecorder::OnMenu()
         ImGui::TextWrapped("Working directory: %s", working_dir.string().c_str());
         ImGui::EndDisabled();
         
-        if (!m_first_movie_error.empty())
+        const char* movie_err = GetFirstMovieError();
+        if (movie_err)
         {
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
-            ImGui::TextColored(ImVec4(1,1,0,1), "[Error] %s", m_first_movie_error.c_str());
+            ImGui::TextColored(ImVec4(1,1,0,1), "[Error] %s", movie_err);
             ImGui::PopStyleColor();
         }
 
@@ -296,6 +297,7 @@ void CRecorder::StopMovie()
 
 void CRecorder::SetFirstMovieError(const char* fmt, ...)
 {
+    std::lock_guard lock{m_mutex_error};
     if (!m_first_movie_error.empty())
         return;
     
@@ -307,6 +309,14 @@ void CRecorder::SetFirstMovieError(const char* fmt, ...)
     va_end(args);
 
     m_first_movie_error.resize(strlen(m_first_movie_error.c_str()));
+}
+
+const char* CRecorder::GetFirstMovieError()
+{
+    std::lock_guard lock{m_mutex_error};
+    if (m_first_movie_error.empty())
+        return nullptr;
+    return m_first_movie_error.c_str();
 }
 
 void CRecorder::WriteFrame(const std::string& stream_name)
@@ -444,7 +454,7 @@ const char* CRecorder::VideoFormatDesc(VideoFormat format)
 {
     const char* const table[] = {
         "QOI image sequence\nLossless compression\nFast\n(https://qoiformat.org/)",
-        "PNG image sequence\nlossless compression\nSlow",
+        "PNG image sequence\nLossless compression\nSlow",
     };
     return table[(int)format];
 }
@@ -555,7 +565,7 @@ void FramePool::WorkerLoop(FramePool* pool)
         std::fstream file = std::fstream(frame->path, std::ios::out | std::ios::binary);
         if (!file)
         {
-            //SetFirstMovieError("Failed to open file for writing: '%s'", frame->path.string().c_str());
+            g_recorder.SetFirstMovieError("Failed to open file for writing: '%s'", frame->path.string().c_str());
             pool->PushEmptyFrame(frame);
             break;
         }
@@ -570,7 +580,11 @@ void FramePool::WorkerLoop(FramePool* pool)
         }
         
         pool->PushEmptyFrame(frame);
-        if (!result)
+        if (!file)
+            g_recorder.SetFirstMovieError("Failure while writing frame: '%s'", frame->path.string().c_str());
+        else if (!result)
+            g_recorder.SetFirstMovieError("Failed to encode frame: '%s'", frame->path.string().c_str());
+        if (!file || !result)
             break;
     }
 }
