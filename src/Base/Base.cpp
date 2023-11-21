@@ -271,7 +271,7 @@ static LONG WINAPI UnhandledFilter(struct _EXCEPTION_POINTERS* info) {
 		auto time_now = std::chrono::system_clock::now();
 		std::time_t rawtime = std::chrono::system_clock::to_time_t(time_now);
 		trace << "--------------------------------------------------" << std::endl;
-		trace << std::put_time(std::gmtime(&rawtime), "%c %Z") << std::endl;
+		trace << std::put_time(std::localtime(&rawtime), "%c %Z") << std::endl;
 		trace << "--------------------------------------------------" << std::endl;
 	}
 
