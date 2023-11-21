@@ -22,7 +22,6 @@
 #include "rendertweak.h"
 #include "materials.h"
 #include <Modules/fx/ActiveStream.h>
-#include <Modules/fx/StreamEditor.h>
 #include <SDK/texture_group_names.h>
 #include <SDK/client_class.h>
 #include <Helper/imgui.h>
@@ -77,7 +76,7 @@ void EntityFilterTweak::OnMenu()
         set.erase(it);
     };
 
-    if (ImGui::BeginCombo("Material", custom_material ? custom_material->name.c_str() : MaterialChoiceName(render_effect)))
+    if (ImGui::BeginCombo("Material", custom_material ? custom_material->GetName().c_str() : MaterialChoiceName(render_effect)))
     {
         for (int i = 0; i < (int)MaterialChoice::_COUNT; ++i)
         {
@@ -89,10 +88,10 @@ void EntityFilterTweak::OnMenu()
         }
 
         size_t i = 0;
-        for (auto mat : g_stream_editor.GetCustomMaterials())
+        for (auto mat : CustomMaterial::GetAll())
         {
             ImGui::PushID(i);
-            if (ImGui::Selectable(mat->name.c_str(), custom_material == mat))
+            if (ImGui::Selectable(mat->GetName().c_str(), custom_material == mat))
             {
                 render_effect = MaterialChoice::CUSTOM;
                 custom_material = mat;

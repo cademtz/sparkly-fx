@@ -4,8 +4,6 @@
 #include <memory>
 #include <list>
 
-class CustomMaterial;
-
 /**
  * @brief Add, remove, and edit video streams.
  * 
@@ -20,9 +18,6 @@ public:
     void StartListening() override;
     /// @brief Sets appropriate preview stream again
     void OnEndMovie();
-    std::list<std::shared_ptr<CustomMaterial>>& GetCustomMaterials() {
-        return m_custom_mats;
-    }
     
 protected:
     int OnMenu();
@@ -48,8 +43,6 @@ private:
 
     /// @brief A list of every stream. No duplicate names are allowed.
     std::vector<Stream::Ptr> m_streams;
-    /// @brief Default and user-created materials
-    std::list<std::shared_ptr<CustomMaterial>> m_custom_mats;
     /// @brief The selected stream index, or a value >= `m_streams.size()`
     int m_stream_index;
     bool m_preview = true;

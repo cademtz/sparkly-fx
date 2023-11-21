@@ -302,7 +302,7 @@ void StreamEditor::CreateDefaultMaterials()
     // The KeyValues instance is owned by the new material, and should not be deleted
     IMaterial* mat = Interfaces::mat_system->CreateMaterial("sparklyfx_solid.vmt", vmt_values);
     if (mat)
-        m_custom_mats.emplace_back(std::make_shared<CustomMaterial>("Solid", mat));
+        CustomMaterial::AddCustomMaterial("Solid", mat);
     else
         vmt_values->deleteThis();
 
@@ -317,7 +317,7 @@ void StreamEditor::CreateDefaultMaterials()
     // The KeyValues instance is owned by the new material, and should not be deleted
     mat = Interfaces::mat_system->CreateMaterial("sparklyfx_matte.vmt", vmt_values);
     if (mat)
-        m_custom_mats.emplace_back(std::make_shared<CustomMaterial>("Matte", mat));
+        CustomMaterial::AddCustomMaterial("Matte", mat);
     else
         vmt_values->deleteThis();
 
@@ -333,7 +333,7 @@ void StreamEditor::CreateDefaultMaterials()
 
     mat = Interfaces::mat_system->CreateMaterial("sparklyfx_matte_wireframe.vmt", vmt_values);
     if (mat)
-        m_custom_mats.emplace_back(std::make_shared<CustomMaterial>("Matte wireframe", mat));
+        CustomMaterial::AddCustomMaterial("Matte wireframe", mat);
     else
         vmt_values->deleteThis();
     
@@ -348,7 +348,7 @@ void StreamEditor::CreateDefaultMaterials()
 
     mat = Interfaces::mat_system->CreateMaterial("sparklyfx_wireframe.vmt", vmt_values);
     if (mat)
-        m_custom_mats.emplace_back(std::make_shared<CustomMaterial>("Wireframe", mat));
+        CustomMaterial::AddCustomMaterial("Wireframe", mat);
     else
         vmt_values->deleteThis();
 }

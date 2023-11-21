@@ -171,7 +171,7 @@ int ActiveStream::PreDrawModelExecute()
         Interfaces::render_view->SetBlend(tweak->color_multiply[3]);
 
         if (tweak->custom_material)
-            Interfaces::model_render->ForcedMaterialOverride(tweak->custom_material->material);
+            Interfaces::model_render->ForcedMaterialOverride(tweak->custom_material->GetMaterial());
     }
     return 0;
 }
