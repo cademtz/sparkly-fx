@@ -17,13 +17,17 @@ public:
     const std::string& GetName() const { return m_name; }
     IMaterial* GetMaterial() const { return m_material; }
 
-    static const std::list<Ptr>& GetAll() { return m_custom_mats; }
+    static const std::list<Ptr>& GetAll() { return custom_mats; }
     static Ptr AddCustomMaterial(std::string&& name, IMaterial* material) {
-        return m_custom_mats.emplace_back(std::make_shared<CustomMaterial>(std::move(name), material));
+        return custom_mats.emplace_back(std::make_shared<CustomMaterial>(std::move(name), material));
     }
 
+protected:
+    friend class StreamEditor;
+    static void CreateDefaultMaterials();
+
 private:
-    static inline std::list<Ptr> m_custom_mats;
+    static inline std::list<Ptr> custom_mats;
     
     std::string m_name;
     // TODO: Destroy this when CustomMaterial is destroyed.
