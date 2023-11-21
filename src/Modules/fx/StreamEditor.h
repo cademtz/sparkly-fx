@@ -38,9 +38,6 @@ protected:
      */
     const std::vector<Stream::Ptr>& GetStreams() const { return m_streams; }
 
-private:
-    void CreateDefaultMaterials();
-
     /// @brief A list of every stream. No duplicate names are allowed.
     std::vector<Stream::Ptr> m_streams;
     /// @brief The selected stream index, or a value >= `m_streams.size()`
