@@ -1,4 +1,5 @@
 #include "ClientHook.h"
+#include <Base/AsmTools.h>
 #include <Base/Interfaces.h>
 #include <Base/Sig.h>
 #include <SDK/usercmd.h>
