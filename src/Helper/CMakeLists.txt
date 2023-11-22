@@ -1,1 +1,4 @@
-target_sources(xsdk-base PRIVATE helper.cpp)
+target_sources(xsdk-base PRIVATE
+    imgui.cpp
+    entity.cpp
+)

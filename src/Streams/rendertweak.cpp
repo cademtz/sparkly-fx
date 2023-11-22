@@ -1,6 +1,8 @@
 #include "rendertweak.h"
-#include "SDK/texture_group_names.h"
-#include "SDK/imaterial.h"
+#include <SDK/texture_group_names.h>
+#include <SDK/imaterial.h>
+#include <Base/Entity.h>
+#include <Helper/entity.h>
 
 const std::array<const char*, 27> MaterialTweak::TEXTURE_GROUPS = {
     TEXTURE_GROUP_LIGHTMAP,
@@ -32,13 +34,23 @@ const std::array<const char*, 27> MaterialTweak::TEXTURE_GROUPS = {
     TEXTURE_GROUP_MORPH_TARGETS,
 };
 
-bool EntityFilterTweak::IsEntityAffected(const std::string& class_name) const
+bool EntityFilterTweak::IsEntityAffected(CBaseEntity* entity) const
 {
     if (filter_choice == FilterChoice::ALL)
         return true;
     
-    bool is_in_list = classes.find(class_name) != classes.end();
-    return filter_choice == FilterChoice::WHITELIST ? is_in_list : !is_in_list;
+    bool is_specified = false;
+    switch (Helper::GetEntityType(entity))
+    {
+    case Helper::EntityType::PLAYER: is_specified |= filter_player; break;
+    case Helper::EntityType::WEAPON: is_specified |= filter_weapon; break;
+    case Helper::EntityType::WEARABLE: is_specified |= filter_wearable; break;
+    case Helper::EntityType::PROJECTILE: is_specified |= filter_projectile; break;
+    }
+    
+    if (!is_specified)
+        is_specified |= classes.find(entity->GetClientClass()) != classes.end();
+    return filter_choice == FilterChoice::WHITELIST ? is_specified : !is_specified;
 }
 
 bool EntityFilterTweak::IsEffectInvisible() const {

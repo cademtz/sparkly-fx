@@ -19,16 +19,20 @@ public:
     /// @brief Sets appropriate preview stream again
     void OnEndMovie();
     
-protected:
+private:
     int OnMenu();
     void ShowStreamListEditor();
     /// @brief Rename a stream, or create one if `stream == nullptr`
     void PopupStreamRenamer(Stream::Ptr stream);
+    void PopupStreamPresets();
     void ShowStreamEditor(Stream::Ptr stream);
     void PopupTweakCreator(Stream::Ptr stream);
     void ShowTweakEditor(RenderTweak::Ptr render_tweak);
     /// @brief True if the name already exists 
-    bool IsDuplicateName(std::string_view& name) const;
+    bool IsDuplicateName(std::string_view name) const;
+    /// @brief Create a unique name (by appending a number to it)
+    /// @param base_name Beginning text for the name 
+    std::string MakeUniqueName(std::string_view base_name) const;
 
     friend class CRecorder;
     /**

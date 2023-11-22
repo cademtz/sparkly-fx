@@ -10,6 +10,7 @@
 #include <algorithm>
 
 #define POPUP_STREAM_RENAMER "##popup_stream_renamer"
+#define POPUP_STREAM_PRESETS "##popup_stream_presets"
 #define POPUP_STREAM_EDITOR "##popup_stream_editor"
 #define POPUP_TWEAK_CREATOR "##popup_tweak_creator"
 #define POPUP_TWEAK_EDITOR "##popup_tweak_editor"
@@ -71,6 +72,11 @@ void StreamEditor::ShowStreamListEditor()
         m_stream_index = m_streams.size();
         ImGui::OpenPopup(POPUP_STREAM_RENAMER);
     } ImGui::SameLine();
+    if (ImGui::Button("Presets##stream"))
+    {
+        m_stream_index = m_streams.size();
+        ImGui::OpenPopup(POPUP_STREAM_PRESETS);
+    } ImGui::SameLine();
     if (ImGui::Button("Remove##stream"))
     {
         if (m_stream_index < m_streams.size())
@@ -121,6 +127,7 @@ void StreamEditor::ShowStreamListEditor()
     }
 
     PopupStreamRenamer(selected);
+    PopupStreamPresets();
 }
 
 void StreamEditor::PopupStreamRenamer(Stream::Ptr stream)
@@ -149,16 +156,8 @@ void StreamEditor::PopupStreamRenamer(Stream::Ptr stream)
     {
         if (stream)
             strncpy_s(input.data(), input.size(), stream->GetName().c_str(), input.size() - 1);
-        else
-        {
-            // Find a good default name
-            for (size_t i = m_streams.size(); ; ++i)
-            {
-                sprintf_s(input.data(), input.size(), "new stream %d", i);
-                if (!IsDuplicateName(std::string_view(input.data())))
-                    break;
-            }
-        }
+        else // Use a default name
+            strncpy_s(input.data(), input.size(), MakeUniqueName("new stream").c_str(), input.size() - 1);
     }
 
     // Focus on the following text input
@@ -193,6 +192,33 @@ void StreamEditor::PopupStreamRenamer(Stream::Ptr stream)
 
     if (accepted || cancel)
         ImGui::CloseCurrentPopup();
+    ImGui::EndPopup();
+}
+
+void StreamEditor::PopupStreamPresets()
+{
+    if (!ImGui::BeginPopup(POPUP_STREAM_PRESETS))
+        return;
+    
+    Stream::ConstPtr selection = nullptr;
+
+    if (ImGui::BeginListBox("Presets"))
+    {
+        for (Stream::ConstPtr preset : Stream::GetPresets())
+        {
+            if (ImGui::Selectable(preset->GetName().c_str()))
+                selection = preset;
+        }
+        ImGui::EndListBox();
+    }
+    
+    if (selection)
+    {
+        Stream::Ptr clone = selection->Clone(MakeUniqueName(selection->GetName()));
+        m_streams.emplace_back(std::move(clone));
+        ImGui::CloseCurrentPopup();
+    }
+
     ImGui::EndPopup();
 }
 
@@ -282,10 +308,27 @@ void StreamEditor::ShowTweakEditor(RenderTweak::Ptr render_tweak) {
     render_tweak->OnMenu();
 }
 
-bool StreamEditor::IsDuplicateName(std::string_view& name) const
+bool StreamEditor::IsDuplicateName(std::string_view name) const
 {
     auto existing = std::find_if(m_streams.begin(), m_streams.end(), [&](auto& cfg) {
         return cfg->GetName() == name;
     });
     return existing != m_streams.end();
+}
+
+std::string StreamEditor::MakeUniqueName(std::string_view base_name) const
+{
+    std::string new_name = std::string(base_name);
+    if (!IsDuplicateName(new_name))
+        return new_name;
+    
+    for (size_t i = m_streams.size(); i != m_streams.size() - 1; ++i)
+    {
+        new_name = std::string(base_name) + ' ' + std::to_string(i);
+        if (!IsDuplicateName(new_name))
+            return new_name;
+    }
+
+    assert(0 && "This should never happen");
+    return ":)";
 }
