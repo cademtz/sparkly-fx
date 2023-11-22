@@ -209,6 +209,7 @@ void MaterialTweak::OnMenu()
     ImGui::SetNextWindowSizeConstraints(ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 1), ImVec2(FLT_MAX, FLT_MAX));
     if (ImGui::BeginChild("ConstrainedChild", ImVec2(0, 0), true, 0))
     {
+        should_update |= ImGui::Checkbox("Props", &props);
         for (size_t i = 0; i < groups.size(); ++i)
             should_update |= ImGui::Checkbox(MaterialTweak::TEXTURE_GROUPS[i], &groups[i]);
     }

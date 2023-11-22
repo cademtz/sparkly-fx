@@ -99,7 +99,9 @@ public:
     /// @brief A color multiply given to each material
     std::array<float, 4> color_multiply = { 1,1,1,1 };
     /// @brief A fixed array containing `true` or `false` for each texture group
-    std::array<bool, TEXTURE_GROUPS.size()> groups;
+    std::array<bool, TEXTURE_GROUPS.size()> groups = {0};
+    /// @brief This will affect props specially, since typical material overrides doesn't work on them.
+    bool props = false;
     FilterChoice filter_choice = FilterChoice::ALL;
 };
 

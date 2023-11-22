@@ -54,8 +54,7 @@ public:
     std::shared_lock<std::shared_mutex> ReadLock() { return std::shared_lock{m_mtx};}
 
 protected:
-    int OnDrawProp();
-    int OnDrawPropArray();
+    int OnDrawStaticProp();
     int PreDrawModelExecute();
     int PostDrawModelExecute();
     int OnFrameStageNotify();
