@@ -6,3 +6,5 @@ target_sources(xsdk-base PRIVATE
     WindowHook.cpp
     ModelRenderHook.cpp
 )
+
+add_subdirectory(fx)
