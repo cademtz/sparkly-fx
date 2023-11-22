@@ -61,6 +61,7 @@ std::vector<Stream::ConstPtr> Stream::MakePresets()
         auto materials = std::make_shared<MaterialTweak>();
         materials->filter_choice = FilterChoice::WHITELIST;
         materials->color_multiply = {0,0,0,1};
+        materials->props = true;
         for (size_t i = 0; i < MaterialTweak::TEXTURE_GROUPS.size(); ++i)
         {
             const char* group = MaterialTweak::TEXTURE_GROUPS[i];

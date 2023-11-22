@@ -1,6 +1,7 @@
 #include "ActiveStream.h"
 #include <Streams/materials.h>
 #include <Helper/entity.h>
+#include <Hooks/fx/StudioRenderHook.h>
 #include <Hooks/ModelRenderHook.h>
 #include <Hooks/ClientHook.h>
 #include <Base/Interfaces.h>
@@ -14,8 +15,7 @@
 
 void ActiveStream::StartListening()
 {
-    Listen(EVENT_DRAW_PROP, [this]{ return OnDrawProp(); });
-    Listen(EVENT_DRAW_PROP_ARRAY, [this] { return OnDrawPropArray(); });
+    Listen(EVENT_DRAWMODELSTATICPROP, [this]{ return OnDrawStaticProp(); });
     Listen(EVENT_PRE_DRAW_MODEL_EXECUTE, [this] { return PreDrawModelExecute(); });
     Listen(EVENT_POST_DRAW_MODEL_EXECUTE, [this] { return PostDrawModelExecute(); });
     Listen(EVENT_FRAMESTAGENOTIFY, [this] { return OnFrameStageNotify(); });
@@ -212,23 +212,25 @@ void ActiveStream::UpdateFog()
     skyfog_color->SetValue(textbuf.data());
 }
 
-int ActiveStream::OnDrawProp()
+int ActiveStream::OnDrawStaticProp()
 {
-    //auto lock = ReadLock();
-    //if (!m_stream)
-    //    return 0;
+    auto lock = ReadLock();
+    if (!m_stream)
+        return 0;
 
-    //auto tweak = m_stream->begin<MiscTweak>();
-    //if (tweak == m_stream->end<MiscTweak>())
-    //    return 0;
-    //
-    //if (!tweak->props_enabled)
-    //    return Return_NoOriginal;
+    auto tweak = m_stream->begin<MaterialTweak>();
+    if (tweak == m_stream->end<MaterialTweak>())
+        return 0;
+    
+    if (!tweak->props)
+        return 0;
+    if (tweak->color_multiply[3] == 0)
+        return Return_NoOriginal;
+    
+    // We don't need to restore these values, because the callers always store and restore it.
+    Interfaces::studio_render->SetColorModulation(tweak->color_multiply.data());
+    Interfaces::studio_render->SetAlphaModulation(tweak->color_multiply[3]);
     return 0;
-}
-
-int ActiveStream::OnDrawPropArray() {
-    return OnDrawProp();
 }
 
 int ActiveStream::PreDrawModelExecute()
