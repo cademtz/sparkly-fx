@@ -1,5 +1,6 @@
 #include "OverlayHook.h"
 #include <Base/Sig.h>
+#include <Base/AsmTools.h>
 
 #ifdef _WIN64
 #define OVERLAY_MODULE "GameOverlayRenderer64.dll"
