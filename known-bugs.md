@@ -1,13 +1,20 @@
 # Known bugs
 
+**Note: Some bugs in the preview are "fake". They don't exist while recording.**
+
+"Fake" bugs (only visible with preview enabled):
+- The "Fog depth" preset makes the skybox look glitchy.
+    - Cause: The skybox was turned off.
+    - Fix: Already fixed. The skybox is filled with black while recording.
+- After starting a new game/demo, some materials aren't being affected.
+    - Cause: The game reloaded some materials, and sparkly-fx did not update them appropriately.
+    - Hack: Toggle the preview on/off.
+    - Fix: Update materials when new ones are added/modified, or update them every frame.
+
 Real bugs *(should get fixed)*:
 - Rarely, the game crashes after ending a recording.
     - Cause: Unknown. The stack trace does not point to any sparkly-fx code. I also deleted my crash log and can't replicate it...
     - Fix: Unknown.
-- After starting a new game/demo, some materials aren't being affected while stream previewing is on
-    - Cause: The game reloaded some materials, and sparkly-fx did not update them appropriately.
-    - Hack: Toggle the preview on/off.
-    - Fix: Update materials when new ones are added/modified, or update them every frame.
 
 Limitations *(may be fixed)*:
 - The "Fog depth" preset renders some materials without the depth effect (like water).
