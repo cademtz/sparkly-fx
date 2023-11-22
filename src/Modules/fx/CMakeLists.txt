@@ -3,4 +3,5 @@ target_sources(xsdk-base PRIVATE
     ActiveStream.cpp
     recorder.cpp
     skybox.cpp
+    devmodule.cpp
 )

@@ -6,6 +6,8 @@
 #include <array>
 
 enum class FilterChoice : int { ALL, WHITELIST, BLACKLIST, _COUNT };
+class CBaseEntity;
+class ClientClass;
 
 /// @brief Configurable variables for one part of the rendering process.
 /// Each subclass will typically provide settings for a specific, hooked render function.
@@ -28,17 +30,23 @@ public:
     static const std::vector<ConstPtr> default_tweaks;
 };
 
-class PropRenderTweak : public RenderTweak
+class MiscTweak : public RenderTweak
 {
 public:
-    const char* GetName() const override { return "Props"; }
+    const char* GetName() const override { return "Miscellaneous"; }
     std::shared_ptr<RenderTweak> Clone() const override {
-        return std::make_shared<PropRenderTweak>(*this);
+        return std::make_shared<MiscTweak>(*this);
     }
     void OnMenu() override;
 
-    /// @brief Hide all props
-    bool hide = false;
+    bool viewmodel_enabled = true; // Affects r_drawviewmodel
+    bool hud_enabled = true; // Affects cl_drawhud
+    bool props_enabled = true; // Affects r_drawstaticprops
+    bool shadows_enabled = true; // Affects r_shadows
+    bool skybox_enabled = true; // Affects r_3dsky and r_skybox
+    bool decals_enabled = true; // Calls r_cleardecals. Will affect future frames.
+    bool particles_enabled = true; // Affects r_drawparticles
+    bool misc_effects_enabled = true; // (TF2: Affects glow_outline_effect_enable)
 };
 
 class EntityFilterTweak : public RenderTweak
@@ -53,7 +61,7 @@ public:
     void OnMenu() override;
     
     /// @return `true` if an entity should be rendered differently than normal
-    bool IsEntityAffected(const std::string& entity_class) const;
+    bool IsEntityAffected(CBaseEntity* entity) const;
     /// @return `true` if the effect will make an entity invisible
     bool IsEffectInvisible() const;
 
@@ -67,8 +75,12 @@ public:
     /// @brief A color multiply given to each entity
     std::array<float, 4> color_multiply = { 1,1,1,1 };
 
-    /// @brief A list that decides which entity types are filtered.
-    std::unordered_set<std::string> classes;
+    /// @brief A list of entity classes to filter
+    std::unordered_set<ClientClass*> classes;
+    bool filter_player = false;
+    bool filter_weapon = false;
+    bool filter_wearable = false;
+    bool filter_projectile = false;
 };
 
 class MaterialTweak : public RenderTweak
@@ -125,7 +137,7 @@ public:
 };
 
 inline const std::vector<RenderTweak::ConstPtr> RenderTweak::default_tweaks = {
-    std::make_shared<PropRenderTweak>(),
+    std::make_shared<MiscTweak>(),
     std::make_shared<EntityFilterTweak>(),
     std::make_shared<MaterialTweak>(),
     std::make_shared<CameraTweak>(),

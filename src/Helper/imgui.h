@@ -29,7 +29,4 @@ namespace Helper
     };
     
     void ImGuiHelpMarker(const char* desc);
-
-    /// @brief Virtual key code to string
-    const char* VirtualKeyString(uint8_t vkey);
 }

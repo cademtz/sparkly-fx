@@ -1,19 +1,23 @@
 #pragma once
 #include "rendertweak.h"
 #include <string>
+#include <memory>
 
 /// @brief A combination of render tweaks to be used while rendering a frame
 class Stream
 {
 public:
     using Ptr = std::shared_ptr<Stream>;
+    using ConstPtr = std::shared_ptr<const Stream>;
     using ElementType = RenderTweak::Ptr;
 
     Stream(std::string&& name) : m_name(std::move(name)) {} 
 
+    Ptr Clone(std::string&& new_name) const;
     std::string& GetName() { return m_name; }
     const std::string& GetName() const { return m_name; }
     std::vector<ElementType>& GetRenderTweaks() { return m_tweaks; }
+    static const std::vector<ConstPtr>& GetPresets();
     
     template <class T>
     class const_type_iterator
@@ -81,4 +85,7 @@ protected:
     
     std::string m_name;
     std::vector<ElementType> m_tweaks;
+
+private:
+    static std::vector<ConstPtr> MakePresets();
 };

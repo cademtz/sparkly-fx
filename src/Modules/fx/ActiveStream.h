@@ -3,9 +3,9 @@
 #include <Streams/Stream.h>
 #include <shared_mutex>
 #include <unordered_map>
-#include <list>
 #include <string>
 #include <mutex>
+#include <cstdint>
 
 class IMaterial;
 enum OverrideType_t;
@@ -19,6 +19,13 @@ enum OverrideType_t;
 class ActiveStream : public CModule
 {
 public:
+    enum UpdateFlags
+    {
+        UPDATE_MATERIALS = 1 << 0,
+        UPDATE_FOG = 1 << 1,
+        UPDATE_WORLD = 1 << 2,
+    };
+
     void StartListening() override;
     
     /// @brief Get the active stream. This calls @ref ReadLock. 
@@ -31,9 +38,9 @@ public:
      * 
      * The signal only raises if a stream is active.
      * @param stream The stream that was updated, or `nullptr` to update with the current one.
-     * @param materials If false, the materials signal is not set
+     * @param UpdateFlags Combined values from @ref UpdateFlags. The default value sets all flags.
      */
-    void SignalUpdate(Stream::Ptr stream = nullptr, bool materials = true /* TODO: Add explciit flags, instead of this */);
+    void SignalUpdate(Stream::Ptr stream = nullptr, uint32_t flags = ~0);
     /**
      * @brief Immediately update material colors.
      * 
@@ -41,7 +48,6 @@ public:
      * This calls @ref ReadLock.
      */
     void UpdateMaterials();
-    void UpdateFog();
     /// @brief Acquire a lock for editing the active stream 
     std::unique_lock<std::shared_mutex> WriteLock() { return std::unique_lock{m_mtx};}
     /// @brief Acquire a lock for reading the active stream
@@ -69,13 +75,14 @@ private:
         std::array<float, 4> color;
     };
 
+    void UpdateFog();
+    void UpdateWorld();
     /// @brief Store a material's original params (if not already stored)
     void StoreMaterialParams(IMaterial* mat);
     /// @brief Restore the original parameters to a material
     void RestoreMaterialParams(IMaterial* mat);
     /// @brief Override the material's color
     void SetMaterialColor(IMaterial* mat, const std::array<float, 4>& col);
-
     IMaterial* CreateMatteMaterial();
     
     /// @brief Was the last DrawModelExecute call affected?

@@ -1,5 +1,6 @@
 #include "ActiveStream.h"
 #include <Streams/materials.h>
+#include <Helper/entity.h>
 #include <Hooks/ModelRenderHook.h>
 #include <Hooks/ClientHook.h>
 #include <Base/Interfaces.h>
@@ -33,17 +34,21 @@ void ActiveStream::Set(Stream::Ptr stream)
     m_should_update_materials = m_stream != stream;
     m_stream = stream;
     UpdateFog();
+    UpdateWorld();
 }
 
-void ActiveStream::SignalUpdate(Stream::Ptr stream, bool materials)
+void ActiveStream::SignalUpdate(Stream::Ptr stream, uint32_t flags)
 {
     auto lock = WriteLock();
     if (m_stream == nullptr)
         return;
     if (stream == nullptr || m_stream == stream)
     {
-        m_should_update_materials |= materials;
-        UpdateFog();
+        m_should_update_materials |= (bool)(flags & UPDATE_MATERIALS);
+        if (flags & UPDATE_FOG)
+            UpdateFog();
+        if (flags & UPDATE_WORLD)
+            UpdateWorld();
     }
 }
 
@@ -73,6 +78,92 @@ void ActiveStream::UpdateMaterials()
         if (!was_affected)
             RestoreMaterialParams(mat);
     }
+}
+
+void ActiveStream::UpdateWorld()
+{ 
+    // TODO: Create a wrapper to restore cvar values.
+    // TODO: Dummy convar wrappers, for game-specific variables
+    static ConVar* draw_viewmodel = Interfaces::cvar->FindVar("r_drawviewmodel");
+    static ConVar* draw_hud = Interfaces::cvar->FindVar("cl_drawhud");
+    static ConVar* draw_props = Interfaces::cvar->FindVar("r_drawstaticprops");
+    static ConVar* draw_shadows = Interfaces::cvar->FindVar("r_shadows");
+    static ConVar* draw_sky = Interfaces::cvar->FindVar("r_skybox");
+    static ConVar* draw_3dsky = Interfaces::cvar->FindVar("r_3dsky");
+    static ConCommand* cleardecals = Interfaces::cvar->FindCommand("r_cleardecals");
+    static ConVar* draw_particles = Interfaces::cvar->FindVar("r_drawparticles");
+    // TF2 specific. May be null
+    static ConVar* draw_glow = Interfaces::cvar->FindVar("glow_outline_effect_enable");
+
+    // === Old values === //
+    std::mutex o_mutex;
+    static bool o_initialized = false;
+    static bool o_draw_hud;
+    static bool o_draw_viewmodel;
+    static bool o_draw_props;
+    static bool o_draw_shadows;
+    static bool o_draw_sky;
+    static bool o_draw_3dsky;
+    static bool o_draw_particles;
+    static bool o_draw_glow;
+
+    std::shared_ptr<MiscTweak> tweak = nullptr;
+    if (m_stream)
+    {
+        auto it = m_stream->begin<MiscTweak>();
+        if (it != m_stream->end<MiscTweak>())
+            tweak = *it;
+    }
+
+    // Restore old values and return early
+    if (!tweak)
+    {
+        std::lock_guard lock{o_mutex};
+        if (o_initialized) 
+        {
+            o_initialized = false;
+            draw_viewmodel->SetValue(o_draw_viewmodel);
+            draw_hud->SetValue(o_draw_hud);
+            draw_props->SetValue(o_draw_props);
+            draw_shadows->SetValue(o_draw_shadows);
+            draw_sky->SetValue(o_draw_sky);
+            draw_3dsky->SetValue(o_draw_3dsky);
+            draw_particles->SetValue(o_draw_particles);
+            if (draw_glow)
+                draw_glow->SetValue(o_draw_glow);
+        }
+        return;
+    }
+
+    // Store old values
+    {
+        std::lock_guard lock{o_mutex};
+        if (!o_initialized)
+        {
+            o_initialized = true;
+            o_draw_viewmodel = draw_viewmodel->GetBool();
+            o_draw_hud = draw_hud->GetBool();
+            o_draw_props = draw_props->GetBool();
+            o_draw_shadows = draw_shadows->GetBool();
+            o_draw_sky = draw_sky->GetBool();
+            o_draw_3dsky = draw_3dsky->GetBool();
+            o_draw_particles = draw_particles->GetBool();
+            if (draw_glow)
+                o_draw_glow = draw_glow->GetBool();
+        }
+    }
+    
+    draw_viewmodel->SetValue(tweak->viewmodel_enabled);
+    draw_hud->SetValue(tweak->hud_enabled);
+    draw_props->SetValue(tweak->props_enabled);
+    draw_shadows->SetValue(tweak->shadows_enabled);
+    draw_sky->SetValue(tweak->skybox_enabled);
+    draw_3dsky->SetValue(tweak->skybox_enabled);
+    //if (!tweak->decals_enabled)
+    //    cleardecals->Dispatch(CCommand());
+    draw_particles->SetValue(tweak->particles_enabled);
+    if (draw_glow)
+        draw_glow->SetValue(tweak->misc_effects_enabled);
 }
 
 void ActiveStream::UpdateFog()
@@ -123,16 +214,16 @@ void ActiveStream::UpdateFog()
 
 int ActiveStream::OnDrawProp()
 {
-    auto lock = ReadLock();
-    if (!m_stream)
-        return 0;
+    //auto lock = ReadLock();
+    //if (!m_stream)
+    //    return 0;
 
-    auto tweak = m_stream->begin<PropRenderTweak>();
-    if (tweak == m_stream->end<PropRenderTweak>())
-        return 0;
-    
-    if (tweak->hide)
-        return Return_NoOriginal;
+    //auto tweak = m_stream->begin<MiscTweak>();
+    //if (tweak == m_stream->end<MiscTweak>())
+    //    return 0;
+    //
+    //if (!tweak->props_enabled)
+    //    return Return_NoOriginal;
     return 0;
 }
 
@@ -154,7 +245,7 @@ int ActiveStream::PreDrawModelExecute()
 
     for (auto tweak = m_stream->begin<EntityFilterTweak>(); tweak != m_stream->end<EntityFilterTweak>(); ++tweak)
     {
-        if (!tweak->IsEntityAffected(entity->GetClientClass()->GetName()))
+        if (!tweak->IsEntityAffected(entity))
             continue;
         
         if (tweak->IsEffectInvisible())
