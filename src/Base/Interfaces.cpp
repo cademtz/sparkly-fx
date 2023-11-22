@@ -1,6 +1,7 @@
 #include "Interfaces.h"
 #include "Base.h"
 #include "Sig.h"
+#include "AsmTools.h"
 #include "Wrappers/EngineClientWrappers.h"
 #include "Wrappers/ClientDLLWrappers.h"
 #include "Wrappers/ClientModeWrappers.h"

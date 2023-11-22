@@ -1,12 +1,11 @@
 #pragma once
-#include "AsmTools.h"
-
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-#include <filesystem>
 #undef DrawText // Thanks Windows.h
 
 #define FATAL(...) Base::Fatal("Fatal error in " __FUNCTION__, __VA_ARGS__)
+
+namespace std::filesystem { class path; }
 
 enum EAppID
 {
@@ -32,16 +31,16 @@ namespace Base
 	HMODULE GetModule(const char* Module);
 	FARPROC GetProc(HMODULE Module, const char* Proc);
 	void Fatal(const char* Title, const char* Format, ...);
-
-	inline HMODULE hInst;
-	inline HWND hWnd;
 	/**
 	 * @brief The directory containing our module.
 	 * 
 	 * It's encouraged to store configs, logs, and other files here.
 	 * The path may be blank if depending on injection method.
 	 */
-	inline std::filesystem::path module_dir;
+	const std::filesystem::path& GetModuleDir();
+
+	inline HMODULE hInst;
+	inline HWND hWnd;
 
 #ifdef _WIN64
 	constexpr bool Win64 = true;

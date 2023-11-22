@@ -2,10 +2,10 @@
 #include <Hooks/WindowHook.h>
 #include <Hooks/OverlayHook.h>
 #include <Modules/BaseModule.h>
-#include <SDK/mathlib.h>
 #include "Interfaces.h"
 #include "Netvars.h"
 #include <array>
+#include <filesystem>
 
 // Stack trace code
 #include <fstream>
@@ -25,6 +25,8 @@ LONG WINAPI UnhandledFilter(struct _EXCEPTION_POINTERS* info);
 LONG NTAPI MyVectoredHandler(struct _EXCEPTION_POINTERS *ExceptionInfo);
 static PVOID my_vectored_handler = nullptr;
 //
+
+static std::filesystem::path module_dir;
 
 void Base::OnAttach(HMODULE Module)
 {
@@ -117,6 +119,10 @@ void Base::Fatal(const char* Title, const char* Format, ...)
 
 	MessageBoxA(0, buf, Title, MB_ICONERROR);
 	TerminateProcess(GetCurrentProcess(), -1);
+}
+
+const std::filesystem::path& Base::GetModuleDir() {
+	return module_dir;
 }
 
 // === Stack trace code === //
@@ -298,7 +304,7 @@ static LONG WINAPI UnhandledFilter(struct _EXCEPTION_POINTERS* info) {
 	Backtrace(trace, info->ContextRecord);
 	trace << std::endl;
 
-	std::filesystem::path log_path = Base::module_dir / CRASHLOG_NAME;
+	std::filesystem::path log_path = Base::GetModuleDir() / CRASHLOG_NAME;
 	std::fstream log_file = std::fstream(log_path, std::ios::out | std::ios::app);
 	if (log_file)
 	{
