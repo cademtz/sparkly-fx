@@ -51,17 +51,32 @@ bool CMenu::AcceptMsg(HWND hWnd, UINT uMsg, LPARAM lParam, WPARAM wParam)
 
 	ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
 	bool hide_input = PushEvent(EVENT_POST_IMGUI_INPUT) & Return_NoOriginal;
-	hide_input |= IsOpen();
+	if (uMsg = WM_PAINT)
+		return false; // Plz never eat this message. It will just infinitely loop.
 
-	if (hide_input)
+	if (IsOpen())
 	{
 		switch (uMsg)
 		{
+		case WM_MOUSEMOVE:
+		case WM_NCMOUSEMOVE:
+		case WM_MOUSELEAVE:
+		case WM_NCMOUSELEAVE:
+		case WM_LBUTTONDOWN: case WM_LBUTTONDBLCLK:
+		case WM_RBUTTONDOWN: case WM_RBUTTONDBLCLK:
+		case WM_MBUTTONDOWN: case WM_MBUTTONDBLCLK:
+		case WM_XBUTTONDOWN: case WM_XBUTTONDBLCLK:
+		case WM_MOUSEWHEEL:
+		case WM_MOUSEHWHEEL:
 		case WM_KEYDOWN:
-			break;
+		case WM_SYSKEYDOWN:
+		case WM_CHAR:
+			return true;
 		case WM_KEYUP:
+		case WM_SYSKEYUP:
 		case WM_LBUTTONUP:
 		case WM_RBUTTONUP:
+		case WM_MBUTTONUP:
 		case WM_XBUTTONUP:
 			return false; // Prevent "stuck" input by allowing game to recieve key up
 		}
