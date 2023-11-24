@@ -74,7 +74,7 @@ int CRecorder::OnPostImguiInput()
 
 int CRecorder::OnDraw()
 {
-    if (IsRecordingMovie())
+    if (false /*IsRecordingMovie()*/)
     {
         const std::string_view text = "Recording";
         const ImU32 text_color = 0xFF0000FF;
