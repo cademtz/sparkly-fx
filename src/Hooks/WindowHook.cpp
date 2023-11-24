@@ -102,8 +102,8 @@ LRESULT WINAPI CWindowHook::Hooked_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, 
 	int flags = g_hk_window.PushEvent(EVENT_WINDOWPROC);
 	if (flags & Return_NoOriginal)
 		return ctx->result;
-	else if (g_hk_window.GetInputEnabled())
-		return true;
+	//else if (g_hk_window.GetInputEnabled())
+	//	return true;
 
 	return CallWindowProc(g_hk_window.OldProc(), hWnd, uMsg, wParam, lParam);
 }
