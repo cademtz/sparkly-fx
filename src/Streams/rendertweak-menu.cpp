@@ -46,7 +46,7 @@ void CommandTweak::OnMenu()
     if (ImGui::Button("Presets"))
         ImGui::OpenPopup(POPUP_PRESETS);
     ImGui::PushItemWidth(-1);
-    should_update |= ImGui::InputTextMultiline("##commands", &commands);
+    should_update |= ImGui::InputTextMultiline("##commands", &commands, ImVec2(0, -1));
     ImGui::SameLine(); Helper::ImGuiHelpMarker("In Team Fortress 2, this affects the glow outlines that appear on objectives");
 
     if (ImGui::BeginPopup(POPUP_PRESETS))
@@ -62,7 +62,6 @@ void CommandTweak::OnMenu()
             {"Erase decals", "r_cleardecals"},
         };
 
-        //ImGui::PushItemWidth(-1);
         if (ImGui::BeginListBox("##presets_list"))
         {
             for (auto& preset : presets)
@@ -237,9 +236,11 @@ void MaterialTweak::OnMenu()
     ImGui::SetNextWindowSizeConstraints(ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 1), ImVec2(FLT_MAX, FLT_MAX));
     if (ImGui::BeginChild("ConstrainedChild", ImVec2(0, 0), true, 0))
     {
+        Helper::PushStyleCompact();
         should_update |= ImGui::Checkbox("Props", &props);
         for (size_t i = 0; i < groups.size(); ++i)
             should_update |= ImGui::Checkbox(MaterialTweak::TEXTURE_GROUPS[i], &groups[i]);
+        Helper::PopStyleCompact();
     }
     ImGui::EndChild();
 
