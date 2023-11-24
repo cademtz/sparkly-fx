@@ -74,7 +74,7 @@ int CRecorder::OnPostImguiInput()
 
 int CRecorder::OnDraw()
 {
-    if (false /*IsRecordingMovie()*/)
+    if (m_record_indicator && IsRecordingMovie())
     {
         const std::string_view text = "Recording";
         const ImU32 text_color = 0xFF0000FF;
@@ -108,6 +108,8 @@ int CRecorder::OnMenu()
             ToggleRecording();
         
         m_record_bind.OnMenu("Record hotkey");
+        ImGui::Checkbox("Recording indicator", &m_record_indicator);
+        ImGui::SameLine(); Helper::ImGuiHelpMarker("Displays an indicator on screen while recording");
 
         if (m_is_recording)
             ImGui::BeginDisabled();

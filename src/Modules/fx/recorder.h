@@ -52,6 +52,7 @@ private:
 
     Helper::KeyBind m_record_bind;
     bool m_is_recording = false;
+    bool m_record_indicator = false;
     bool m_pause_on_menu = true;
     int m_png_compression_lvl = 1;
     int m_framerate = 60;
