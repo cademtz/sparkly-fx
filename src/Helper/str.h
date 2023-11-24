@@ -1,5 +1,6 @@
 #pragma once
 #include <cstring>
+#include <string_view>
 
 namespace Helper
 {
@@ -21,4 +22,15 @@ namespace Helper
         }
         return nullptr;
     }
+
+    struct ParsedCommand
+    {
+        std::string_view name;
+        /// @brief Command arguments. May be empty.
+        std::string_view args;
+    };
+
+    /// @brief Find and parse the command
+    /// @return The number of chars read, or 0 if there is no command.
+    size_t ParseNextCommand(const char* str, ParsedCommand* output);
 }

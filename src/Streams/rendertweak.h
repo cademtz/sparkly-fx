@@ -1,13 +1,14 @@
 #pragma once
 #include <unordered_set>
-#include <string_view>
 #include <vector>
 #include <memory>
 #include <array>
+#include <string>
 
-enum class FilterChoice : int { ALL, WHITELIST, BLACKLIST, _COUNT };
+namespace Helper { class ParsedCommand; }
 class CBaseEntity;
 class ClientClass;
+enum class FilterChoice : int { ALL, WHITELIST, BLACKLIST, _COUNT };
 
 /// @brief Configurable variables for one part of the rendering process.
 /// Each subclass will typically provide settings for a specific, hooked render function.
@@ -30,23 +31,19 @@ public:
     static const std::vector<ConstPtr> default_tweaks;
 };
 
-class MiscTweak : public RenderTweak
+class CommandTweak : public RenderTweak
 {
 public:
-    const char* GetName() const override { return "Miscellaneous"; }
+    const char* GetName() const override { return "Commands"; }
     std::shared_ptr<RenderTweak> Clone() const override {
-        return std::make_shared<MiscTweak>(*this);
+        return std::make_shared<CommandTweak>(*this);
     }
     void OnMenu() override;
+    /// @brief Split @ref commands into individual commands and add them to a vector
+    void GetCommandList(std::vector<Helper::ParsedCommand>* output);
 
-    bool viewmodel_enabled = true; // Affects r_drawviewmodel
-    bool hud_enabled = true; // Affects cl_drawhud
-    bool props_enabled = true; // Affects r_drawstaticprops
-    bool shadows_enabled = true; // Affects r_shadows
-    bool skybox_enabled = true; // Affects r_3dsky and r_skybox
-    bool decals_enabled = true; // Calls r_cleardecals. Will affect future frames.
-    bool particles_enabled = true; // Affects r_drawparticles
-    bool misc_effects_enabled = true; // (TF2: Affects glow_outline_effect_enable)
+    /// @brief Console commands separated by newlines or semicolons
+    std::string commands;
 };
 
 class EntityFilterTweak : public RenderTweak
@@ -139,7 +136,7 @@ public:
 };
 
 inline const std::vector<RenderTweak::ConstPtr> RenderTweak::default_tweaks = {
-    std::make_shared<MiscTweak>(),
+    std::make_shared<CommandTweak>(),
     std::make_shared<EntityFilterTweak>(),
     std::make_shared<MaterialTweak>(),
     std::make_shared<CameraTweak>(),

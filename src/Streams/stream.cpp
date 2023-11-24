@@ -39,9 +39,11 @@ std::vector<Stream::ConstPtr> Stream::MakePresets()
         fog->fog_enabled = true;
         matte->m_tweaks.emplace_back(std::move(fog));
 
-        auto misc = std::make_shared<MiscTweak>();
-        misc->skybox_enabled = false;
-        misc->misc_effects_enabled = false;
+        auto misc = std::make_shared<CommandTweak>();
+        misc->commands =
+            "r_skybox 0\n"
+            "r_3dsky 0\n"
+            "glow_outline_effect_enable 0";
         // Particles are intentionally left enabled, so they may obscure the player matte
         matte->m_tweaks.emplace_back(std::move(misc));
 
@@ -78,12 +80,17 @@ std::vector<Stream::ConstPtr> Stream::MakePresets()
         fog->fog_start = 2048;
         depth->m_tweaks.push_back(std::move(fog));
 
-        auto misc = std::make_shared<MiscTweak>();
-        misc->decals_enabled = false;
-        misc->shadows_enabled = false;
-        misc->skybox_enabled = false;
-        misc->particles_enabled = false;
-        misc->misc_effects_enabled = false;
+        auto misc = std::make_shared<CommandTweak>();
+        misc->commands =
+            "r_shadows 0\n"
+            "r_skybox 0\n"
+            "r_3dsky 0\n"
+            "r_drawparticles 0\n"
+            "glow_outline_effect_enable 0\n" // Glow effect is TF2-specific
+            "r_cleardecals\n"
+            "cl_drawhud 0\n"
+            "r_drawviewmodel 0\n"
+            "mat_drawwater 0"; // Hack: Water renders oddly, so just hide it
         depth->m_tweaks.push_back(std::move(misc));
         
         vec.emplace_back(std::move(depth));
