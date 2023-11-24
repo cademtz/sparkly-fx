@@ -99,9 +99,16 @@ void ActiveStream::UpdateConVars()
 
     for (auto& cmd : parsed_cmds)
     {
-        ConVar* cvar = Interfaces::cvar->FindVar(std::string(cmd.name).c_str());
+        std::string cmd_name = std::string(cmd.name);
+        ConVar* cvar = Interfaces::cvar->FindVar(cmd_name.c_str());
         if (!cvar)
+        {
+            // It's probably a command. Dispatch the command the lazy way.
+            cmd_name += ' ';
+            cmd_name += cmd.args;
+            Interfaces::engine->ExecuteClientCmd(cmd_name.c_str());
             continue;
+        }
         
         std::string args = std::string(cmd.args);
         Helper::RestoringConVar restoring_cvar {cvar};
