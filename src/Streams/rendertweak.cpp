@@ -2,7 +2,8 @@
 #include <SDK/texture_group_names.h>
 #include <SDK/imaterial.h>
 #include <Base/Entity.h>
-#include <Helper/entity.h>
+#include <Helper/engine.h>
+#include <Helper/str.h>
 
 const std::array<const char*, 27> MaterialTweak::TEXTURE_GROUPS = {
     TEXTURE_GROUP_LIGHTMAP,
@@ -33,6 +34,17 @@ const std::array<const char*, 27> MaterialTweak::TEXTURE_GROUPS = {
     TEXTURE_GROUP_RENDER_TARGET_SURFACE,
     TEXTURE_GROUP_MORPH_TARGETS,
 };
+
+void CommandTweak::GetCommandList(std::vector<Helper::ParsedCommand>* output)
+{
+    size_t offset = 0;
+    Helper::ParsedCommand cmd;
+    while (size_t read = Helper::ParseNextCommand(commands.c_str() + offset, &cmd))
+    {
+        offset += read;
+        output->emplace_back(std::move(cmd));
+    }
+}
 
 bool EntityFilterTweak::IsEntityAffected(CBaseEntity* entity) const
 {

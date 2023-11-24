@@ -1,11 +1,13 @@
 #pragma once
 #include <Modules/BaseModule.h>
+#include <Helper/engine.h>
 #include <Streams/Stream.h>
 #include <shared_mutex>
 #include <unordered_map>
 #include <string>
 #include <mutex>
 #include <cstdint>
+#include <utility>
 
 class IMaterial;
 enum OverrideType_t;
@@ -23,7 +25,7 @@ public:
     {
         UPDATE_MATERIALS = 1 << 0,
         UPDATE_FOG = 1 << 1,
-        UPDATE_WORLD = 1 << 2,
+        UPDATE_CONVARS = 1 << 2,
     };
 
     void StartListening() override;
@@ -75,7 +77,7 @@ private:
     };
 
     void UpdateFog();
-    void UpdateWorld();
+    void UpdateConVars();
     /// @brief Store a material's original params (if not already stored)
     void StoreMaterialParams(IMaterial* mat);
     /// @brief Restore the original parameters to a material
@@ -89,6 +91,7 @@ private:
     /// @brief Should we iterate all materials and update them?
     bool m_should_update_materials = false;
     bool m_should_update_fog = false;
+    std::vector<std::pair<Helper::RestoringConVar, std::string>> m_convars;
     /// @brief Parameters stored during the last DrawModelExecute call
     LastDrawParams m_last_dme_params;
     /**

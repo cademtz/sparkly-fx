@@ -1,4 +1,5 @@
 target_sources(xsdk-base PRIVATE
     imgui.cpp
-    entity.cpp
+    engine.cpp
+    str.cpp
 )

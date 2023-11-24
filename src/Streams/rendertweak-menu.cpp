@@ -25,35 +25,63 @@
 #include <SDK/texture_group_names.h>
 #include <SDK/client_class.h>
 #include <Helper/imgui.h>
+#include <imgui/misc/cpp/imgui_stdlib.h>
 #include <Helper/str.h>
 #include <Base/Interfaces.h>
 #include <imgui.h>
 #include <array>
+#include <utility>
 
-//static std::vector<const char*> GetAllClassNames()
-//{
-//    std::vector<const char*> names;
-//    ClientClass* client_class = Interfaces::hlclient->GetAllClasses();
-//    for (; client_class; client_class = client_class->m_pNext)
-//        names.emplace_back(client_class->m_pNetworkName);
-//    return names;
-//}
-
-void MiscTweak::OnMenu()
+void CommandTweak::OnMenu()
 {
+    const char* const POPUP_PRESETS = "##presets";
     bool should_update = false;
-    should_update |= ImGui::Checkbox("Enable viewmodel", &viewmodel_enabled);
-    should_update |= ImGui::Checkbox("Enable HUD", &hud_enabled);
-    should_update |= ImGui::Checkbox("Enable props", &props_enabled);
-    should_update |= ImGui::Checkbox("Enable shadows", &shadows_enabled);
-    should_update |= ImGui::Checkbox("Enable skybox", &skybox_enabled);
-    should_update |= ImGui::Checkbox("Enable decals", &decals_enabled);
-    should_update |= ImGui::Checkbox("Enable particles", &particles_enabled);
-    should_update |= ImGui::Checkbox("Enable misc effects", &misc_effects_enabled);
+
+    ImGui::Text("Console commands:");
+    ImGui::SameLine();
+    Helper::ImGuiHelpMarker(
+        "These commands are executed before rendering the stream.\n"
+        "After rendering, all variables are set to their original value."
+    );
+    if (ImGui::Button("Presets"))
+        ImGui::OpenPopup(POPUP_PRESETS);
+    ImGui::PushItemWidth(-1);
+    should_update |= ImGui::InputTextMultiline("##commands", &commands);
     ImGui::SameLine(); Helper::ImGuiHelpMarker("In Team Fortress 2, this affects the glow outlines that appear on objectives");
 
+    if (ImGui::BeginPopup(POPUP_PRESETS))
+    {
+        const std::pair<const char*, const char*> presets[] = {
+            {"Hide viewmodel", "r_drawviewmodel 0"},
+            {"Hide HUD", "cl_drawhud 0"},
+            {"Hide props", "r_drawstaticprops 0"},
+            {"Hide shadows", "r_shadows 0"},
+            {"Hide skybox", "r_skybox 0\nr_3dsky 0"},
+            {"Hide particles", "r_drawparticles 0"},
+            {"Hide misc effects", "glow_outline_effect_enable 0"},
+            {"Erase decals", "r_cleardecals"},
+        };
+
+        //ImGui::PushItemWidth(-1);
+        if (ImGui::BeginListBox("##presets_list"))
+        {
+            for (auto& preset : presets)
+            {
+                if (ImGui::Selectable(preset.first))
+                {
+                    should_update |= true;
+                    if (commands.size() && commands.back() != '\n')
+                        commands += '\n';
+                    commands += preset.second;
+                }
+            }
+            ImGui::EndListBox();
+        }
+        ImGui::EndPopup();
+    }
+
     if (should_update)
-        g_active_stream.SignalUpdate(nullptr, ActiveStream::UPDATE_WORLD);
+        g_active_stream.SignalUpdate(nullptr, ActiveStream::UPDATE_CONVARS);
 }
 
 void EntityFilterTweak::OnMenu()
