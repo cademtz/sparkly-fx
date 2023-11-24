@@ -58,7 +58,10 @@ bool CMenu::AcceptMsg(HWND hWnd, UINT uMsg, LPARAM lParam, WPARAM wParam)
 	{
 		switch (uMsg)
 		{
+		case WM_INPUT:
 		case WM_MOUSEMOVE:
+		case WM_MOUSEHOVER:
+		case WM_NCMOUSEHOVER:
 		case WM_NCMOUSEMOVE:
 		case WM_MOUSELEAVE:
 		case WM_NCMOUSELEAVE:
@@ -106,7 +109,10 @@ int CMenu::OnWindowProc()
 {
 	WndProcArgs* ctx = g_hk_window.Context();
 	if (AcceptMsg(ctx->hwnd, ctx->msg, ctx->lparam, ctx->wparam))
+	{
+		ctx->result = TRUE;
 		return Return_NoOriginal | Return_Skip;
+	}
 	return 0;
 }
 
