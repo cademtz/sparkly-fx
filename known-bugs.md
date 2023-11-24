@@ -15,6 +15,10 @@ Real bugs *(should get fixed)*:
 - Rarely, the game crashes after ending a recording.
     - Cause: Unknown. The stack trace does not point to any sparkly-fx code. I also deleted my crash log and can't replicate it...
     - Fix: Unknown.
+- The recording indicator may appear in saved movie frames.
+    - Cause: Screen is sometimes not cleared before next frame, or indicator draws too early.
+    - Hack: Disable this in the "Recording" settings.
+    - Fix: Unknown. Perhaps draw during `EVENT_IMGUI``, which always runs just before Present(). But if parts of the screen go un-cleared, it will still appear.
 
 Limitations *(may be fixed)*:
 - The "Fog depth" preset renders some materials without the depth effect (like water).
