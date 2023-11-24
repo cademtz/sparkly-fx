@@ -51,7 +51,7 @@ bool CMenu::AcceptMsg(HWND hWnd, UINT uMsg, LPARAM lParam, WPARAM wParam)
 
 	ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
 	bool hide_input = PushEvent(EVENT_POST_IMGUI_INPUT) & Return_NoOriginal;
-	if (uMsg = WM_PAINT)
+	if (uMsg == WM_PAINT)
 		return false; // Plz never eat this message. It will just infinitely loop.
 
 	if (IsOpen())
