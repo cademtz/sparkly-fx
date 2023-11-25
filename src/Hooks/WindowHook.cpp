@@ -22,11 +22,11 @@ void CWindowHook::Hook()
 void CWindowHook::Unhook()
 {
 	SetWindowLongPtrA(m_hwnd, GWLP_WNDPROC, (LONG_PTR)m_oldproc);
-	m_hkcurpos.UnHook();
-	m_hkshowcur.UnHook();
-	m_hksetcur.UnHook();
-	m_hkgetcurpos.UnHook();
-	m_hk_getcurinfo.UnHook();
+	m_hkcurpos.Unhook();
+	m_hkshowcur.Unhook();
+	m_hksetcur.Unhook();
+	m_hkgetcurpos.Unhook();
+	m_hk_getcurinfo.Unhook();
 }
 
 BOOL CWindowHook::SetCurPos(int X, int Y)
@@ -88,12 +88,6 @@ void CWindowHook::SetInputEnabled(bool Enabled)
 	m_passInput = !Enabled;
 }
 
-void CWindowHook::SetInputEnabled_Increment(bool Enabled)
-{
-	m_inputBypai += Enabled ? -1 : 1;
-	//assert(m_inputBypai >= 0);
-}
-
 LRESULT WINAPI CWindowHook::Hooked_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	auto ctx = g_hk_window.Context();
@@ -102,8 +96,36 @@ LRESULT WINAPI CWindowHook::Hooked_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, 
 	int flags = g_hk_window.PushEvent(EVENT_WINDOWPROC);
 	if (flags & Return_NoOriginal)
 		return ctx->result;
-	//else if (g_hk_window.GetInputEnabled())
-	//	return true;
+	else if (g_hk_window.GetInputEnabled())
+	{
+		switch (uMsg)
+		{
+		case WM_INPUT:
+		case WM_MOUSEMOVE:
+		case WM_MOUSEHOVER:
+		case WM_NCMOUSEHOVER:
+		case WM_NCMOUSEMOVE:
+		case WM_MOUSELEAVE:
+		case WM_NCMOUSELEAVE:
+		case WM_LBUTTONDOWN: case WM_LBUTTONDBLCLK:
+		case WM_RBUTTONDOWN: case WM_RBUTTONDBLCLK:
+		case WM_MBUTTONDOWN: case WM_MBUTTONDBLCLK:
+		case WM_XBUTTONDOWN: case WM_XBUTTONDBLCLK:
+		case WM_MOUSEWHEEL:
+		case WM_MOUSEHWHEEL:
+		case WM_KEYDOWN:
+		case WM_SYSKEYDOWN:
+		case WM_CHAR:
+			return true;
+		case WM_KEYUP:
+		case WM_SYSKEYUP:
+		case WM_LBUTTONUP:
+		case WM_RBUTTONUP:
+		case WM_MBUTTONUP:
+		case WM_XBUTTONUP:
+			break; // Prevent "stuck" input by allowing game to recieve key up
+		}
+	}
 
 	return CallWindowProc(g_hk_window.OldProc(), hWnd, uMsg, wParam, lParam);
 }
@@ -147,9 +169,7 @@ HCURSOR CWindowHook::Hooked_SetCursor(HCURSOR hCursor)
 		cursor.hCursor = hCursor;
 		return hCursor;
 	}
-
-	if (g_hk_window.GetInputEnabled())
-		printf("Farded\n");
+	
 	return g_hk_window.SetCur(hCursor);
 }
 

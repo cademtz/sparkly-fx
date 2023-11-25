@@ -32,18 +32,13 @@ public:
 	BOOL GetCurInfo(PCURSORINFO pci);
 
 	void SetInputEnabled(bool Enabled);
-	bool GetInputEnabled() { return !m_passInput && !m_inputBypai; }
-
-protected:
-	friend class CEnableInput;
-	void SetInputEnabled_Increment(bool Enabled);
+	bool GetInputEnabled() { return !m_passInput; }
 
 private:
 	CJumpHook m_hkcurpos, m_hkshowcur, m_hksetcur, m_hkgetcurpos, m_hk_getcurinfo;
 
 	HWND m_hwnd;
 	WNDPROC m_oldproc;
-	int m_inputBypai = 0; // Should be thread-local, if used in the future
 	bool m_passInput = true;
 
 	struct
@@ -63,9 +58,3 @@ private:
 };
 
 inline CWindowHook g_hk_window;
-
-class CEnableInput {
-public:
-	CEnableInput() { g_hk_window.SetInputEnabled_Increment(false); }
-	~CEnableInput() { g_hk_window.SetInputEnabled_Increment(true); }
-};
