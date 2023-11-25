@@ -51,21 +51,6 @@ bool CMenu::AcceptMsg(HWND hWnd, UINT uMsg, LPARAM lParam, WPARAM wParam)
 
 	ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
 	bool hide_input = PushEvent(EVENT_POST_IMGUI_INPUT) & Return_NoOriginal;
-	hide_input |= IsOpen();
-
-	if (hide_input)
-	{
-		switch (uMsg)
-		{
-		case WM_KEYDOWN:
-			break;
-		case WM_KEYUP:
-		case WM_LBUTTONUP:
-		case WM_RBUTTONUP:
-		case WM_XBUTTONUP:
-			return false; // Prevent "stuck" input by allowing game to recieve key up
-		}
-	}
 	return hide_input;
 }
 
@@ -91,7 +76,10 @@ int CMenu::OnWindowProc()
 {
 	WndProcArgs* ctx = g_hk_window.Context();
 	if (AcceptMsg(ctx->hwnd, ctx->msg, ctx->lparam, ctx->wparam))
+	{
+		ctx->result = TRUE;
 		return Return_NoOriginal | Return_Skip;
+	}
 	return 0;
 }
 
