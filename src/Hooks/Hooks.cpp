@@ -99,7 +99,7 @@ void CJumpHook::Hook(void* From, void* To)
 	m_from = From, m_to = To;
 }
 
-void CJumpHook::UnHook()
+void CJumpHook::Unhook()
 {
 	if (m_from != nullptr)
 	{
