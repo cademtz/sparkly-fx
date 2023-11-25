@@ -22,11 +22,11 @@ void CWindowHook::Hook()
 void CWindowHook::Unhook()
 {
 	SetWindowLongPtrA(m_hwnd, GWLP_WNDPROC, (LONG_PTR)m_oldproc);
-	m_hkcurpos.UnHook();
-	m_hkshowcur.UnHook();
-	m_hksetcur.UnHook();
-	m_hkgetcurpos.UnHook();
-	m_hk_getcurinfo.UnHook();
+	m_hkcurpos.Unhook();
+	m_hkshowcur.Unhook();
+	m_hksetcur.Unhook();
+	m_hkgetcurpos.Unhook();
+	m_hk_getcurinfo.Unhook();
 }
 
 BOOL CWindowHook::SetCurPos(int X, int Y)

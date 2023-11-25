@@ -68,7 +68,7 @@ private:
 class CJumpHook
 {
 public:
-	~CJumpHook() { UnHook(); }
+	~CJumpHook() { Unhook(); }
 
 	template<class T = void*>
 	inline T Location() { return (T)m_from; }
@@ -76,7 +76,7 @@ public:
 	inline T Original() { return (T)m_original; }
 
 	void Hook(void* From, void* To);
-	void UnHook();
+	void Unhook();
 
 private:
 	void* m_original = nullptr;

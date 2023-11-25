@@ -65,8 +65,8 @@ void COverlayHook::Hook()
 
 void COverlayHook::Unhook()
 {
-	m_jmp_reset.UnHook();
-	m_jmp_present.UnHook();
+	m_jmp_reset.Unhook();
+	m_jmp_present.Unhook();
 }
 
 HRESULT COverlayHook::Reset(D3DPRESENT_PARAMETERS* Params)
