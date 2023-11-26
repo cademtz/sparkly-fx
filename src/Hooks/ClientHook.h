@@ -7,7 +7,7 @@ DECL_EVENT(EVENT_HLCREATEMOVE);
 DECL_EVENT(EVENT_FRAMESTAGENOTIFY);
 DECL_EVENT(EVENT_OVERRIDEVIEW);
 
-typedef bool(__thiscall* CreateMoveFn_t)(void*, float, bool);
+typedef bool(__thiscall* CreateMoveFn_t)(void*, float, CUserCmd*);
 typedef void(__thiscall* HLCreateMoveFn_t)(void*, int, float, bool);
 typedef void(__thiscall* FrameStageNotifyFn_t)(void*, ClientFrameStage_t);
 typedef void(__thiscall* OverrideViewFn_t)(void*, CViewSetup*);
