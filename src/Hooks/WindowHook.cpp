@@ -123,7 +123,10 @@ LRESULT WINAPI CWindowHook::Hooked_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, 
 		case WM_RBUTTONUP:
 		case WM_MBUTTONUP:
 		case WM_XBUTTONUP:
-			break; // Prevent "stuck" input by allowing game to recieve key up
+			//break; // Prevent "stuck" input by allowing game to recieve key up
+			// For now, this is more safe...
+			// Some games/UIs will use mouse-/key-up events to trigger some actions. 
+			return true;
 		}
 	}
 
