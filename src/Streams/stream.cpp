@@ -67,10 +67,10 @@ std::vector<Stream::ConstPtr> Stream::MakePresets()
         for (size_t i = 0; i < MaterialTweak::TEXTURE_GROUPS.size(); ++i)
         {
             const char* group = MaterialTweak::TEXTURE_GROUPS[i];
-            materials->groups[i] =  group == TEXTURE_GROUP_CLIENT_EFFECTS
-                                    || group == TEXTURE_GROUP_WORLD
-                                    || group == TEXTURE_GROUP_SKYBOX
-                                    || group == TEXTURE_GROUP_DECAL;
+            materials->groups[i] =  !strcmp(group, TEXTURE_GROUP_CLIENT_EFFECTS)
+                                    || !strcmp(group, TEXTURE_GROUP_WORLD)
+                                    || !strcmp(group, TEXTURE_GROUP_SKYBOX)
+                                    || !strcmp(group, TEXTURE_GROUP_DECAL);
         }
         depth->m_tweaks.push_back(std::move(materials));
         
