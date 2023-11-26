@@ -5,9 +5,6 @@
 DECL_EVENT(EVENT_DX9PRESENT);
 DECL_EVENT(EVENT_DX9RESET);
 
-typedef HRESULT(WINAPI* D3D9Present_t)(IDirect3DDevice9*, const RECT*, const RECT*, HWND, const RGNDATA*);
-typedef HRESULT(WINAPI* D3D9Reset_t)(IDirect3DDevice9*, D3DPRESENT_PARAMETERS*);
-
 class COverlayHook : public CBaseHook
 {
 public:
