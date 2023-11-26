@@ -1,6 +1,7 @@
 #include "OverlayHook.h"
 #include <Base/Sig.h>
 #include <Base/AsmTools.h>
+#include <stdio.h>
 
 COverlayHook::COverlayHook() : m_dev(nullptr), BASEHOOK(COverlayHook)
 {
@@ -58,6 +59,7 @@ void COverlayHook::Hook()
 	void** vtable = *(void***)d3d_device;
 	m_jmp_reset.Hook(vtable[16], &Hooked_Reset);
 	m_jmp_present.Hook(vtable[17], &Hooked_Present);
+	m_jmp_setstencil.Hook(vtable[39], &Hooked_SetDepthStencilSurface);
 
 	d3d_device->Release();
 	d3d->Release();
@@ -67,6 +69,14 @@ void COverlayHook::Unhook()
 {
 	m_jmp_reset.Unhook();
 	m_jmp_present.Unhook();
+	m_jmp_setstencil.Unhook();
+}
+
+void COverlayHook::ReplaceDepthStencil(IDirect3DSurface9* old_stencil, IDirect3DSurface9* new_stencil) {
+	m_stencilmap[old_stencil] = new_stencil;
+}
+void COverlayHook::RestoreDepthStencil(IDirect3DSurface9* old_stencil) {
+	m_stencilmap.erase(old_stencil);
 }
 
 HRESULT COverlayHook::Reset(D3DPRESENT_PARAMETERS* Params)
@@ -79,6 +89,21 @@ HRESULT COverlayHook::Present(const RECT* Src, const RECT* Dest, HWND Window, co
 {
 	static auto original = m_jmp_present.Original<decltype(Hooked_Present)*>();
 	return original(m_dev, Src, Dest, Window, DirtyRegion);
+}
+
+HRESULT COverlayHook::SetDepthStencilSurface(IDirect3DSurface9* pNewZStencil)
+{
+	static auto original = m_jmp_setstencil.Original<decltype(Hooked_SetDepthStencilSurface)*>();
+	return original(m_dev, pNewZStencil);
+}
+
+HRESULT WINAPI COverlayHook::Hooked_SetDepthStencilSurface(IDirect3DDevice9* thisptr, IDirect3DSurface9* pNewZStencil)
+{
+	g_hk_overlay.m_dev = thisptr;
+	auto it = g_hk_overlay.m_stencilmap.find(pNewZStencil);
+	if (it != g_hk_overlay.m_stencilmap.end())
+		pNewZStencil = it->second;
+	return g_hk_overlay.SetDepthStencilSurface(pNewZStencil);
 }
 
 HRESULT WINAPI COverlayHook::Hooked_Reset(IDirect3DDevice9* thisptr, D3DPRESENT_PARAMETERS* Params)
