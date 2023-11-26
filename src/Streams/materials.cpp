@@ -6,10 +6,7 @@
 CustomMaterial::~CustomMaterial()
 {
     if (m_material)
-    {
         m_material->DecrementReferenceCount();
-        m_material->DeleteIfUnreferenced();
-    }
 }
 
 CustomMaterial::Ptr CustomMaterial::AddCustomMaterial(std::string&& name, IMaterial* material) {
