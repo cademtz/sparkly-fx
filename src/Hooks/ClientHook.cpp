@@ -45,17 +45,8 @@ void CClientHook::FrameStageNotify(ClientFrameStage_t curStage)
 
 bool CClientHook::CreateMove(float flInputSampleTime, CUserCmd* cmd)
 {
-	// !!	Compiler LITERALLY will not give the correct result.
-	//		Always seems to call with completely wrong convention.
-	//		Am I just being stupid?
-
 	static auto original = m_clhook.Get<void*>(Interfaces::client->GetOffset(Off_CreateMove));
-	//return ((CreateMoveFn_t)original)(Interfaces::client->Inst(), flInputSampleTime, cmd);
-
-	m_clhook.Set(Interfaces::client->GetOffset(Off_CreateMove), original);
-	bool result = Interfaces::client->CreateMove(flInputSampleTime, cmd);
-	m_clhook.Set(Interfaces::client->GetOffset(Off_CreateMove), Hooked_CreateMove);
-	return result;
+	return ((CreateMoveFn_t)original)(Interfaces::client->Inst(), flInputSampleTime, cmd);
 }
 
 bool CClientHook::OverrideView(CViewSetup* pSetup)
