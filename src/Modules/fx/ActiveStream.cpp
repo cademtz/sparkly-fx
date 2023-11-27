@@ -3,7 +3,7 @@
 #include <Helper/engine.h>
 #include <Helper/str.h>
 #include <Hooks/fx/StudioRenderHook.h>
-#include <Hooks/ModelRenderHook.h>
+#include <Hooks/fx/ModelRenderHook.h>
 #include <Hooks/ClientHook.h>
 #include <Base/Interfaces.h>
 #include <Base/Entity.h>
