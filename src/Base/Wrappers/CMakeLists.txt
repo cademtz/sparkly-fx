@@ -7,4 +7,5 @@ target_sources(xsdk-base PRIVATE
     EntityListWrappers.cpp
     ModelRenderWrappers.cpp
     MaterialSystemWrappers.cpp
+    CvarWrappers.cpp
 )

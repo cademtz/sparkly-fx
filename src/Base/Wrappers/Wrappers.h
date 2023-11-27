@@ -57,6 +57,9 @@ enum OverrideType_t;
 struct DrawModelState_t;
 struct ModelRenderInfo_t;
 typedef unsigned short MaterialHandle_t;
+class ConCommandBase;
+class ConCommand;
+class ConVar;
 
 class IEngineClientWrapper
 {
@@ -197,4 +200,17 @@ public:
 	virtual MaterialHandle_t InvalidMaterial() = 0;
 	virtual IMaterial* GetMaterial(MaterialHandle_t handle) = 0;
 	virtual ITexture* FindTexture(char const* pTextureName, const char *pTextureGroupName, bool complain = true, int nAdditionalCreationFlags = 0) = 0;
+};
+
+class ICvarWrapper
+{
+public:
+	virtual ~ICvarWrapper() { }
+	virtual void* Inst() = 0;
+
+	virtual void		RegisterConCommand( ConCommandBase *pCommandBase ) = 0;
+	virtual void		UnregisterConCommand( ConCommandBase *pCommandBase ) = 0;
+	virtual ConVar*		FindVar ( const char *var_name ) = 0;
+	virtual ConCommand*	FindCommand( const char *name ) = 0;
+	virtual ConCommandBase*	GetCommands( void ) = 0;
 };
