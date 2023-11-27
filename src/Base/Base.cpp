@@ -21,7 +21,6 @@
 #define MAX_BACKTRACE_FRAMES 50
 #define CRASHLOG_NAME "xsdk-crashlog.txt"
 
-LONG WINAPI UnhandledFilter(struct _EXCEPTION_POINTERS* info);
 LONG NTAPI MyVectoredHandler(struct _EXCEPTION_POINTERS *ExceptionInfo);
 static PVOID my_vectored_handler = nullptr;
 //
@@ -46,6 +45,7 @@ void Base::OnDetach()
 
 DWORD WINAPI Base::HookThread(LPVOID Args)
 {
+	
 	while (!(hWnd = FindWindowA("Valve001", 0)))
 		Sleep(100);
 
@@ -147,7 +147,8 @@ static int GetFrames(CONTEXT* ctx, uintptr_t* addrs, int max)
 	frame.AddrFrame.Offset = ctx->Ebp;
 	frame.AddrStack.Offset = ctx->Esp;
 	spRegister             = ctx->Esp;
-#elif defined _M_X64
+//#elif defined _M_X64
+#elif 0 // x64 trace crashes when recording more than a couple frames. Fall back to RtlCaptureStackBackTrace
 	type = IMAGE_FILE_MACHINE_AMD64;
 	frame.AddrPC.Offset    = ctx->Rip;
 	frame.AddrFrame.Offset = ctx->Rsp;
@@ -155,7 +156,8 @@ static int GetFrames(CONTEXT* ctx, uintptr_t* addrs, int max)
 	spRegister             = ctx->Rsp;
 #else
 	/* Always available after XP, so use that */
-	return RtlCaptureStackBackTrace(0, max, (void**)addrs, NULL);
+	// Skip 3 frames (GetFrames <- Backtrace <- MyVectoredHandler)
+	return RtlCaptureStackBackTrace(3, max, (void**)addrs, NULL);
 #endif
 	thread = GetCurrentThread();
 
@@ -266,7 +268,7 @@ static const char* ExceptionDescribe(uint32_t code) {
 	return NULL;
 }
 
-static LONG WINAPI UnhandledFilter(struct _EXCEPTION_POINTERS* info) {
+static LONG NTAPI MyVectoredHandler(struct _EXCEPTION_POINTERS* info) {
 	std::stringstream trace;
 	const char* desc;
 	uint32_t code;
@@ -341,9 +343,5 @@ static LONG WINAPI UnhandledFilter(struct _EXCEPTION_POINTERS* info) {
 		);
 	}
 
-	return EXCEPTION_EXECUTE_HANDLER;
-}
-
-static LONG NTAPI MyVectoredHandler(struct _EXCEPTION_POINTERS *ExceptionInfo) {
-	return UnhandledFilter(ExceptionInfo);
+	return EXCEPTION_CONTINUE_SEARCH;
 }
