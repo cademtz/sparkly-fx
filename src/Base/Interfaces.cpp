@@ -57,18 +57,19 @@ void Interfaces::CreateInterfaces()
 		engine_tool = (IEngineTool*)engine_tool3;
 	
 	if (void* model_render16 = fn("VEngineModel016", 0))
-		model_render = new IVModelRenderWrapperSDK(model_render16);
+	{
+		if (engine->GetAppID() == AppID_GMod)
+			model_render = new IVModelRenderWrapperGMod(model_render16);
+		else
+			model_render = new IVModelRenderWrapperSDK(model_render16);
+	}
 
 	if (void* vgui1 = fn(VENGINE_VGUI_VERSION, 0))
 	{
-		switch (engine->GetAppID())
-		{
-		case AppId_CSGO:
+		if (engine->GetAppID() == AppId_CSGO)
 			vgui = new CEngineVGUIWrapperCSGO(vgui1);
-			break;
-		default:
+		else
 			vgui = new CEngineVGUIWrapperSDK(vgui1);
-		}
 	} else if (void* vgui2 = fn("VEngineVGui002", 0)) {
 		vgui = new CEngineVGUIWrapperTF2(vgui2);
 	}
