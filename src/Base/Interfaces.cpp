@@ -10,11 +10,11 @@
 #include "Wrappers/EngineTraceWrappers.h"
 #include "Wrappers/ModelRenderWrappers.h"
 #include "Wrappers/MaterialSystemWrappers.h"
+#include "Wrappers/CvarWrappers.h"
 #include <SDK/icliententitylist.h>
 #include <SDK/IPanel.h>
 #include <SDK/vgui_baseui_interface.h>
 #include <SDK/ienginetool.h>
-#include <SDK/icvar.h>
 
 #ifdef _WIN64
 #define SIG_CLIENTMODE "8B 0D ? ? ? ? 48 8B 01"
@@ -105,7 +105,10 @@ void Interfaces::CreateInterfaces()
 
 	// vstdlib //
 	fn = GetFactory("vstdlib.dll");
-	cvar = (ICvar*)fn(CVAR_INTERFACE_VERSION, 0);
+	if (void* cvar4 = fn("VEngineCvar004", 0))
+		cvar = new ICvarWrapperSDK(cvar4);
+	else if (void* cvar7 = fn("VEngineCvar007", 0))
+		cvar = new ICvarWrapper007(cvar7);
 
 	AssertInterfacePointer("IEngineClient", engine);
 	AssertInterfacePointer("IClientDLL", hlclient);
@@ -151,6 +154,7 @@ void Interfaces::DestroyInterfaces()
 	delete vgui;
 	delete mat_system;
 	delete model_render;
+	delete cvar;
 	engine = nullptr;
 	hlclient = nullptr;
 	entlist = nullptr;
@@ -159,4 +163,5 @@ void Interfaces::DestroyInterfaces()
 	vgui = nullptr;
 	mat_system = nullptr;
 	model_render = nullptr;
+	cvar = nullptr;
 }
