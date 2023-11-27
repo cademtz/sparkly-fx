@@ -45,7 +45,7 @@ void COverlayHook::Hook()
 	IDirect3DDevice9* d3d_device;
 	HRESULT err = d3d->CreateDevice(
 		D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, temp_window,
-		D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_DISABLE_DRIVER_MANAGEMENT,
+		D3DCREATE_SOFTWARE_VERTEXPROCESSING,
 		&present_params, &d3d_device
 	);
 
@@ -53,7 +53,7 @@ void COverlayHook::Hook()
 	UnregisterClass(wnd_class.lpszClassName, NULL);
 
 	if (FAILED(err))
-		FATAL("Failed to create IDirect3DDevice9 object");
+		FATAL("Failed to create IDirect3DDevice9 object\nD3D9 Error code: %d", err);
 	
 	void** vtable = *(void***)d3d_device;
 	m_jmp_reset.Hook(vtable[16], &Hooked_Reset);
