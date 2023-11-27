@@ -43,9 +43,22 @@ std::vector<Stream::ConstPtr> Stream::MakePresets()
         misc->commands =
             "r_skybox 0\n"
             "r_3dsky 0\n"
-            "glow_outline_effect_enable 0";
+            "glow_outline_effect_enable 0\n"
+            "cl_drawhud 0\n";
         // Particles are intentionally left enabled, so they may obscure the player matte
         matte->m_tweaks.emplace_back(std::move(misc));
+
+        // Get rid of the "client effects" materials by making them black
+        auto materials = std::make_shared<MaterialTweak>();
+        materials->filter_choice = FilterChoice::WHITELIST;
+        materials->color_multiply = {0,0,0,1};
+        materials->props = true;
+        for (size_t i = 0; i < MaterialTweak::TEXTURE_GROUPS.size(); ++i)
+        {
+            const char* group = MaterialTweak::TEXTURE_GROUPS[i];
+            materials->groups[i] = !strcmp(group, TEXTURE_GROUP_CLIENT_EFFECTS);
+        }
+        matte->m_tweaks.push_back(std::move(materials));
 
         vec.emplace_back(std::move(matte));
     }
