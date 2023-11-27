@@ -95,7 +95,12 @@ void Interfaces::CreateInterfaces()
 	fn = GetFactory("materialsystem.dll");
 
 	if (void* matsystem80 = fn(MATERIAL_SYSTEM_INTERFACE_VERSION, 0))
-		mat_system = new IMaterialSystemWrapperSDK(matsystem80);
+	{
+		if (engine->GetAppID() == AppID_GMod)
+			mat_system = new IMaterialSystemWrapperGMod(matsystem80);
+		else
+			mat_system = new IMaterialSystemWrapperSDK(matsystem80);
+	}
 	else if (void* matsystem81 = fn("VMaterialSystem081", 0))
 		mat_system = new IMaterialSystemWrapper081(matsystem81);
 
