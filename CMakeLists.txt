@@ -4,6 +4,7 @@ project(xsdk-base)
 
 add_library(xsdk-base SHARED)
 target_compile_features(xsdk-base PUBLIC cxx_std_17)
+enable_language(ASM_MASM) # Necessary to build AsmTools.asm, written in MASM syntax
 set_property(TARGET xsdk-base PROPERTY
   MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
 )
