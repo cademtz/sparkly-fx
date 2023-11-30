@@ -44,7 +44,8 @@ std::vector<Stream::ConstPtr> Stream::MakePresets()
             "r_skybox 0\n"
             "r_3dsky 0\n"
             "glow_outline_effect_enable 0\n"
-            "cl_drawhud 0\n";
+            "cl_drawhud 0\n"
+            "r_screenoverlay off";
         // Particles are intentionally left enabled, so they may obscure the player matte
         matte->m_tweaks.emplace_back(std::move(misc));
 
@@ -103,7 +104,8 @@ std::vector<Stream::ConstPtr> Stream::MakePresets()
             "r_cleardecals\n"
             "cl_drawhud 0\n"
             "r_drawviewmodel 0\n"
-            "mat_drawwater 0"; // Hack: Water renders oddly, so just hide it
+            "mat_drawwater 0\n" // Hack: Water renders oddly, so just hide it
+            "r_screenoverlay off";
         depth->m_tweaks.push_back(std::move(misc));
         
         vec.emplace_back(std::move(depth));
