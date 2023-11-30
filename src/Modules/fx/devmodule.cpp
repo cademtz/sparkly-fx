@@ -112,10 +112,15 @@ int DevModule::OnMenu()
     if (!m_depthreplacement)
     {
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
-        ImGui::TextWrapped(
-            "Your hardware does not support the 'INTZ' depth format.\n"
-            "Depth buffer will be unavailable."
-        );
+        if (m_rendertarget_desc.MultiSampleType != D3DMULTISAMPLE_NONE)
+            ImGui::TextWrapped("Depth buffer is not available while anti-aliasing is enabled");
+        else
+        {
+            ImGui::TextWrapped(
+                "Your hardware does not support the 'INTZ' depth format.\n"
+                "Depth buffer will be unavailable."
+            );
+        }
         ImGui::PopStyleColor();
     }
 
@@ -142,13 +147,16 @@ int DevModule::OnPresent()
         m_depthstencil->GetDesc(&m_depthstencil_desc);
         m_rendertarget->GetDesc(&m_rendertarget_desc);
 
-        if (m_depthreplacement = CreateTextureGetSurface(
-            m_depthstencil_desc.Width, m_depthstencil_desc.Height,
-            D3DUSAGE_DEPTHSTENCIL, (D3DFORMAT)FOURCC_INTZ, D3DPOOL_DEFAULT)
-        ) {
-            g_hk_overlay.ReplaceDepthStencil(m_depthstencil, m_depthreplacement);
-        } else
-            printf("Failed to create replacement depth texture\n");
+        if (m_rendertarget_desc.MultiSampleType == D3DMULTISAMPLE_NONE)
+        {
+            if (m_depthreplacement = CreateTextureGetSurface(
+                m_depthstencil_desc.Width, m_depthstencil_desc.Height,
+                D3DUSAGE_DEPTHSTENCIL, (D3DFORMAT)FOURCC_INTZ, D3DPOOL_DEFAULT)
+            ) {
+                g_hk_overlay.ReplaceDepthStencil(m_depthstencil, m_depthreplacement);
+            } else
+                printf("Failed to create replacement depth texture\n");
+        }
         
         m_buffers_initialized = true;
     }
