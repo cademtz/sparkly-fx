@@ -12,7 +12,7 @@
 #endif
 
 #include "vector.h"
-//#include "utlvector.h"
+#include "utlvector.h"
 #include "mathlib.h"
 //#include "imovehelper.h"
 #include "checksum_crc.h"

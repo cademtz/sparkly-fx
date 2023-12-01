@@ -13,7 +13,7 @@
 #endif
 
 #include "basehandle.h"
-//#include "utlvector.h" //need CUtlVector for IEngineTrace::GetBrushesIn*()
+#include "utlvector.h"
 #include "platform.h"
 #include "vector4d.h"
 
