@@ -108,7 +108,8 @@ int HlaeUi::OnFrameStageNotify()
     if (elapsed_mins >= m_autosave_mins)
     {
         prev_time = cur_time;
-        WriteNewAutosave();
+        if (m_autosave)
+            WriteNewAutosave();
     }
 
     return 0;
