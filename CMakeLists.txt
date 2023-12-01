@@ -5,6 +5,7 @@ project(xsdk-base)
 enable_language(ASM_MASM) # Necessary to build AsmTools.asm, written in MASM syntax
 add_compile_options(/MP) # Enable multi-threaded compiling
 add_compile_options($<IF:$<CONFIG:Debug>,/MTd,/MT>) # Statically linked runtime
+add_link_options(/Debug) # Always output debug symbols
 
 add_library(xsdk-base SHARED)
 target_compile_features(xsdk-base PUBLIC cxx_std_17)
