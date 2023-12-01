@@ -23,8 +23,9 @@
 #include "Color.h"
 #include <stdlib.h>
 #include "dbg.h"
-//#include "tier0/mem.h"
+#include "mem.h"
 #include "utlvector.h"
+#include <stdio.h>
 //#include "utlbuffer.h"
 //#include "utlhash.h"
 //#include "UtlSortVector.h"
