@@ -1,9 +1,14 @@
 #pragma once
 #include <imgui.h>
 #include <cstdint>
+#include <filesystem>
+#include <optional>
+#include <shtypes.h>
 
 namespace Helper
 {
+    namespace stdfs = std::filesystem;
+
     class KeyBind
     {
     public:
@@ -39,4 +44,28 @@ namespace Helper
         ImGui::PopStyleVar(2);
     }
 
+    /// @brief Run the system's file dialog. Either open/save and either file/folder.
+    /// @param filter (optional) A null-terminated array of whitelisted file types
+    std::optional<stdfs::path> OpenFileDialog(
+        const wchar_t* title = nullptr, const stdfs::path* initial_path = nullptr, const COMDLG_FILTERSPEC* filter = nullptr,
+        bool folder_dialog = false, bool save_dialog = false
+    );
+
+    /// @brief Run the system's file dialog. Either open/save and either file/folder.
+    /// @param filter (optional) A null-terminated array of whitelisted file types
+    static inline std::optional<stdfs::path> OpenFolderDialog(
+        const wchar_t* title = nullptr, const stdfs::path* initial_path = nullptr, const COMDLG_FILTERSPEC* filter = nullptr,
+        bool save_dialog = false
+    ) {
+        return OpenFileDialog(title, initial_path, filter, true, false);
+    }
+
+    /// @brief Run the system's "Save file" dialog
+    /// @param filter (optional) A null-terminated array of  whitelisted file types
+    static inline std::optional<stdfs::path> SaveFileDialog(
+        const wchar_t* title = nullptr, const stdfs::path* initial_path = nullptr, const COMDLG_FILTERSPEC* filter = nullptr,
+        bool folder_dialog = false
+    ) {
+        return OpenFileDialog(title, initial_path, filter, folder_dialog, true);
+    }
 }

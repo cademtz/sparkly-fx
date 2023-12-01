@@ -1,9 +1,11 @@
 #include "engine.h"
 #include <Base/Entity.h>
+#include <Base/Interfaces.h>
 #include <SDK/client_class.h>
 #include <SDK/convar.h>
 #include <unordered_map>
 #include <cstring>
+#include <cstdio>
 
 namespace Helper
 {
@@ -92,6 +94,30 @@ void RestoringConVar::StoreOldValue()
         m_str_value.resize(std::strlen(str));
         memcpy(m_str_value.data(), str, m_str_value.length());
     }
+}
+
+void ExecuteClientCmd(const char* fmt, ...)
+{
+    char buffer[512];
+
+    va_list va;
+    va_start(va, fmt);
+    vsnprintf_s(buffer, sizeof(buffer) - 1, fmt, va);
+    va_end(va);
+
+    Interfaces::engine->ExecuteClientCmd(buffer);
+}
+
+void ClientCmd_Unrestricted(const char* fmt, ...)
+{
+    char buffer[512];
+
+    va_list va;
+    va_start(va, fmt);
+    vsnprintf_s(buffer, sizeof(buffer) - 1, fmt, va);
+    va_end(va);
+
+    Interfaces::engine->ClientCmd_Unrestricted(buffer);
 }
 
 }
