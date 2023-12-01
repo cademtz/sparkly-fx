@@ -331,7 +331,8 @@ inline size_t MemAlloc_GetSizeAligned( void *pMemBlock )
 
 //-----------------------------------------------------------------------------
 
-#if (defined(_DEBUG) || defined(USE_MEM_DEBUG))
+//#if (defined(_DEBUG) || defined(USE_MEM_DEBUG))
+#if 0
 #define MEM_ALLOC_CREDIT_(tag)	CMemAllocAttributeAlloction memAllocAttributeAlloction( tag, __LINE__ )
 #define MemAlloc_PushAllocDbgInfo( pszFile, line ) g_pMemAlloc->PushAllocDbgInfo( pszFile, line )
 #define MemAlloc_PopAllocDbgInfo() g_pMemAlloc->PopAllocDbgInfo()
@@ -379,7 +380,8 @@ public:
 
 //-----------------------------------------------------------------------------
 
-#if defined(_WIN32) && ( defined(_DEBUG) || defined(USE_MEM_DEBUG) )
+//#if defined(_WIN32) && ( defined(_DEBUG) || defined(USE_MEM_DEBUG) )
+#if 0
 
 	#pragma warning(disable:4290)
 	#pragma warning(push)
@@ -412,7 +414,8 @@ public:
 
 //-----------------------------------------------------------------------------
 
-#if (defined(_DEBUG) || defined(USE_MEM_DEBUG))
+//#if (defined(_DEBUG) || defined(USE_MEM_DEBUG))
+#if 0
 struct MemAllocFileLine_t
 {
 	const char *pszFile;
