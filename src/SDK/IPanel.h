@@ -14,7 +14,7 @@
 
 #include "VGUI.h"
 #include "interface.h"
-//#include "tier1/utlvector.h"
+#include "utlvector.h"
 
 #ifdef SendMessage
 #undef SendMessage

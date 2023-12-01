@@ -2,6 +2,7 @@
 #include <SDK/mathlib.h>
 #include <SDK/basehandle.h>
 #include <SDK/ienginevgui.h>
+#include <assert.h>
 
 enum EOffsets {
 	Off_CreateMove,
@@ -213,4 +214,13 @@ public:
 	virtual ConVar*		FindVar ( const char *var_name ) = 0;
 	virtual ConCommand*	FindCommand( const char *name ) = 0;
 	virtual ConCommandBase*	GetCommands( void ) = 0;
+	
+	virtual int AllocateDLLIdentifier() { assert(0 && "Not implemeneted"); return 0; }
+	virtual void ProcessQueuedMaterialThreadConVarSets() { assert(0 && "Not implemented"); }
+	virtual int UnregisterConCommands(int) { assert(0 && "Not implemeneted"); return 0; }
+	virtual bool IsMaterialThreadSetAllowed() { assert(0 && "Not implemented"); return false; }
+	virtual void QueueMaterialThreadSetValue(ConVar* pConVar, const char* pValue) { assert(0 && "Not implemented"); }
+    virtual void QueueMaterialThreadSetValue(ConVar* pConVar, int nValue) { assert(0 && "Not implemented"); }
+    virtual void QueueMaterialThreadSetValue(ConVar* pConVar, float flValue) { assert(0 && "Not implemented"); }
+	virtual void CallGlobalChangeCallbacks( ConVar *var, const char *pOldString, float flOldValue ) { assert(0 && "Not implemented"); }
 };
