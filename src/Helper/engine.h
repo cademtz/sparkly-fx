@@ -1,6 +1,4 @@
 #pragma once
-#include <optional>
-#include <variant>
 #include <string>
 #include <mutex>
 
@@ -53,4 +51,9 @@ namespace Helper
         float m_float_value;
         std::mutex m_mutex;
     };
+
+    /// @brief Format and execute the command immediately (not thread-safe)
+    void ExecuteClientCmd(const char* fmt, ...);
+    /// @brief Format and execute the command in the next frame (thread-safe)
+    void ClientCmd_Unrestricted(const char* fmt, ...);
 }

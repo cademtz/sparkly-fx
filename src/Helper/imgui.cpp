@@ -2,6 +2,7 @@
 #include <array>
 #include <cstdio>
 #include <cassert>
+#include <shobjidl_core.h>
 
 namespace Helper
 {
@@ -153,6 +154,76 @@ void ImGuiHelpMarker(const char* desc)
         ImGui::PopTextWrapPos();
         ImGui::EndTooltip();
     }
+}
+
+std::optional<stdfs::path> OpenFileDialog(
+        const wchar_t* title, const stdfs::path* initial_path, const COMDLG_FILTERSPEC* filter,
+        bool folder_dialog, bool save_dialog
+) {
+    std::optional<stdfs::path> result;
+
+    if (FAILED(CoInitialize(nullptr)))
+        return std::nullopt;
+    
+    IFileDialog* dlg;
+    HRESULT err;
+    if (save_dialog)
+    {
+        err = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_IFileSaveDialog, (void**)&dlg);
+        IFileSaveDialog* save_dlg = (IFileSaveDialog*)dlg;
+    }
+    else
+        err = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, (void**)&dlg);
+
+    if (SUCCEEDED(err))
+    {
+        if (title)
+            dlg->SetTitle(title);
+
+        if (initial_path)
+        {
+            IShellItem* default_folder;
+            if (SUCCEEDED(SHCreateItemFromParsingName(initial_path->c_str(), nullptr, IID_PPV_ARGS(&default_folder))))
+            {
+                dlg->SetDefaultFolder(default_folder);
+                default_folder->Release();
+            }
+        }
+
+        FILEOPENDIALOGOPTIONS opt;
+        if (SUCCEEDED(dlg->GetOptions(&opt)))
+        {
+            opt &= ~FOS_ALLOWMULTISELECT;
+            if (folder_dialog)
+                opt |= FOS_PICKFOLDERS;
+            dlg->SetOptions(opt);
+        }
+
+        if (filter)
+        {
+            UINT filter_count = 0;
+            while (filter[filter_count].pszName)
+                ++filter_count;
+            dlg->SetFileTypes(filter_count, filter);
+        }
+
+        if (SUCCEEDED(dlg->Show(NULL)))
+        {
+            IShellItem* sh_path;
+            if (SUCCEEDED(dlg->GetResult(&sh_path)))
+            {
+                LPWSTR str_path;
+                if (SUCCEEDED(sh_path->GetDisplayName(SIGDN_FILESYSPATH, &str_path)))
+                    result = stdfs::path(str_path);
+                sh_path->Release();
+            }
+        }
+
+        dlg->Release();
+    }
+
+    CoUninitialize();
+    return result;
 }
 
 }
