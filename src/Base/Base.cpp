@@ -171,8 +171,6 @@ static int GetFrames(CONTEXT* ctx, uintptr_t* addrs, int max)
 }
 
 static void PrintFrame(std::stringstream& str, uintptr_t addr, uintptr_t symAddr, const char* symName, const char* modName) {
-	int offset;
-
 	str << (void*)addr << " - ";
 	if (modName && modName[0])
 		str << modName << ".dll";
@@ -180,7 +178,7 @@ static void PrintFrame(std::stringstream& str, uintptr_t addr, uintptr_t symAddr
 		str << "???";
 	
 	if (symName && symName[0]) {
-		offset = (int)(addr - symAddr);
+		uintptr_t offset = addr - symAddr;
 		str << '(' << symName << '+' << (void*)offset << ')';
 	}
 	str << std::endl;

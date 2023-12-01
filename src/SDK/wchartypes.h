@@ -17,6 +17,9 @@
 #error ("Must include tier0 type headers before tchar.h")
 #endif
 
+// Temporarily turn off Valve defines
+#include "valve_off.h"
+
 #if !defined(_WCHAR_T_DEFINED) && !defined(GNUC)
 typedef unsigned short wchar_t;
 #define _WCHAR_T_DEFINED
@@ -85,10 +88,22 @@ typedef char tchar;
 #define TCHAR_IS_CHAR
 #endif
 
+#if defined( _MSC_VER ) || defined( WIN32 )
+typedef wchar_t uchar16;
+typedef unsigned int uchar32;
+#else
+typedef unsigned short uchar16;
+typedef wchar_t uchar32;
+#endif
+
 #ifdef FORCED_UNICODE
 #undef _UNICODE
 #endif
 
+// Turn valve defines back on
+#include "valve_on.h"
+
 
 #endif // WCHARTYPES
+
 

@@ -1,7 +1,15 @@
 #include "OverlayHook.h"
 #include <Base/Sig.h>
 #include <Base/AsmTools.h>
-#include <stdio.h>
+#include <cstdio>
+
+#ifdef WIN64
+#define SIG_CD3DHAL "48 8D 05 ? ? ? ? 48 89 03 33 C0"
+#define OFFSET_CD3DHAL 3
+#else
+#define SIG_CD3DHAL "C7 06 ? ? ? ? 89 86 ? ? ? ? 89 86"
+#define OFFSET_CD3DHAL 2
+#endif
 
 COverlayHook::COverlayHook() : m_dev(nullptr), BASEHOOK(COverlayHook)
 {
@@ -11,58 +19,31 @@ COverlayHook::COverlayHook() : m_dev(nullptr), BASEHOOK(COverlayHook)
 
 void COverlayHook::Hook()
 {
-	HMODULE d3d_module = Base::GetModule("d3d9.dll");
-	auto p_Direct3DCreate9 = (decltype(Direct3DCreate9)*)Base::GetProc(d3d_module, "Direct3DCreate9");
+	std::string error_create;
+	std::string error_scan;
 
-	IDirect3D9* d3d = p_Direct3DCreate9(D3D_SDK_VERSION);
-	if (!d3d)
-		FATAL("Direct3DCreate9 failed");
+	printf("Creating IDirect3DDevice9...\n");
+	void** vtable = GetDeviceVtable_CreateDevice(&error_create);
 	
-	D3DDISPLAYMODE display_mode;
-	if (FAILED(d3d->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &display_mode)))
-		FATAL("GetAdapterDisplayMode failed");
+	if (!vtable)
+	{
+		printf("Scanning for IDirect3DDevice9 vtable...\n");
+		vtable = GetDeviceVtable_SigScan(&error_scan);
+	}
+
+	if (!vtable)
+	{
+		FATAL(
+			"Failed to hook D3D9.\n"
+			"GetDeviceVtable_CreateDevice: %s\n"
+			"GetDeviceVtable_SigScan: %s",
+			error_create.c_str(), error_scan.c_str()
+		);
+	}
 	
-	D3DPRESENT_PARAMETERS present_params = {0};
-	present_params.Windowed = TRUE;
-	present_params.SwapEffect = D3DSWAPEFFECT_DISCARD;
-	present_params.BackBufferFormat = display_mode.Format;
-
-	WNDCLASSEX wnd_class = {0};
-	wnd_class.cbSize = sizeof(wnd_class);
-	wnd_class.style = CS_HREDRAW | CS_VREDRAW;
-	wnd_class.lpfnWndProc = DefWindowProc;
-	wnd_class.lpszClassName = TEXT("DummyWindowClass");
-	wnd_class.hInstance = GetModuleHandle(NULL);
-	
-	if (!RegisterClassEx(&wnd_class))
-		FATAL("Failed to register temp window class");
-
-	HWND temp_window = CreateWindow(
-		wnd_class.lpszClassName, TEXT("Dummy window"), WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, NULL, NULL, wnd_class.hInstance, NULL
-	);
-	if (!temp_window)
-		FATAL("Failed to create temp window");
-
-	IDirect3DDevice9* d3d_device;
-	HRESULT err = d3d->CreateDevice(
-		D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, temp_window,
-		D3DCREATE_SOFTWARE_VERTEXPROCESSING,
-		&present_params, &d3d_device
-	);
-
-	DestroyWindow(temp_window);
-	UnregisterClass(wnd_class.lpszClassName, NULL);
-
-	if (FAILED(err))
-		FATAL("Failed to create IDirect3DDevice9 object\nD3D9 Error code: %d", err);
-	
-	void** vtable = *(void***)d3d_device;
 	m_jmp_reset.Hook(vtable[16], &Hooked_Reset);
 	m_jmp_present.Hook(vtable[17], &Hooked_Present);
 	m_jmp_setstencil.Hook(vtable[39], &Hooked_SetDepthStencilSurface);
-
-	d3d_device->Release();
-	d3d->Release();
 }
 
 void COverlayHook::Unhook()
@@ -125,4 +106,95 @@ HRESULT WINAPI COverlayHook::Hooked_Present(IDirect3DDevice9* thisptr, const REC
 
 	thisptr->SetRenderState(D3DRS_SRGBWRITEENABLE, oldstate);
 	return g_hk_overlay.Present(Src, Dest, Window, DirtyRegion);
+}
+
+void** COverlayHook::GetDeviceVtable_SigScan(std::string* out_error)
+{
+	uint8_t* code = (uint8_t*)Sig::FindPattern("d3d9.dll", SIG_CD3DHAL);
+	if (!code)
+	{
+		*out_error = "The signature scan could not find `CD3DHal::CD3DHal`";
+		return nullptr;
+	}
+	
+	
+	return (void**)AsmTools::Relative(code, OFFSET_CD3DHAL);
+}
+
+void** COverlayHook::GetDeviceVtable_CreateDevice(std::string* out_error)
+{
+	HMODULE d3d_module = Base::GetModule("d3d9.dll");
+	if (!d3d_module)
+	{
+		*out_error = "d3d9.dll is not loaded";
+		return nullptr;
+	}
+	
+	auto p_Direct3DCreate9 = (decltype(Direct3DCreate9)*)Base::GetProc(d3d_module, "Direct3DCreate9");
+
+	IDirect3D9* d3d = p_Direct3DCreate9(D3D_SDK_VERSION);
+	if (!d3d)
+	{
+		*out_error = "Direct3DCreate9 failed";
+		return nullptr;
+	}
+	
+	D3DDISPLAYMODE display_mode;
+	if (FAILED(d3d->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &display_mode)))
+	{
+		*out_error = "GetAdapterDisplayMode failed";
+		return nullptr;
+	}
+	
+	D3DPRESENT_PARAMETERS present_params = {0};
+	present_params.Windowed = TRUE;
+	present_params.SwapEffect = D3DSWAPEFFECT_DISCARD;
+	present_params.BackBufferFormat = display_mode.Format;
+
+	WNDCLASSEX wnd_class = {0};
+	wnd_class.cbSize = sizeof(wnd_class);
+	wnd_class.style = CS_HREDRAW | CS_VREDRAW;
+	wnd_class.lpfnWndProc = DefWindowProc;
+	wnd_class.lpszClassName = TEXT("DummyWindowClass");
+	wnd_class.hInstance = GetModuleHandle(NULL);
+	
+	if (!RegisterClassEx(&wnd_class))
+	{
+		*out_error = "Failed to register temp window class";
+		return nullptr;
+	}
+
+	HWND temp_window = CreateWindow(
+		wnd_class.lpszClassName, TEXT("Dummy window"), WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, NULL, NULL, wnd_class.hInstance, NULL
+	);
+	if (!temp_window)
+	{
+		*out_error = "Failed to create temp window";
+		UnregisterClass(wnd_class.lpszClassName, NULL);
+		return nullptr;
+	}
+
+	IDirect3DDevice9* d3d_device;
+	HRESULT err = d3d->CreateDevice(
+		D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, temp_window,
+		D3DCREATE_SOFTWARE_VERTEXPROCESSING,
+		&present_params, &d3d_device
+	);
+
+	DestroyWindow(temp_window);
+	UnregisterClass(wnd_class.lpszClassName, NULL);
+
+	void** vtable = nullptr;
+
+	if (SUCCEEDED(err))
+		vtable = *(void***)d3d_device;
+	else
+	{
+		*out_error = "CreateDevice error code: " + std::to_string(err);
+		return nullptr;
+	}
+
+	d3d_device->Release();
+	d3d->Release();
+	return vtable;
 }

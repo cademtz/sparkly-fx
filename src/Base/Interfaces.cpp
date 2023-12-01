@@ -15,6 +15,7 @@
 #include <SDK/IPanel.h>
 #include <SDK/vgui_baseui_interface.h>
 #include <SDK/ienginetool.h>
+#include <SDK/memalloc.h>
 
 #ifdef _WIN64
 #define SIG_CLIENTMODE "8B 0D ? ? ? ? 48 8B 01"
@@ -23,6 +24,7 @@
 #endif
 
 class IKeyValuesSystem;
+IMemAlloc* g_pMemAlloc;
 
 static CreateInterfaceFn GetFactory(const char* Module)
 {
@@ -37,8 +39,16 @@ static void AssertInterfacePointer(const char* name, void* value) {
 
 void Interfaces::CreateInterfaces()
 {
+	HMODULE tier0_dll;
+
+	// Wait for game libraries to load
 	while (!GetModuleHandleA("client.dll"))
-		Sleep(100); // Wait for client.dll to load
+		Sleep(100);
+	while (!(tier0_dll = GetModuleHandleA("tier0.dll")))
+		Sleep(100);
+	
+	// Tier0 exports //
+	g_pMemAlloc = (IMemAlloc*)GetProcAddress(tier0_dll, "g_pMemAlloc");
 	
 	// Engine factory //
 	CreateInterfaceFn fn = GetFactory("engine.dll");

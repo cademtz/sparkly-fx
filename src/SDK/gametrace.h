@@ -12,7 +12,7 @@
 
 
 #include "cmodel.h"
-//#include "utlvector.h"
+#include "utlvector.h"
 #include "ihandleentity.h"
 #include "ispatialpartition.h"
 
