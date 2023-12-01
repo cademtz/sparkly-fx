@@ -3,4 +3,7 @@ target_sources(xsdk-base PRIVATE
     mathlib_base.cpp
     KeyValues.cpp
     strtools.cpp
+    convar.cpp
+    characterset.cpp
+    utlbuffer.cpp
 )

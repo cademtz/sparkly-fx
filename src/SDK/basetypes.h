@@ -11,6 +11,8 @@
 #include "commonmacros.h"
 #include "wchartypes.h"
 
+#include "valve_off.h"
+
 #ifdef _WIN32
 #pragma once
 #endif
@@ -20,6 +22,14 @@
 #define DLLExtTokenPaste(x) #x
 #define DLLExtTokenPaste2(x) DLLExtTokenPaste(x)
 #define DLL_EXT_STRING DLLExtTokenPaste2( _DLL_EXT )
+
+
+#include "protected_things.h"
+
+// There's a different version of this file in the xbox codeline
+// so the PC version built in the xbox branch includes things like 
+// tickrate changes.
+#include "xbox_codeline_defines.h"
 
 #ifdef IN_XBOX_CODELINE
 #define XBOX_CODELINE_ONLY()
@@ -52,9 +62,9 @@
 
 
 template <typename T>
-inline T AlignValue(T val, uintptr_t alignment)
+inline T AlignValue( T val, uintptr_t alignment )
 {
-	return (T)(((uintptr_t)val + alignment - 1) & ~(alignment - 1));
+	return (T)( ( (uintptr_t)val + alignment - 1 ) & ~( alignment - 1 ) );
 }
 
 
@@ -88,11 +98,11 @@ inline T AlignValue(T val, uintptr_t alignment)
 // lower-case) function can generate more expensive code because of the
 // mixed types involved.
 template< class T >
-T Clamp(T const& val, T const& minVal, T const& maxVal)
+T Clamp( T const &val, T const &minVal, T const &maxVal )
 {
-	if (val < minVal)
+	if( val < minVal )
 		return minVal;
-	else if (val > maxVal)
+	else if( val > maxVal )
 		return maxVal;
 	else
 		return val;
@@ -101,7 +111,7 @@ T Clamp(T const& val, T const& minVal, T const& maxVal)
 // This is the preferred Min operator. Using the MIN macro can lead to unexpected
 // side-effects or more expensive code.
 template< class T >
-T Min(T const& val1, T const& val2)
+T Min( T const &val1, T const &val2 )
 {
 	return val1 < val2 ? val1 : val2;
 }
@@ -109,7 +119,7 @@ T Min(T const& val1, T const& val2)
 // This is the preferred Max operator. Using the MAX macro can lead to unexpected
 // side-effects or more expensive code.
 template< class T >
-T Max(T const& val1, T const& val2)
+T Max( T const &val1, T const &val2 )
 {
 	return val1 > val2 ? val1 : val2;
 }
@@ -144,8 +154,6 @@ enum ThreeState_t
 	TRS_NONE,
 };
 
-#define FORCEINLINE __forceinline
-
 typedef float vec_t;
 
 #if defined(__GNUC__)
@@ -162,27 +170,27 @@ typedef float vec_t;
 // This assumes the ANSI/IEEE 754-1985 standard
 //-----------------------------------------------------------------------------
 
-inline unsigned long& FloatBits(vec_t& f)
+inline unsigned long& FloatBits( vec_t& f )
 {
 	return *reinterpret_cast<unsigned long*>(&f);
 }
 
-inline unsigned long const& FloatBits(vec_t const& f)
+inline unsigned long const& FloatBits( vec_t const& f )
 {
 	return *reinterpret_cast<unsigned long const*>(&f);
 }
 
-inline vec_t BitsToFloat(unsigned long i)
+inline vec_t BitsToFloat( unsigned long i )
 {
 	return *reinterpret_cast<vec_t*>(&i);
 }
 
-inline bool IsFinite(vec_t f)
+inline bool IsFinite( vec_t f )
 {
 	return ((FloatBits(f) & 0x7F800000) != 0x7F800000);
 }
 
-inline unsigned long FloatAbsBits(vec_t f)
+inline unsigned long FloatAbsBits( vec_t f )
 {
 	return FloatBits(f) & 0x7FFFFFFF;
 }
@@ -198,17 +206,17 @@ extern "C" float fabsf(_In_ float);
 #include <math.h>
 #endif
 
-inline float FloatMakeNegative(vec_t f)
+inline float FloatMakeNegative( vec_t f )
 {
 	return -fabsf(f);
 }
 
-inline float FloatMakePositive(vec_t f)
+inline float FloatMakePositive( vec_t f )
 {
 	return fabsf(f);
 }
 
-inline float FloatNegate(vec_t f)
+inline float FloatNegate( vec_t f )
 {
 	return -f;
 }
@@ -229,12 +237,12 @@ struct color24
 
 typedef struct color32_s
 {
-	bool operator!=(const struct color32_s& other) const;
+	bool operator!=( const struct color32_s &other ) const;
 
 	byte r, g, b, a;
 } color32;
 
-inline bool color32::operator!=(const color32& other) const
+inline bool color32::operator!=( const color32 &other ) const
 {
 	return r != other.r || g != other.g || b != other.b || a != other.a;
 }
@@ -251,8 +259,8 @@ struct colorVec
 
 struct vrect_t
 {
-	int				x, y, width, height;
-	vrect_t* pnext;
+	int				x,y,width,height;
+	vrect_t			*pnext;
 };
 
 
@@ -261,7 +269,7 @@ struct vrect_t
 //-----------------------------------------------------------------------------
 struct Rect_t
 {
-	int x, y;
+    int x, y;
 	int width, height;
 };
 
@@ -287,14 +295,14 @@ template< class HandleType >
 class CBaseIntHandle
 {
 public:
-
-	inline bool			operator==(const CBaseIntHandle& other) { return m_Handle == other.m_Handle; }
-	inline bool			operator!=(const CBaseIntHandle& other) { return m_Handle != other.m_Handle; }
+	
+	inline bool			operator==( const CBaseIntHandle &other )	{ return m_Handle == other.m_Handle; }
+	inline bool			operator!=( const CBaseIntHandle &other )	{ return m_Handle != other.m_Handle; }
 
 	// Only the code that doles out these handles should use these functions.
 	// Everyone else should treat them as a transparent type.
-	inline HandleType	GetHandleValue() { return m_Handle; }
-	inline void			SetHandleValue(HandleType val) { m_Handle = val; }
+	inline HandleType	GetHandleValue()					{ return m_Handle; }
+	inline void			SetHandleValue( HandleType val )	{ m_Handle = val; }
 
 	typedef HandleType	HANDLE_TYPE;
 
@@ -309,13 +317,13 @@ class CIntHandle16 : public CBaseIntHandle< unsigned short >
 public:
 	inline			CIntHandle16() {}
 
-	static inline	CIntHandle16<DummyType> MakeHandle(HANDLE_TYPE val)
+	static inline	CIntHandle16<DummyType> MakeHandle( HANDLE_TYPE val )
 	{
-		return CIntHandle16<DummyType>(val);
+		return CIntHandle16<DummyType>( val );
 	}
 
 protected:
-	inline			CIntHandle16(HANDLE_TYPE val)
+	inline			CIntHandle16( HANDLE_TYPE val )
 	{
 		m_Handle = val;
 	}
@@ -328,13 +336,13 @@ class CIntHandle32 : public CBaseIntHandle< unsigned long >
 public:
 	inline			CIntHandle32() {}
 
-	static inline	CIntHandle32<DummyType> MakeHandle(HANDLE_TYPE val)
+	static inline	CIntHandle32<DummyType> MakeHandle( HANDLE_TYPE val )
 	{
-		return CIntHandle32<DummyType>(val);
+		return CIntHandle32<DummyType>( val );
 	}
 
 protected:
-	inline			CIntHandle32(HANDLE_TYPE val)
+	inline			CIntHandle32( HANDLE_TYPE val )
 	{
 		m_Handle = val;
 	}
@@ -384,5 +392,7 @@ protected:
 	inline Type &operator--( Type &a      ) { return a = Type( int( a ) - 1 ); } \
 	inline Type  operator++( Type &a, int ) { Type t = a; ++a; return t; } \
 	inline Type  operator--( Type &a, int ) { Type t = a; --a; return t; }
+
+#include "valve_on.h"
 
 #endif // BASETYPES_H
