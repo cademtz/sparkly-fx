@@ -108,7 +108,7 @@ int HlaeUi::OnFrameStageNotify()
     if (elapsed_mins >= m_autosave_mins)
     {
         prev_time = cur_time;
-        if (m_autosave)
+        if (Interfaces::engine->IsInGame() && m_autosave)
             WriteNewAutosave();
     }
 
