@@ -12,13 +12,10 @@
     - Fix: Update materials when new ones are added/modified, or update them every frame.
 
 Real bugs *(should get fixed)*:
-- Rarely, the game crashes after ending a recording.
-    - Cause: Unknown. The stack trace does not point to any sparkly-fx code. I also deleted my crash log and can't replicate it...
-    - Fix: Unknown.
 - The recording indicator may appear in saved movie frames.
     - Cause: Screen is sometimes not cleared before next frame, or indicator draws too early.
     - Hack: Disable this in the "Recording" settings.
-    - Fix: Unknown. Perhaps draw during `EVENT_IMGUI``, which always runs just before Present(). But if parts of the screen go un-cleared, it will still appear.
+    - Fix: Unknown. Perhaps draw during `EVENT_IMGUI`, which always runs just before Present(). But if parts of the screen go un-cleared, it will still appear.
 
 Limitations *(may be fixed)*:
 - The "Fog depth" preset renders some materials without the depth effect (like water).
@@ -30,5 +27,5 @@ Limitations *(may be fixed)*:
     - Fix: Find a way to render semi-transparent materials separately, including the hologram.
 - The "Player matte" preset does not hide particle colors
     - Cause: Particle colors can't be affected yet.
-    - Hack: Disable particles in the `Miscellaneous` tweak
+    - Hack: Disable particles in the `Commands` tweak
     - Fix: Find a way to change particle colors.
