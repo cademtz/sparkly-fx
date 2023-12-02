@@ -60,6 +60,8 @@ void CommandTweak::OnMenu()
             {"Hide particles", "r_drawparticles 0"},
             {"Hide misc effects", "glow_outline_effect_enable 0"},
             {"Erase decals", "r_cleardecals"},
+            {"Hide screen shake", "shake_show 0"},
+            {"Erase overlays (like jarate)", "r_screenoverlay off"},
         };
 
         if (ImGui::BeginListBox("##presets_list"))
