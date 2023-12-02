@@ -64,11 +64,8 @@ void CRecorder::StartListening()
 
 int CRecorder::OnPostImguiInput()
 {
-    if (m_record_bind.Poll())
-    {
-        if (!g_menu.IsOpen() && !Interfaces::engine->Con_IsVisible())
-            ToggleRecording();
-    }
+    if (m_record_bind.Poll() && !g_menu.IsOpen())
+        ToggleRecording();
     return 0;
 }
 
@@ -473,6 +470,17 @@ const char* CRecorder::VideoFormatDesc(VideoFormat format)
         "PNG image sequence\nLossless compression\nSlow",
     };
     return table[(int)format];
+}
+
+void CRecorder::ToggleRecording()
+{
+    if (IsRecordingMovie())
+        StopMovie();
+    else
+    {
+        if (Interfaces::engine->IsInGame() && !Interfaces::engine->Con_IsVisible())
+            StartMovie(m_input_movie_path);
+    }
 }
 
 FramePool::FramePool(
