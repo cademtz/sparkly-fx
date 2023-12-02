@@ -113,6 +113,7 @@ public:
 
     float fov = 90;
     bool fov_override = false;
+    bool hide_fade = false;
 };
 
 class FogTweak : public RenderTweak

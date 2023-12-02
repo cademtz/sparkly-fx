@@ -4,6 +4,7 @@
 #include <Helper/str.h>
 #include <Hooks/fx/StudioRenderHook.h>
 #include <Hooks/fx/ModelRenderHook.h>
+#include <Hooks/fx/RenderViewHook.h>
 #include <Hooks/ClientHook.h>
 #include <Base/Interfaces.h>
 #include <Base/Entity.h>
@@ -21,6 +22,7 @@ void ActiveStream::StartListening()
     Listen(EVENT_POST_DRAW_MODEL_EXECUTE, [this] { return PostDrawModelExecute(); });
     Listen(EVENT_FRAMESTAGENOTIFY, [this] { return OnFrameStageNotify(); });
     Listen(EVENT_OVERRIDEVIEW, [this] { return OnOverrideView(); });
+    Listen(EVENT_VIEW_DRAW_FADE, [this] { return OnViewDrawFade(); });
 }
 
 Stream::Ptr ActiveStream::Get()
@@ -258,6 +260,20 @@ int ActiveStream::OnOverrideView()
     {
         if (tweak->fov_override)
             view_setup->fov = tweak->fov;
+    }
+    return 0;
+}
+
+int ActiveStream::OnViewDrawFade()
+{
+    auto lock = ReadLock();
+    if (!m_stream)
+        return 0;
+    
+    for (auto tweak = m_stream->begin<CameraTweak>(); tweak != m_stream->end<CameraTweak>(); ++tweak)
+    {
+        if (tweak->hide_fade)
+            return Return_NoOriginal;
     }
     return 0;
 }

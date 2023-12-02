@@ -61,6 +61,7 @@ protected:
     int PostDrawModelExecute();
     int OnFrameStageNotify();
     int OnOverrideView();
+    int OnViewDrawFade();
 
 private:
     struct LastDrawParams
