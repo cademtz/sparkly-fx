@@ -264,6 +264,9 @@ void CameraTweak::OnMenu()
 
     if (!fov_override)
         ImGui::EndDisabled();
+
+    ImGui::Checkbox("Hide fade effects", &hide_fade); ImGui::SameLine();
+    Helper::ImGuiHelpMarker("This hides the effects of flashbangs, teleporters, and other mechanics that normally cover the screen.");
 }
 
 void FogTweak::OnMenu()
