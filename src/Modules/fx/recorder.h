@@ -43,10 +43,7 @@ private:
     int OnFrameStageNotify();
     /// @brief Write the current frame to the stream
     void WriteFrame(const std::string& stream_name);
-
-    void ToggleRecording() {
-        IsRecordingMovie() ? StopMovie() : StartMovie(m_input_movie_path);
-    }
+    void ToggleRecording();
 
     // === Menu options === //
 
