@@ -194,7 +194,13 @@ void** COverlayHook::GetDeviceVtable_CreateDevice(std::string* out_error)
 		return nullptr;
 	}
 
-	d3d_device->Release();
-	d3d->Release();
+	// Intentionally leak the D3D device...
+	// During game startup, releasing it can cause the D3D code to be unloaded or moved.
+	// MinHook will throw MH_ERROR_NOT_EXECUTABLE:
+	//   "The specified pointer is invalid. It points the address of non-allocated
+	//   and/or non-executable region."
+	
+	//d3d_device->Release();
+	//d3d->Release();
 	return vtable;
 }
