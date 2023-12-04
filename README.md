@@ -6,6 +6,11 @@ Features:
 - Output multiple streams/layers
 - Highly customizeable streams (Multiple mattes, visibility filters, color adjustment, unlimited FOV)
 
+Usage:
+- From the releases page, download a ZIP and extract it
+- Using a DLL-loader/DLL-injector, load the DLL into Team Fortress 2.
+- In-game, press the `F11` or `Insert` key to open and use the Sparkly FX menu.
+
 Please read [known-bugs.md](known-bugs.md). This software is in early development.
 
 You can chat with fellow TF2 video editors (including me) in the Castellum Discord server:
