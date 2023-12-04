@@ -392,7 +392,18 @@ int CRecorder::OnFrameStageNotify()
             // We don't explicitly lock any mutex.
             // Assume that nothing is modified while recording.
             if (g_stream_editor.GetStreams().empty())
+            {
+                // HACK: Re-render the frame without the recording indicator.
+                // Frames should be read *before* D3D's `Present` func is called, but... 
+                // `Present` is sometimes dispatched more than once per frame. (This may only be the case for beta-branch GMod. I don't remember.)
+                if (m_record_indicator)
+                {
+                    CViewSetup view_setup;
+                    Interfaces::hlclient->GetPlayerView(view_setup);
+                    Interfaces::hlclient->RenderView(view_setup, VIEW_CLEAR_COLOR, RENDERVIEW_DRAWVIEWMODEL | RENDERVIEW_DRAWHUD);
+                }
                 WriteFrame(DEFAULT_STREAM_NAME);
+            }
             else
             {
                 CViewSetup view_setup;
