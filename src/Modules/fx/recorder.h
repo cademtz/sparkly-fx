@@ -50,9 +50,14 @@ private:
     Helper::KeyBind m_record_bind;
     bool m_is_recording = false;
     bool m_record_indicator = false;
-    bool m_autoresume = true;
-    bool m_autoclose = true;
-    bool m_autostop = false;
+    /// @brief Resume the demo when recording starts
+    bool m_autoresume_demo = true;
+    /// @brief Pause the demo when recording stops
+    bool m_autopause_demo = true;
+    /// @brief Close the menu when recording starts
+    bool m_autoclose_menu = false;
+    /// @brief Stop the recording when the menu is opened
+    bool m_autostop_recording = false;
     int m_png_compression_lvl = 1;
     int m_framerate = 60;
     VideoFormat m_video_format = VideoFormat::PNG;

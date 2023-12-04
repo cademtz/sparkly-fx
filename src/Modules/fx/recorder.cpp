@@ -118,19 +118,24 @@ int CRecorder::OnMenu()
         ImGui::BeginGroup();
 
         ImGui::Checkbox("Recording indicator", &m_record_indicator); ImGui::SameLine();
-        Helper::ImGuiHelpMarker("Displays an indicator on screen while recording");
-        ImGui::Checkbox("Auto-resume demo", &m_autoresume); ImGui::SameLine();
+        Helper::ImGuiHelpMarker(
+            "Displays an indicator on screen while recording\n"
+            "(Currently, this decreases the recording performance by re-rendering the frame)"
+        );
+        ImGui::Checkbox("Auto-resume demo", &m_autoresume_demo); ImGui::SameLine();
         Helper::ImGuiHelpMarker("Resumes the demo when the recording starts");
+        ImGui::Checkbox("Auto-pause demo", &m_autopause_demo); ImGui::SameLine();
+        Helper::ImGuiHelpMarker("Pauses the demo when the recording stops");
         
         ImGui::EndGroup();
         ImGui::SameLine();
         ImGui::BeginGroup();
 
-        if (ImGui::Checkbox("Auto-close menu", &m_autoclose))
-            m_autostop &= m_autoclose; // Do not auto-stop if auto-close is off.
+        if (ImGui::Checkbox("Auto-close menu", &m_autoclose_menu))
+            m_autostop_recording &= m_autoclose_menu; // Do not auto-stop if auto-close is off.
         ImGui::SameLine(); Helper::ImGuiHelpMarker("Closes the menu when the recording starts");
-        if (ImGui::Checkbox("Auto-stop recording", &m_autostop))
-            m_autoclose |= m_autostop; // Always auto-close if auto-stop is enabled.
+        if (ImGui::Checkbox("Auto-stop recording", &m_autostop_recording))
+            m_autoclose_menu |= m_autostop_recording; // Always auto-close if auto-stop is enabled.
         ImGui::SameLine(); Helper::ImGuiHelpMarker("Stops the recording when the menu is opened");
         
         ImGui::EndGroup();
@@ -202,7 +207,7 @@ int CRecorder::OnMenu()
         ImGui::EndDisabled();
     }
 
-    if (IsRecordingMovie() && m_autostop)
+    if (IsRecordingMovie() && m_autostop_recording)
         StopMovie();
     return 0;
 }
@@ -296,7 +301,7 @@ bool CRecorder::StartMovie(const std::string& path)
     );
     Interfaces::engine_tool->StartMovieRecording(movie_params);
     Interfaces::engine->ExecuteClientCmd("demo_resume");
-    if (m_autoclose)
+    if (m_autoclose_menu)
         g_menu.SetOpen(false);
     m_is_recording = true;
     return true;
@@ -306,6 +311,8 @@ void CRecorder::StopMovie()
 {
     m_is_recording = false;
     Interfaces::engine_tool->EndMovieRecording();
+    if (m_autopause_demo)
+        Interfaces::engine->ExecuteClientCmd("demo_pause");
     m_framepool->Finish();
     g_stream_editor.OnEndMovie(); // This just sets the preview stream again
     
