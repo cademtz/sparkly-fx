@@ -45,6 +45,8 @@ CRecorder::CRecorder()
 
 void CRecorder::StartListening()
 {
+    Interfaces::engine->ClientCmd_Unrestricted("echo SparklyFX is loaded. Press F11 or Insert to open the menu.");
+
     std::array<char, 512> buffer;
     std::error_code err;
 
