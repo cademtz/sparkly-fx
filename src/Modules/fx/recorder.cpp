@@ -105,18 +105,42 @@ int CRecorder::OnMenu()
             ToggleRecording();
         
         m_record_bind.OnMenu("Record hotkey");
-        ImGui::Checkbox("Recording indicator", &m_record_indicator);
-        ImGui::SameLine(); Helper::ImGuiHelpMarker("Displays an indicator on screen while recording");
+        
+        ImGui::BeginGroup();
+
+        ImGui::Checkbox("Recording indicator", &m_record_indicator); ImGui::SameLine();
+        Helper::ImGuiHelpMarker("Displays an indicator on screen while recording");
+        ImGui::Checkbox("Auto-resume demo", &m_autoresume); ImGui::SameLine();
+        Helper::ImGuiHelpMarker("Resumes the demo when the recording starts");
+        
+        ImGui::EndGroup();
+        ImGui::SameLine();
+        ImGui::BeginGroup();
+        
+        if (ImGui::Checkbox("Auto-close menu", &m_autoclose))
+            m_autostop &= m_autoclose; // Do not auto-stop if auto-close is off.
+        ImGui::SameLine(); Helper::ImGuiHelpMarker("Closes the menu when the recording starts");
+        if (ImGui::Checkbox("Auto-stop recording", &m_autostop))
+            m_autoclose |= m_autostop; // Always auto-close if auto-stop is enabled.
+        ImGui::SameLine(); Helper::ImGuiHelpMarker("Stops the recording when the menu is opened");
+        
+        ImGui::EndGroup();
 
         if (m_is_recording)
             ImGui::BeginDisabled();
 
-        ImGui::InputText("Output folder", &m_input_movie_path);
-        ImGui::SameLine();
+        ImGui::Text("Output folder:"); ImGui::SameLine();
         Helper::ImGuiHelpMarker(
             "This folder will contain the movie files.\n"
             "The folder will be created automatically, if it doesn't exist."
         );
+        ImGui::InputText("##output_folder", &m_input_movie_path); ImGui::SameLine();
+        if (ImGui::Button("Browse"))
+        {
+            auto optional_path = Helper::OpenFolderDialog(L"Select the output folder");
+            if (optional_path)
+                m_input_movie_path = optional_path->u8string();
+        }
         ImGui::InputInt("Framerate", &m_framerate);
 
         if (ImGui::BeginCombo("Video format", VideoFormatName(m_video_format)))
@@ -160,8 +184,6 @@ int CRecorder::OnMenu()
         if (m_is_recording)
             ImGui::EndDisabled();
         
-        ImGui::Checkbox("Pause if menu is open", &m_pause_on_menu);
-        
         // Disabled text has less visual clutter
         ImGui::BeginDisabled();
         ImGui::Text("Framepool RAM: %f MB", framepool_ram);
@@ -180,6 +202,9 @@ int CRecorder::OnMenu()
 
         ImGui::EndGroup();
     }
+
+    if (IsRecordingMovie() && m_autostop)
+        StopMovie();
     return 0;
 }
 
@@ -187,10 +212,7 @@ bool CRecorder::IsRecordingMovie() {
     return m_is_recording;
 }
 
-bool CRecorder::ShouldRecordFrame()
-{
-    if (m_pause_on_menu && g_menu.IsOpen())
-        return false;
+bool CRecorder::ShouldRecordFrame() {
     return IsRecordingMovie() && !Interfaces::engine->Con_IsVisible();
 }
 
@@ -273,6 +295,9 @@ bool CRecorder::StartMovie(const std::string& path)
         screen_w, screen_h
     );
     Interfaces::engine_tool->StartMovieRecording(movie_params);
+    Interfaces::engine->ExecuteClientCmd("demo_resume");
+    if (m_autoclose)
+        g_menu.SetOpen(false);
     m_is_recording = true;
     return true;
 }
