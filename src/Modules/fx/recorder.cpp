@@ -65,7 +65,10 @@ void CRecorder::StartListening()
 int CRecorder::OnPostImguiInput()
 {
     if (m_record_bind.Poll() && !g_menu.IsOpen())
-        ToggleRecording();
+    {
+        if (!Interfaces::engine->Con_IsVisible()) // Don't active the keybind while typing in the console
+            ToggleRecording();
+    }
     return 0;
 }
 
@@ -99,7 +102,13 @@ int CRecorder::OnMenu()
 {
     if (ImGui::CollapsingHeader("Recording"))
     {
-        ImGui::BeginGroup();
+        const char* movie_err = GetFirstMovieError();
+        if (movie_err)
+        {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
+            ImGui::TextColored(ImVec4(1,1,0,1), "[Error] %s", movie_err);
+            ImGui::PopStyleColor();
+        }
 
         if (ImGui::Button(IsRecordingMovie() ? "Stop" : "Start"))
             ToggleRecording();
@@ -116,7 +125,7 @@ int CRecorder::OnMenu()
         ImGui::EndGroup();
         ImGui::SameLine();
         ImGui::BeginGroup();
-        
+
         if (ImGui::Checkbox("Auto-close menu", &m_autoclose))
             m_autostop &= m_autoclose; // Do not auto-stop if auto-close is off.
         ImGui::SameLine(); Helper::ImGuiHelpMarker("Closes the menu when the recording starts");
@@ -191,16 +200,6 @@ int CRecorder::OnMenu()
         ImGui::TextWrapped("Game directory: %s", game_dir.string().c_str());
         ImGui::TextWrapped("Working directory: %s", working_dir.string().c_str());
         ImGui::EndDisabled();
-        
-        const char* movie_err = GetFirstMovieError();
-        if (movie_err)
-        {
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
-            ImGui::TextColored(ImVec4(1,1,0,1), "[Error] %s", movie_err);
-            ImGui::PopStyleColor();
-        }
-
-        ImGui::EndGroup();
     }
 
     if (IsRecordingMovie() && m_autostop)
@@ -220,17 +219,18 @@ bool CRecorder::StartMovie(const std::string& path)
 {
     if (IsRecordingMovie())
         return false;
-    if (!Interfaces::engine->IsInGame())
-    {
-        SetFirstMovieError("Must be in-game to record");
-        return false;
-    }
     
     auto lock = g_active_stream.ReadLock();
 
     m_first_movie_error.clear();
     m_movie_path.clear();
     m_frame_index = 0;
+
+    if (!Interfaces::engine->IsInGame())
+    {
+        SetFirstMovieError("Must be in-game to record");
+        return false;
+    }
 
     if (path.empty())
     {
@@ -497,15 +497,8 @@ const char* CRecorder::VideoFormatDesc(VideoFormat format)
     return table[(int)format];
 }
 
-void CRecorder::ToggleRecording()
-{
-    if (IsRecordingMovie())
-        StopMovie();
-    else
-    {
-        if (Interfaces::engine->IsInGame() && !Interfaces::engine->Con_IsVisible())
-            StartMovie(m_input_movie_path);
-    }
+void CRecorder::ToggleRecording() {
+    IsRecordingMovie() ? (void)StopMovie() : (void)StartMovie(m_input_movie_path);
 }
 
 FramePool::FramePool(
