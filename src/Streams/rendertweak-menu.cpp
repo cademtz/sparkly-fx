@@ -86,7 +86,7 @@ void CommandTweak::OnMenu()
         g_active_stream.SignalUpdate(nullptr, ActiveStream::UPDATE_CONVARS);
 }
 
-void EntityFilterTweak::OnMenu()
+void ModelTweak::OnMenu()
 {
     const char* const ENTITY_POPUP = "##popup_add_class";
     const char* const MODEL_POPUP = "##popup_add_model";
@@ -119,13 +119,13 @@ void EntityFilterTweak::OnMenu()
     ImGui::SameLine(); Helper::ImGuiHelpMarker("Change how the models/textures are rendered");
 
     ImGui::ColorEdit4("Color multiply", color_multiply.data());
-    ImGui::SameLine(); Helper::ImGuiHelpMarker("Use with the matte effect to get a solid color.");
+    ImGui::SameLine(); Helper::ImGuiHelpMarker("Use this with the matte material to get a solid color.");
 
-    ImGui::TextUnformatted("Affected entities:");
+    ImGui::TextUnformatted("Affected models:");
     
-    ImGui::RadioButton("All", (int*)&filter_choice, (int)FilterChoice::ALL);
-    ImGui::RadioButton("Entities in the list", (int*)&filter_choice, (int)FilterChoice::WHITELIST);
-    ImGui::RadioButton("Entities not in the list", (int*)&filter_choice, (int)FilterChoice::BLACKLIST);
+    ImGui::RadioButton("All models", (int*)&filter_choice, (int)FilterChoice::ALL);
+    ImGui::RadioButton("Models in the list", (int*)&filter_choice, (int)FilterChoice::WHITELIST);
+    ImGui::RadioButton("Models not in the list", (int*)&filter_choice, (int)FilterChoice::BLACKLIST);
 
     // === Include entities === //
     static ClientClass* selected_class = nullptr;
@@ -276,6 +276,16 @@ void EntityFilterTweak::OnMenu()
             }
             ImGui::EndListBox();
         }
+
+        if (ImGui::Button("Close"))
+            ImGui::CloseCurrentPopup();
+
+        ImGui::BeginDisabled();
+        ImGui::Text( // Don't use TextWrapped. Popups don't like it.
+            "This list only contains model that have been used.\n"
+            "If you can't find a model, then make it appear in-game."
+        );
+        ImGui::EndDisabled();
         
         ImGui::EndPopup();
     }

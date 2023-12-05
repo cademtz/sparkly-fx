@@ -46,7 +46,7 @@ void CommandTweak::GetCommandList(std::vector<Helper::ParsedCommand>* output)
     }
 }
 
-bool EntityFilterTweak::IsEntityAffected(CBaseEntity* entity) const
+bool ModelTweak::IsEntityAffected(CBaseEntity* entity) const
 {
     if (filter_choice == FilterChoice::ALL)
         return true;
@@ -65,7 +65,7 @@ bool EntityFilterTweak::IsEntityAffected(CBaseEntity* entity) const
     return filter_choice == FilterChoice::WHITELIST ? is_specified : !is_specified;
 }
 
-bool EntityFilterTweak::IsModelAffected(const std::string& path) const
+bool ModelTweak::IsModelAffected(const std::string& path) const
 {
     if (filter_choice == FilterChoice::ALL)
         return true;
@@ -74,11 +74,11 @@ bool EntityFilterTweak::IsModelAffected(const std::string& path) const
     return filter_choice == FilterChoice::WHITELIST ? exists : !exists;
 }
 
-bool EntityFilterTweak::IsEffectInvisible() const {
+bool ModelTweak::IsEffectInvisible() const {
     return render_effect == MaterialChoice::INVISIBLE || color_multiply[3] == 0;
 }
 
-const char* EntityFilterTweak::MaterialChoiceName(MaterialChoice value)
+const char* ModelTweak::MaterialChoiceName(MaterialChoice value)
 {
     switch (value)
     {

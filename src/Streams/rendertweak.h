@@ -46,14 +46,14 @@ public:
     std::string commands;
 };
 
-class EntityFilterTweak : public RenderTweak
+class ModelTweak : public RenderTweak
 {
 public:
     enum class MaterialChoice : int { NORMAL, INVISIBLE, CUSTOM, _COUNT = CUSTOM };
 
-    const char* GetName() const override { return "Entities"; }
+    const char* GetName() const override { return "Models"; }
     std::shared_ptr<RenderTweak> Clone() const override {
-        return std::make_shared<EntityFilterTweak>(*this);
+        return std::make_shared<ModelTweak>(*this);
     }
     void OnMenu() override;
     
@@ -141,7 +141,7 @@ public:
 
 inline const std::vector<RenderTweak::ConstPtr> RenderTweak::default_tweaks = {
     std::make_shared<CommandTweak>(),
-    std::make_shared<EntityFilterTweak>(),
+    std::make_shared<ModelTweak>(),
     std::make_shared<MaterialTweak>(),
     std::make_shared<CameraTweak>(),
     std::make_shared<FogTweak>(),
