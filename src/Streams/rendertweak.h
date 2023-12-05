@@ -59,6 +59,7 @@ public:
     
     /// @return `true` if an entity should be rendered differently than normal
     bool IsEntityAffected(CBaseEntity* entity) const;
+    bool IsModelAffected(const std::string& path) const;
     /// @return `true` if the effect will make an entity invisible
     bool IsEffectInvisible() const;
 
@@ -74,6 +75,8 @@ public:
 
     /// @brief A list of entity classes to filter
     std::unordered_set<ClientClass*> classes;
+    /// @brief A list of model paths to filter. Paths must be lowercase with forward-slashes.
+    std::unordered_set<std::string> model_paths;
     bool filter_player = false;
     bool filter_weapon = false;
     bool filter_wearable = false;
