@@ -22,6 +22,7 @@
 #include "rendertweak.h"
 #include "materials.h"
 #include <Modules/fx/ActiveStream.h>
+#include <Hooks/fx/ModelRenderHook.h>
 #include <SDK/texture_group_names.h>
 #include <SDK/client_class.h>
 #include <Helper/imgui.h>
@@ -88,33 +89,7 @@ void CommandTweak::OnMenu()
 void EntityFilterTweak::OnMenu()
 {
     const char* const ENTITY_POPUP = "##popup_add_class";
-    
-    // === Helper functions === //
-    auto classes_getter = [](void* data, int index, const char** out_text) -> bool
-    {
-        const auto* set = (decltype(classes)*)data;
-        size_t i = 0;
-        for (auto it = set->begin(); it != set->end(); ++it, ++i)
-        {
-            if (i == index)
-            {
-                *out_text = (*it)->GetName();
-                return true;
-            }
-        }
-        return false;
-    };
-    auto classes_remove = [](decltype(classes)& set, size_t index)
-    {
-        std::unique_lock lock = g_active_stream.WriteLock();
-        
-        if (index < 0 || index >= set.size())
-            return;
-        auto it = set.begin();
-        for (size_t i = 0; i < index; ++i)
-            ++it;
-        set.erase(it);
-    };
+    const char* const MODEL_POPUP = "##popup_add_model";
 
     if (ImGui::BeginCombo("Material", custom_material ? custom_material->GetName().c_str() : MaterialChoiceName(render_effect)))
     {
@@ -153,27 +128,92 @@ void EntityFilterTweak::OnMenu()
     ImGui::RadioButton("Entities not in the list", (int*)&filter_choice, (int)FilterChoice::BLACKLIST);
 
     // === Include entities === //
-    static int current_class = 0;
+    static ClientClass* selected_class = nullptr;
 
     if (filter_choice == FilterChoice::ALL)
         ImGui::BeginDisabled();
 
+    ImGui::BeginGroup();
+
     ImGui::Checkbox("Players", &filter_player);
     ImGui::Checkbox("Weapons", &filter_weapon);
+
+    ImGui::EndGroup();
+    ImGui::SameLine();
+    ImGui::BeginGroup();
+
     ImGui::Checkbox("Wearables", &filter_wearable);
     ImGui::Checkbox("Projectiles", &filter_projectile);
+
+    ImGui::EndGroup();
     
     ImGui::Text("Entity classes:");
     ImGui::SameLine(); Helper::ImGuiHelpMarker("List of entity classes to include/exclude");
-    if (ImGui::Button("Add##include"))
+    if (ImGui::Button("Add##class"))
         ImGui::OpenPopup(ENTITY_POPUP);
     ImGui::SameLine();
-    if (ImGui::Button("Remove##include"))
-        classes_remove(classes, current_class);
+    if (ImGui::Button("Remove##class"))
+    {
+        auto lock = g_active_stream.WriteLock();
+        classes.erase(selected_class);
+    }
     ImGui::SameLine();
-    if (ImGui::Button("Remove all##include"))
+    if (ImGui::Button("Remove all##class"))
+    {
+        auto lock = g_active_stream.WriteLock();
         classes.clear();
-    ImGui::ListBox("##included", &current_class, classes_getter, &classes, classes.size());
+    }
+
+    if (ImGui::BeginListBox("##class_list", Helper::CalcListBoxSize(classes.size())))
+    {
+        for (ClientClass* client_class : classes)
+        {
+            if (ImGui::Selectable(client_class->GetName(), client_class == selected_class))
+                selected_class = client_class;
+        }
+        ImGui::EndListBox();
+    }
+
+    // === Include models === //
+    
+    static size_t selected_model = 0;
+
+    ImGui::Text("Models:");
+    ImGui::SameLine(); Helper::ImGuiHelpMarker("List of models to include/exclude");
+    if (ImGui::Button("Add##model"))
+        ImGui::OpenPopup(MODEL_POPUP);
+    ImGui::SameLine();
+    if (ImGui::Button("Remove##model"))
+    {
+        size_t i = 0;
+        for (auto it = model_paths.begin(); it != model_paths.end(); ++it, ++i)
+        {
+            if (i == selected_model)
+            {
+                auto lock = g_active_stream.WriteLock();
+                model_paths.erase(it);
+                break;
+            }
+        }
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Remove all##model"))
+    {
+        auto lock = g_active_stream.WriteLock();
+        model_paths.clear();
+    }
+
+    if (ImGui::BeginListBox("##model_list", Helper::CalcListBoxSize(model_paths.size())))
+    {
+        size_t i = 0;
+        for (const std::string& path : model_paths)
+        {
+            if (ImGui::Selectable(path.c_str(), i == selected_model))
+                selected_model = i;
+            ++i;
+        }
+        ImGui::EndListBox();
+    }
     
     if (filter_choice == FilterChoice::ALL)
         ImGui::EndDisabled();
@@ -184,7 +224,6 @@ void EntityFilterTweak::OnMenu()
         static std::array<char, 64> search_input = {0};
         ImGui::InputText("Search", search_input.data(), search_input.size() - 1);
 
-        ClientClass* selected = nullptr;
         if (ImGui::BeginListBox("Class names"))
         {
             ClientClass* next_class = Interfaces::hlclient->GetAllClasses();
@@ -193,21 +232,51 @@ void EntityFilterTweak::OnMenu()
                 if (!search_input[0] || Helper::strcasestr(next_class->GetName(), search_input.data()))
                 {
                     if (ImGui::Selectable(next_class->GetName(), false, ImGuiSelectableFlags_DontClosePopups))
-                        selected = next_class;
+                    {
+                        auto lock = g_active_stream.WriteLock();
+                        classes.emplace(next_class);
+                    }
                 }
             }
             ImGui::EndListBox();
         }
 
-        bool close = ImGui::Button("Close");
+        if (ImGui::Button("Close"))
+            ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
 
-        if (selected)
+    if (ImGui::BeginPopup(MODEL_POPUP))
+    {
+        static std::array<char, 64> search_input = {0};
+        ImGui::Text("Search:");
+        ImGui::InputText("##search", search_input.data(), search_input.size() - 1); ImGui::SameLine();
+        if (ImGui::Button("Add"))
         {
             auto lock = g_active_stream.WriteLock();
-            classes.emplace(selected);
+            model_paths.emplace(search_input.data());
         }
-        if (close)
-            ImGui::CloseCurrentPopup();
+
+        ImGui::SetNextItemWidth(-1);
+        if (ImGui::BeginListBox("##models"))
+        {
+            CModelRenderHook::LockedModelNames model_list = g_hk_model_render.GetDrawnModelList();
+            for (const std::string& name : *model_list)
+            {
+                if (!search_input[0] || Helper::CaseInsensitivePathSubstr(name.c_str(), search_input.data()))
+                {
+                    if (ImGui::Selectable(name.c_str(), false, ImGuiSelectableFlags_DontClosePopups))
+                    {
+                        auto lock = g_active_stream.WriteLock();
+                        model_paths.emplace(name);
+                    }
+                    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone))
+                        ImGui::SetTooltip("%s", name.c_str());
+                }
+            }
+            ImGui::EndListBox();
+        }
+        
         ImGui::EndPopup();
     }
 }

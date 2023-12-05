@@ -1,5 +1,6 @@
 #include "ModelRenderHook.h"
 #include <Base/Interfaces.h>
+#include <SDK/ivmodelrender.h>
 
 CModelRenderHook::CModelRenderHook() : BASEHOOK(CModelRenderHook)
 {
@@ -24,12 +25,27 @@ void CModelRenderHook::DrawModelExecute(const DrawModelState_t& state, const Mod
 	original(Interfaces::model_render->Inst(), state, pInfo, pCustomBoneToWorld);
 }
 
+CModelRenderHook::LockedModelNames CModelRenderHook::GetDrawnModelList() {
+    return LockedModelNames(m_drawn_modelnames, m_drawn_models_mutex);
+}
+
+void CModelRenderHook::ClearDrawnModelList()
+{
+    std::lock_guard lock(m_drawn_models_mutex);
+    m_drawn_modelnames.clear();
+}
+
 void __stdcall CModelRenderHook::Hooked_DrawModelExecute(UNCRAP const DrawModelState_t& state, const ModelRenderInfo_t& pInfo, matrix3x4_t* pCustomBoneToWorld)
 {
     auto* ctx = &g_hk_model_render.Context()->model_execute;
     ctx->state = &state;
     ctx->pInfo = &pInfo;
     ctx->pCustomBoneToWorld = pCustomBoneToWorld;
+
+    {
+        std::lock_guard lock(g_hk_model_render.m_drawn_models_mutex);
+        g_hk_model_render.m_drawn_modelnames.emplace(state.m_pStudioHdr->pszName());
+    }
 
     int flags = g_hk_model_render.PushEvent(EVENT_PRE_DRAW_MODEL_EXECUTE);
     if (!(flags & Return_NoOriginal))

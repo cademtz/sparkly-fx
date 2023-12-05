@@ -34,6 +34,7 @@ namespace Helper
     };
     
     void ImGuiHelpMarker(const char* desc);
+    ImVec2 CalcListBoxSize(size_t num_items);
     static void PushStyleCompact()
     {
         ImGuiStyle& style = ImGui::GetStyle();

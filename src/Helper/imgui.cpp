@@ -4,6 +4,10 @@
 #include <cassert>
 #include <shobjidl_core.h>
 
+#undef min
+#undef max
+#include <algorithm> // std::min and std::max
+
 namespace Helper
 {
 
@@ -154,6 +158,13 @@ void ImGuiHelpMarker(const char* desc)
         ImGui::PopTextWrapPos();
         ImGui::EndTooltip();
     }
+}
+
+ImVec2 CalcListBoxSize(size_t num_items)
+{
+    float height_in_items = std::min<size_t>(num_items, 7);
+    float height_in_items_f = height_in_items + 0.25f;
+    return {0.0f, std::floorf(ImGui::GetTextLineHeightWithSpacing() * height_in_items_f + ImGui::GetStyle().FramePadding.y * 2.0f)};
 }
 
 std::optional<stdfs::path> OpenFileDialog(

@@ -193,14 +193,15 @@ int ActiveStream::PreDrawModelExecute()
         return 0;
     
     auto* ctx = &g_hk_model_render.Context()->model_execute;
-
     CBaseEntity* entity = Interfaces::entlist->GetClientEntity(ctx->pInfo->entity_index);
-    if (entity == nullptr || entity->GetClientClass() == nullptr)
-        return 0;
 
     for (auto tweak = m_stream->begin<EntityFilterTweak>(); tweak != m_stream->end<EntityFilterTweak>(); ++tweak)
     {
-        if (!tweak->IsEntityAffected(entity))
+        bool is_affected = entity && tweak->IsEntityAffected(entity);
+        if (!is_affected)
+            is_affected = tweak->IsModelAffected(ctx->state->m_pStudioHdr->pszName());
+
+        if (!is_affected)
             continue;
         
         if (tweak->IsEffectInvisible())

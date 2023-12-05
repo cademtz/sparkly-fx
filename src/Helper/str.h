@@ -23,6 +23,29 @@ namespace Helper
         return nullptr;
     }
 
+    /// @brief Case-and-slash-insensitive search for `substr` in `str`
+    /// @return The first occurence of `substr` in `str`, or `nullptr`
+    template <class T = char>
+    const T* CaseInsensitivePathSubstr(const T* str, const T* substr)
+    {
+        while (*str)
+        { 
+            for (size_t i = 0; ; ++i)
+            {
+                if (!substr[i])
+                    return str;
+
+                char lhs = str[i] == '\\' ? '/' : std::tolower(str[i]);
+                char rhs = substr[i] == '\\' ? '/' : std::tolower(substr[i]);
+                
+                if (lhs != rhs)
+                    break;
+            }
+            ++str;
+        }
+        return nullptr;
+    }
+
     struct ParsedCommand
     {
         std::string_view name;
