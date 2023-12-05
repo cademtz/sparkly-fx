@@ -7,9 +7,11 @@ Features:
 - Highly customizeable streams (Multiple mattes, visibility filters, color adjustment, unlimited FOV)
 
 Usage:
-- From the releases page, download a ZIP and extract it
-- Using a DLL-loader/DLL-injector, load the DLL into Team Fortress 2.
+- From the releases page, download `sparkly-fx.zip` and extract it.
+- Using a DLL-loader/DLL-injector, load the extracted DLL file into Team Fortress 2.
 - In-game, press the `F11` or `Insert` key to open and use the Sparkly FX menu.
+  *(A console message from Sparkly FX will appear if it loaded correctly.)*
+- Alternatively, you may use [HLAE's loader](https://www.advancedfx.org/).
 
 Please read [known-bugs.md](known-bugs.md). This software is in early development.
 
