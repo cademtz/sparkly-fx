@@ -25,8 +25,8 @@ std::vector<Stream::ConstPtr> Stream::MakePresets()
     {
         Stream::Ptr matte = std::make_shared<Stream>("Player matte");
 
-        auto entities = std::make_shared<EntityFilterTweak>();
-        entities->render_effect = EntityFilterTweak::MaterialChoice::CUSTOM;
+        auto entities = std::make_shared<ModelTweak>();
+        entities->render_effect = ModelTweak::MaterialChoice::CUSTOM;
         entities->custom_material = CustomMaterial::GetMatte();
         entities->color_multiply = {0,1,0,1};
         entities->filter_choice = FilterChoice::WHITELIST;
@@ -67,8 +67,8 @@ std::vector<Stream::ConstPtr> Stream::MakePresets()
     {
         Stream::Ptr depth = std::make_shared<Stream>("Depth fog");
 
-        auto entities = std::make_shared<EntityFilterTweak>();
-        entities->render_effect = EntityFilterTweak::MaterialChoice::CUSTOM;
+        auto entities = std::make_shared<ModelTweak>();
+        entities->render_effect = ModelTweak::MaterialChoice::CUSTOM;
         entities->custom_material = CustomMaterial::GetSolid();
         entities->color_multiply = {0,0,0,1};
         depth->m_tweaks.emplace_back(std::move(entities));

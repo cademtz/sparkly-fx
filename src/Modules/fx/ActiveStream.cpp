@@ -195,7 +195,7 @@ int ActiveStream::PreDrawModelExecute()
     auto* ctx = &g_hk_model_render.Context()->model_execute;
     CBaseEntity* entity = Interfaces::entlist->GetClientEntity(ctx->pInfo->entity_index);
 
-    for (auto tweak = m_stream->begin<EntityFilterTweak>(); tweak != m_stream->end<EntityFilterTweak>(); ++tweak)
+    for (auto tweak = m_stream->begin<ModelTweak>(); tweak != m_stream->end<ModelTweak>(); ++tweak)
     {
         bool is_affected = entity && tweak->IsEntityAffected(entity);
         if (!is_affected)
