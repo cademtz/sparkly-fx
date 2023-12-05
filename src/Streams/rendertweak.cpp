@@ -69,7 +69,7 @@ bool EntityFilterTweak::IsModelAffected(const std::string& path) const
 {
     if (filter_choice == FilterChoice::ALL)
         return true;
-    // TODO: The path argument must become lowercase with forward slashes before calling find
+    // TODO: The path must become lowercase with forward slashes before calling find
     bool exists = model_paths.find(path) != model_paths.end();
     return filter_choice == FilterChoice::WHITELIST ? exists : !exists;
 }
