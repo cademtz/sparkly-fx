@@ -2,6 +2,7 @@
 #include "Netvars.h"
 #include <SDK/vector.h>
 #include <SDK/mathlib.h>
+#include <cstdint>
 
 #define NV_RET(type, var) return *(type*)(this + var)
 
@@ -34,6 +35,6 @@ class CBasePlayer : public CBaseEntity
 {
 public:
 	inline const Vector& ViewOffset() { NV_RET(Vector, Netvars::m_vecViewOffset); }
-	inline const int LifeState() { NV_RET(int, Netvars::m_lifeState); }
+	inline const uint8_t LifeState() { NV_RET(uint8_t, Netvars::m_lifeState); }
 	inline const int Health() { NV_RET(int, Netvars::m_iHealth); }
 };
