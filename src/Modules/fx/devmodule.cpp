@@ -1,5 +1,6 @@
 #include <Modules/BaseModule.h>
 #include <Modules/Menu.h>
+#include <Modules/Draw.h>
 #include <Modules/fx/recorder.h>
 #include <Hooks/OverlayHook.h>
 #include <Base/Interfaces.h>
@@ -7,6 +8,8 @@
 #include <imgui/imgui_internal.h>
 #include <Helper/str.h>
 #include <array>
+#include <vector>
+#include <mutex>
 #include <d3d9.h>
 #include <Helper/dxerr.h>
 #include <fstream>
@@ -15,7 +18,6 @@
 
 const uint32_t FOURCC_INTZ = MAKEFOURCC('I','N','T','Z');
 bool PrintDXResult(HRESULT err, const char* expr);
-
 
 class DevModule : public CModule {
 protected:
@@ -31,8 +33,11 @@ private:
     IDirect3DSurface9* m_depthstencil;
     IDirect3DSurface9* m_rendertarget;
     IDirect3DSurface9* m_depthreplacement = nullptr;
+    std::vector<std::pair<std::string, Vector>> m_3dmarkers;
+    std::mutex m_3dmarkers_mutex;
 
     int OnMenu();
+    int OnDraw();
     int OnReset();
     int OnPresent();
 
@@ -47,6 +52,7 @@ DevModule g_devmodule;
 void DevModule::StartListening()
 {
     Listen(EVENT_MENU, [this] { return OnMenu(); });
+    Listen(EVENT_DRAW, [this] { return OnDraw(); });
     Listen(EVENT_DX9RESET, [this] { return OnReset(); });
     Listen(EVENT_DX9PRESENT, [this] { return OnPresent(); });
 }
@@ -75,6 +81,8 @@ void DevModule::DisplayTataTableTree(RecvTable* table)
 
 int DevModule::OnMenu()
 {
+    const char* const POPUP_3DMARKER = "##popup_3dmarker";
+    
     if (!ImGui::CollapsingHeader("Dev tools"))
         return 0;
     
@@ -123,7 +131,73 @@ int DevModule::OnMenu()
         }
         ImGui::PopStyleColor();
     }
+    
+    static size_t selected_marker = 0;
 
+    if (ImGui::Button("Add##marker"))
+        ImGui::OpenPopup(POPUP_3DMARKER);
+    ImGui::SameLine();
+    if (ImGui::Button("Remove##marker"))
+    {
+        std::scoped_lock lock(m_3dmarkers_mutex);
+        if (selected_marker < m_3dmarkers.size())
+            m_3dmarkers.erase(m_3dmarkers.begin() + selected_marker);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Clear##marker"))
+    {
+        std::scoped_lock lock(m_3dmarkers_mutex);
+        m_3dmarkers.clear();
+    }
+
+    if (ImGui::BeginListBox("Markers", Helper::CalcListBoxSize(m_3dmarkers.size())))
+    {
+        std::scoped_lock lock(m_3dmarkers_mutex);
+        size_t i = 0;
+        for (auto& pair : m_3dmarkers)
+        {
+            ImGui::PushID(i);
+            if (ImGui::Selectable(pair.first.c_str(), i == selected_marker))
+                selected_marker = i;
+            ImGui::PopID();
+        }
+        ImGui::EndListBox();
+    }
+
+    if (ImGui::BeginPopup(POPUP_3DMARKER))
+    {
+        static float pos[3] = {0};
+        static std::array<char, 64> name = {0};
+
+        ImGui::InputText("Name", name.data(), name.size() - 1);
+        ImGui::InputFloat3("Pos", pos);
+
+        if (ImGui::Button("Add") && name[0])
+        {
+            std::scoped_lock lock(m_3dmarkers_mutex);
+            m_3dmarkers.emplace_back(std::make_pair(std::string(name.data()), Vector(pos[0], pos[1], pos[2])));
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+
+    return 0;
+}
+
+int DevModule::OnDraw()
+{
+    {
+        std::scoped_lock lock(m_3dmarkers_mutex);
+        for (auto& pair : m_3dmarkers)
+        {
+            Vector world_pos = pair.second;
+            ImVec2 screen_pos;
+            if (!gDraw.WorldToScreen(world_pos, screen_pos))
+                continue;
+            gDraw.DrawText_Outline(screen_pos, 0xFFFFFFFF, 0xFF000000, pair.first.c_str());
+            gDraw.DrawBox3D_Radius(world_pos, 50, ImColor(255, 0, 0));
+        }
+    }
     return 0;
 }
 
