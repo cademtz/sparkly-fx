@@ -19,6 +19,7 @@
 #include <chrono>
 #include <array>
 #include <cassert>
+#include <Helper/ffmpeg.h>
 
 // Libraries for threading/writing movie data 
 #include <fstream>
@@ -30,33 +31,39 @@
 //
 
 static const std::string DEFAULT_STREAM_NAME = "video";
+static const COMDLG_FILTERSPEC COM_EXE_FILTER[] = {{L"Executable", L"*.exe"}, {0}};
 
 static std::filesystem::path game_dir;
 static std::filesystem::path working_dir;
-
-CRecorder::CRecorder()
-{
-    // By default, allocate 1 frame for every thread/core.
-    m_framepool_size = std::thread::hardware_concurrency();
-    if (m_framepool_size < 1)
-        m_framepool_size = 1;
-    m_framepool_size += 1;
-}
 
 void CRecorder::StartListening()
 {
     Interfaces::engine->ClientCmd_Unrestricted("echo SparklyFX is loaded. Press F11 or Insert to open the menu.");
 
-    std::array<char, 512> buffer;
-    std::error_code err;
+    // Get game directory
+    {
+        std::array<char, 512> buffer;
+        std::error_code err;
 
-    Interfaces::engine_tool->GetGameDir(buffer.data(), buffer.size());
-    game_dir = buffer.data();
-    working_dir = std::filesystem::current_path(err);
-    if (err)
-        printf("Failed to get working directory");
-    
-    m_input_movie_path = game_dir.string();
+        Interfaces::engine_tool->GetGameDir(buffer.data(), buffer.size());
+        game_dir = buffer.data();
+        working_dir = std::filesystem::current_path(err);
+        if (err)
+            printf("Failed to get working directory");
+
+        m_input_movie_path = game_dir.string();
+    }
+
+    // By default, allocate 1 frame for every thread/core.
+    m_framepool_size = std::thread::hardware_concurrency();
+    if (m_framepool_size < 1)
+        m_framepool_size = 1;
+    m_framepool_size += 1;
+
+    // Find FFMpeg executables
+    m_ffmpeg_path_list = Helper::FFmpeg::ScanForExecutables();
+    if (!m_ffmpeg_path_list.empty())
+        m_ffmpeg_path = m_ffmpeg_path_list.front();
 
     Listen(EVENT_POST_IMGUI_INPUT, [this]{ return OnPostImguiInput(); });
     Listen(EVENT_DRAW, [this]{ return OnDraw(); });
@@ -196,6 +203,42 @@ int CRecorder::OnMenu()
         Interfaces::engine->GetScreenSize(screen_w, screen_h);
         float framepool_ram = screen_w * screen_h * FrameBufferRGB::NUM_CHANNELS * FrameBufferRGB::NUM_BYTES;
         framepool_ram = framepool_ram * m_framepool_size / (1024 * 1024);
+
+        if (ImGui::TreeNode("FFmpeg settings"))
+        {
+            bool has_ffmpeg = !m_ffmpeg_path.empty();
+            if (has_ffmpeg)
+                ImGui::TextWrapped("FFmpeg: %S", m_ffmpeg_path.c_str());
+            else
+            {
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
+                ImGui::Text("Select an FFmpeg executable");
+                ImGui::PopStyleColor();
+            }
+            
+            if (ImGui::Button("Browse"))
+            {
+                auto optional_path = Helper::OpenFileDialog(L"Select an FFmpeg executable", nullptr, COM_EXE_FILTER);
+                if (optional_path)
+                    m_ffmpeg_path = std::move(*optional_path);
+                else
+                    m_ffmpeg_path.clear();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Clear"))
+                m_ffmpeg_path.clear();
+
+            if (ImGui::BeginListBox("Executables", Helper::CalcListBoxSize(m_ffmpeg_path_list.size())))
+            {
+                for (const auto& path : m_ffmpeg_path_list)
+                {
+                    if (ImGui::Selectable(path.u8string().c_str(), false))
+                        m_ffmpeg_path = path;
+                }
+                ImGui::EndListBox();
+            }
+            ImGui::TreePop();
+        }
 
         if (m_is_recording)
             ImGui::EndDisabled();
