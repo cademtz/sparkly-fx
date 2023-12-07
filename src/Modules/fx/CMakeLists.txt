@@ -4,4 +4,5 @@ target_sources(xsdk-base PRIVATE
     recorder.cpp
     devmodule.cpp
     hlaeui.cpp
+    spectatemodule.cpp
 )
