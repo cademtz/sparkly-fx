@@ -3,4 +3,5 @@ target_sources(xsdk-base PRIVATE
     engine.cpp
     str.cpp
     dxerr.cpp
+    ffmpeg.cpp
 )

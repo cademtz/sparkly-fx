@@ -12,8 +12,6 @@ class FramePool;
 class CRecorder : public CModule
 {
 public:
-    CRecorder();
-
     /// @brief A video format.
     /// Update @ref VideoFormatName and @ref VideoFormatDesc when changed!
     enum class VideoFormat : int
@@ -62,6 +60,9 @@ private:
     int m_framerate = 60;
     VideoFormat m_video_format = VideoFormat::PNG;
     int m_framepool_size = 1;
+    /// @brief The desired FFmpeg executable path. An empty path indicates no FFmpeg.
+    std::filesystem::path m_ffmpeg_path;
+    std::vector<std::filesystem::path> m_ffmpeg_path_list;
     
     // === Current movie info === //
 
