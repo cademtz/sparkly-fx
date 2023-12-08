@@ -345,7 +345,8 @@ bool CRecorder::StartMovie(const std::string& path)
         screen_w, screen_h
     );
     Interfaces::engine_tool->StartMovieRecording(movie_params);
-    Interfaces::engine->ExecuteClientCmd("demo_resume");
+    if (m_autoresume_demo)
+        Interfaces::engine->ExecuteClientCmd("demo_resume");
     if (m_autoclose_menu)
         g_menu.SetOpen(false);
     m_is_recording = true;
