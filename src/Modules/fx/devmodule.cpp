@@ -3,6 +3,7 @@
 #include <Modules/Draw.h>
 #include <Modules/fx/recorder.h>
 #include <Hooks/OverlayHook.h>
+#include <Streams/videowriter.h>
 #include <Base/Interfaces.h>
 #include <SDK/client_class.h>
 #include <imgui/imgui_internal.h>
@@ -265,7 +266,7 @@ int DevModule::OnPresent()
 
             std::fstream file {m_dump_filename.data(), std::ios::out | std::ios::binary};
             if (file)
-                fb.WritePNG(file);
+                ImageWriter::WritePNG(fb, file);
         }
     }
 
