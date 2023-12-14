@@ -61,13 +61,13 @@ void EncoderConfig::ShowImguiControls()
     else if (type == EncoderConfig::TYPE_FFMPEG)
     {
         static auto ffmpeg_path_list = Helper::FFmpeg::ScanForExecutables();
-        //bool is_initialized = false;
-        //if (!is_initialized) // Find a good default FFmpeg path
-        //{
-        //    is_initialized = true;
-        //    if (Helper::FFmpeg::GetDefaultPath().empty() && !ffmpeg_path_list.empty())
-        //        Helper::FFmpeg::SetDefaultPath(ffmpeg_path_list.front());
-        //}
+        bool is_initialized = false;
+        if (!is_initialized) // Find a good default FFmpeg path
+        {
+            is_initialized = true;
+            if (Helper::FFmpeg::GetDefaultPath().empty() && !ffmpeg_path_list.empty())
+                Helper::FFmpeg::SetDefaultPath(ffmpeg_path_list.front());
+        }
 
         std::filesystem::path ffmpeg_path = Helper::FFmpeg::GetDefaultPath();
         bool has_ffmpeg = !ffmpeg_path.empty();
