@@ -1,9 +1,13 @@
 #pragma once
 #include <cstring>
+#include <string>
 #include <string_view>
 
 namespace Helper
 {
+    /// @brief Print a format string to a new `std::string`
+    std::string sprintf(const char* fmt, ...);
+
     /// @brief Case-insensitive search for `substr` in `str`
     /// @return The first occurence of `substr` in `str`, or `nullptr`
     template <class T = char>

@@ -1,8 +1,28 @@
 #include "str.h"
 #include <cctype>
+#include <cstdarg>
+#include <vector>
 
 namespace Helper
 {
+
+std::string sprintf(const char* fmt, ...)
+{
+    std::string buffer(256, '\0');
+
+    bool is_incomplete = true;
+    do
+    {
+        va_list va;
+        va_start(va, fmt);
+        int len = std::vsnprintf(buffer.data(), buffer.size() + 1 /* Includes null-terminator */, fmt, va);
+        va_end(va);
+
+        is_incomplete = len > buffer.size();
+        buffer.resize(len);
+    } while (is_incomplete);
+    return buffer;
+}
 
 size_t ParseCommandName(const char* str, std::string_view* output)
 {

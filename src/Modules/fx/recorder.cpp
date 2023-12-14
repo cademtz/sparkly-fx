@@ -1,17 +1,15 @@
 #include "recorder.h"
-#include <imgui.h>
-#include <imgui/misc/cpp/imgui_stdlib.h>
+#include <Helper/ffmpeg.h>
+#include <Streams/videowriter.h>
 #include <Hooks/ClientHook.h>
 #include <Modules/Menu.h>
 #include <Modules/Draw.h>
 #include "ActiveStream.h"
 #include "StreamEditor.h"
 #include <Base/Interfaces.h>
-#include <Base/fnv1a.h>
 #include <SDK/cdll_int.h>
 #include <SDK/ienginetool.h>
 #include <SDK/KeyValues.h>
-#include <SDK/itexture.h>
 #include <SDK/ivrenderview.h>
 #include <SDK/view_shared.h>
 #include <cstdint>
@@ -19,19 +17,9 @@
 #include <chrono>
 #include <array>
 #include <cassert>
-#include <Helper/ffmpeg.h>
-
-// Libraries for threading/writing movie data 
-#include <fstream>
-#include <spng.h>
-#define QOI_IMPLEMENTATION
-#define QOI_NO_STDIO
-#include <qoi.h>
 #include <thread>
-//
 
 static const std::string DEFAULT_STREAM_NAME = "video";
-static const COMDLG_FILTERSPEC COM_EXE_FILTER[] = {{L"Executable", L"*.exe"}, {0}};
 
 static std::filesystem::path game_dir;
 static std::filesystem::path working_dir;
@@ -50,20 +38,14 @@ void CRecorder::StartListening()
         working_dir = std::filesystem::current_path(err);
         if (err)
             printf("Failed to get working directory");
-
-        m_input_movie_path = game_dir.string();
     }
 
     // By default, allocate 1 frame for every thread/core.
     m_framepool_size = std::thread::hardware_concurrency();
-    if (m_framepool_size < 1)
+    if (m_framepool_size <= 1)
         m_framepool_size = 1;
-    m_framepool_size += 1;
-
-    // Find FFMpeg executables
-    m_ffmpeg_path_list = Helper::FFmpeg::ScanForExecutables();
-    if (!m_ffmpeg_path_list.empty())
-        m_ffmpeg_path = m_ffmpeg_path_list.front();
+    else
+        m_framepool_size += 1; // Add an extra thread to minimize idle time
 
     Listen(EVENT_POST_IMGUI_INPUT, [this]{ return OnPostImguiInput(); });
     Listen(EVENT_DRAW, [this]{ return OnDraw(); });
@@ -111,11 +93,18 @@ int CRecorder::OnMenu()
 {
     if (ImGui::CollapsingHeader("Recording"))
     {
-        const char* movie_err = GetFirstMovieError();
-        if (movie_err)
+        bool has_errors = !GetErrorLog()->empty();
+        if (has_errors)
         {
+            ImGui::Text("Errors:"); ImGui::SameLine();
+            if (ImGui::Button("Clear"))
+                ClearErrorLog();
+            
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
-            ImGui::TextColored(ImVec4(1,1,0,1), "[Error] %s", movie_err);
+            auto locked_error_log = GetErrorLog();
+            ImGui::InputTextMultiline("##error_log",
+                locked_error_log->data(), locked_error_log->length(), ImVec2(0,0), ImGuiInputTextFlags_ReadOnly
+            );
             ImGui::PopStyleColor();
         }
 
@@ -157,39 +146,17 @@ int CRecorder::OnMenu()
             "This folder will contain the movie files.\n"
             "The folder will be created automatically, if it doesn't exist."
         );
-        ImGui::InputText("##output_folder", &m_input_movie_path); ImGui::SameLine();
+        ImGui::InputText("##output_folder", &m_movie_path.string(), ImGuiInputTextFlags_ReadOnly); ImGui::SameLine();
         if (ImGui::Button("Browse"))
         {
             auto optional_path = Helper::OpenFolderDialog(L"Select the output folder");
             if (optional_path)
-                m_input_movie_path = optional_path->u8string();
+                m_movie_path = std::move(*optional_path);
         }
-        ImGui::InputInt("Framerate", &m_framerate);
-
-        if (ImGui::BeginCombo("Video format", VideoFormatName(m_video_format)))
-        {
-            for (int fmt = 0; fmt < (int)VideoFormat::NUM_FORMATS; ++fmt)
-            {
-                ImGui::PushID(fmt);
-                const bool item_selected = (VideoFormat)fmt == m_video_format;
-                const char* item_text = VideoFormatName((VideoFormat)fmt);
-                if (ImGui::Selectable(item_text, item_selected) && !item_selected)
-                    m_video_format = (VideoFormat)fmt;
-                if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone))
-                    ImGui::SetTooltip(VideoFormatDesc((VideoFormat)fmt));
-                if (item_selected)
-                    ImGui::SetItemDefaultFocus();
-                ImGui::PopID();
-            }
-            ImGui::EndCombo();
-        }
-
-        if (m_video_format == VideoFormat::PNG)
-        {
-            ImGui::Text("PNG compression (higher compression is slower):");
-            ImGui::SliderInt("PNG compression", &m_png_compression_lvl, 0, 9);
-        }
-
+        
+        ImGui::PushID("##videoconfig");
+        m_videoconfig.ShowImguiControls();
+        ImGui::PopID();
 
         ImGui::SliderInt("Frame pool size", &m_framepool_size, 1, 128, "%d", ImGuiSliderFlags_AlwaysClamp);
         ImGui::SameLine();
@@ -203,43 +170,7 @@ int CRecorder::OnMenu()
         Interfaces::engine->GetScreenSize(screen_w, screen_h);
         float framepool_ram = screen_w * screen_h * FrameBufferRGB::NUM_CHANNELS * FrameBufferRGB::NUM_BYTES;
         framepool_ram = framepool_ram * m_framepool_size / (1024 * 1024);
-
-        if (ImGui::TreeNode("FFmpeg settings"))
-        {
-            bool has_ffmpeg = !m_ffmpeg_path.empty();
-            if (has_ffmpeg)
-                ImGui::TextWrapped("FFmpeg: %S", m_ffmpeg_path.c_str());
-            else
-            {
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
-                ImGui::Text("Select an FFmpeg executable");
-                ImGui::PopStyleColor();
-            }
-            
-            if (ImGui::Button("Browse"))
-            {
-                auto optional_path = Helper::OpenFileDialog(L"Select an FFmpeg executable", nullptr, COM_EXE_FILTER);
-                if (optional_path)
-                    m_ffmpeg_path = std::move(*optional_path);
-                else
-                    m_ffmpeg_path.clear();
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Clear"))
-                m_ffmpeg_path.clear();
-
-            if (ImGui::BeginListBox("Executables", Helper::CalcListBoxSize(m_ffmpeg_path_list.size())))
-            {
-                for (const auto& path : m_ffmpeg_path_list)
-                {
-                    if (ImGui::Selectable(path.u8string().c_str(), false))
-                        m_ffmpeg_path = path;
-                }
-                ImGui::EndListBox();
-            }
-            ImGui::TreePop();
-        }
-
+        
         if (m_is_recording)
             ImGui::EndDisabled();
         
@@ -262,435 +193,219 @@ bool CRecorder::IsRecordingMovie() {
 }
 
 bool CRecorder::ShouldRecordFrame() {
-    return IsRecordingMovie() && !Interfaces::engine->Con_IsVisible();
+    return IsRecordingMovie() && !Interfaces::engine->Con_IsVisible() && m_movie;
 }
 
-bool CRecorder::StartMovie(const std::string& path)
+bool CRecorder::SetupMovie()
 {
-    if (IsRecordingMovie())
-        return false;
+    if (m_movie)
+        return true;
     
-    auto lock = g_active_stream.ReadLock();
+    ClearErrorLog();
 
-    m_first_movie_error.clear();
-    m_movie_path.clear();
-    m_frame_index = 0;
-
+    if (m_movie_path.empty())
+    {
+        AppendErrorLog("No folder was given for recording");
+        return false;
+    }
+    
     if (!Interfaces::engine->IsInGame())
     {
-        SetFirstMovieError("Must be in-game to record");
+        AppendErrorLog("Must be in-game to record\n");
         return false;
     }
-
-    if (path.empty())
-    {
-        SetFirstMovieError("Movie path was empty");
-        return false;
-    }
-    m_movie_path = path;
-
-    // Create the movie directory structure
-    std::error_code err;
-    std::filesystem::create_directory(m_movie_path, err);
-    if (err)
-    {
-        SetFirstMovieError("Failed to create folder (%s): '%s'", err.message().c_str(), m_movie_path.string().c_str());
-        return false;
-    }
-
-    if (g_stream_editor.GetStreams().empty()) // Default video folder
-    {
-        std::filesystem::path dir = m_movie_path / DEFAULT_STREAM_NAME;
-        std::filesystem::create_directory(dir, err);
-        if (err)
-        {
-            SetFirstMovieError("Failed to create folder: '%s'", dir.string().c_str());
-            return false;
-        }
-    }
-    else // Video folders named after each stream
-    {
-        for (auto stream : g_stream_editor.GetStreams())
-        {
-            std::filesystem::path dir = m_movie_path / stream->GetName();
-            std::filesystem::create_directory(dir, err);
-            if (err)
-            {
-                SetFirstMovieError("Failed to create folder: '%s'", dir.string().c_str());
-                return false;
-            }
-        }
-    }
-    
-    // We use the engine to record the audio file, but it only accepts relative directories. So:
-    // Make a temporary, relative audio file with a somewhat unique name. Then we can move it later.
-    {
-        auto time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch());
-        m_temp_audio_name = "audio-" + std::to_string(time.count()) + ".wav";
-    }
-
-    // Use engine_tool to record sound for us, otherwise we would need a signature to SND_StartMovie
-    KeyValuesAD movie_params("movie_params");
-
-    movie_params->SetString("filename", m_temp_audio_name.c_str());
-    movie_params->SetInt("outputwav", 1);
-    movie_params->SetFloat("framerate", m_framerate); // This one is a float. Dunno why.
 
     int screen_w, screen_h;
     Interfaces::engine->GetScreenSize(screen_w, screen_h);
 
-    m_framepool = std::make_shared<FramePool>(
-        std::thread::hardware_concurrency(), m_framepool_size,
-        m_video_format, m_png_compression_lvl,
-        screen_w, screen_h
-    );
+    // Create the Movie instance
+    {
+        auto lock = g_active_stream.ReadLock();
+        std::vector<Stream::Ptr> dummy_stream_list;
+        auto* stream_list = &g_stream_editor.GetStreams();
+        if (stream_list->empty()) // If there are no streams, make an empty one
+        {
+            dummy_stream_list.emplace_back(std::make_shared<Stream>("video"));
+            stream_list = &dummy_stream_list;
+        }
+
+        m_movie.emplace(
+            screen_w, screen_h, std::filesystem::path{m_movie_path}, *stream_list, m_framepool_size,
+            [this](std::string_view str) { AppendErrorLog(str); },
+            m_videoconfig
+        );
+    }
+
+    if (m_movie->Failed())
+    {
+        m_movie = std::nullopt;
+        return false;
+    }
+
+    // Use engine_tool to record sound for us, otherwise we would need a signature to SND_StartMovie
+    KeyValuesAD movie_params("movie_params");
+    movie_params->SetString("filename", m_movie->GetTempAudioName().c_str());
+    movie_params->SetInt("outputwav", 1);
+    movie_params->SetFloat("framerate", m_videoconfig.framerate); // This one is a float. Dunno why.
     Interfaces::engine_tool->StartMovieRecording(movie_params);
+
     if (m_autoresume_demo)
         Interfaces::engine->ExecuteClientCmd("demo_resume");
     if (m_autoclose_menu)
         g_menu.SetOpen(false);
-    m_is_recording = true;
+    
     return true;
 }
 
-void CRecorder::StopMovie()
+static void AttemptToMovieTempAudioFile(std::filesystem::path&& old_path, std::filesystem::path&& new_path)
 {
-    m_is_recording = false;
+    const int WAIT_MS = 200;
+    const int TIMEOUT_MS = 10'000;
+
+    std::error_code err;
+    for (int attempts = 0; attempts * WAIT_MS < TIMEOUT_MS; ++attempts)
+    {
+        std::filesystem::rename(old_path, new_path, err);
+        if (!err)
+            return;
+        std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_MS));
+    }
+
+    g_recorder.FormatErrorLog("Failed to move temp audio file (%s): '%s' -> '%s'\n",
+        err.message().c_str(),
+        old_path.string().c_str(),
+        new_path.string().c_str()
+    );
+}
+
+void CRecorder::CleanupMovie()
+{
+    if (!m_movie)
+        return;
+
     Interfaces::engine_tool->EndMovieRecording();
     if (m_autopause_demo)
         Interfaces::engine->ExecuteClientCmd("demo_pause");
-    m_framepool->Finish();
     g_stream_editor.OnEndMovie(); // This just sets the preview stream again
     
     // Sometimes the audio file cannot be renamed because the engine is still writing to it.
     // The solution? Retry a couple times in another thread.
 
     std::filesystem::path new_audio_path = m_movie_path / "audio.wav";
-    std::filesystem::path old_audio_path = game_dir / m_temp_audio_name;
-    std::thread([](std::filesystem::path&& old_path, std::filesystem::path&& new_path)
-    {
-        const int WAIT_MS = 200;
-        const int TIMEOUT_MS = 10'000;
-
-        std::error_code err;
-        for (int attempts = 0; attempts * WAIT_MS < TIMEOUT_MS; ++attempts)
-        {
-            std::filesystem::rename(old_path, new_path, err);
-            if (!err)
-                return;
-            std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_MS));
-        }
-
-        g_recorder.SetFirstMovieError("Failed to move temp audio file (%s): '%s' -> '%s'",
-            err.message().c_str(),
-            old_path.string().c_str(),
-            new_path.string().c_str()
-        );
-    }, std::move(old_audio_path), std::move(new_audio_path)).detach();
+    std::filesystem::path old_audio_path = game_dir / m_movie->GetTempAudioName();
+    std::thread(AttemptToMovieTempAudioFile, std::move(old_audio_path), std::move(new_audio_path)).detach();
+    m_movie = std::nullopt;
 }
 
-void CRecorder::SetFirstMovieError(const char* fmt, ...)
-{
-    std::lock_guard lock{m_mutex_error};
-    if (!m_first_movie_error.empty())
-        return;
-    
-    m_first_movie_error.resize(1024);
-
-    va_list args;
-    va_start(args, fmt);
-    vsnprintf(m_first_movie_error.data(), m_first_movie_error.size(), fmt, args);
-    va_end(args);
-
-    m_first_movie_error.resize(strlen(m_first_movie_error.c_str()));
+Helper::LockedRef<std::string> CRecorder::GetErrorLog() {
+    return {m_error_log, m_error_mutex};
 }
-
-const char* CRecorder::GetFirstMovieError()
+void CRecorder::AppendErrorLog(std::string_view str)
 {
-    std::lock_guard lock{m_mutex_error};
-    if (m_first_movie_error.empty())
-        return nullptr;
-    return m_first_movie_error.c_str();
+    std::scoped_lock lock(m_error_mutex);
+    m_error_log.append(str);
 }
-
-void CRecorder::WriteFrame(const std::string& stream_name)
+void CRecorder::ClearErrorLog()
 {
-    FramePool::FramePtr frame = m_framepool->PopEmptyFrame();
-    if (!frame) // We're done recording
-        return;
-    
-    {
-        std::string frame_name = "frame_" + std::to_string(m_frame_index) + '.' + VideoFormatName(m_video_format);
-        frame->path = m_movie_path / stream_name / frame_name;
-    }
-
-    IMatRenderContext* render_ctx = Interfaces::mat_system->GetRenderContext();
-    render_ctx->ReadPixels(
-        0, 0, frame->buffer.GetWidth(), frame->buffer.GetHeight(), frame->buffer.GetData(), IMAGE_FORMAT_RGB888
-    );
-    
-    m_framepool->PushFullFrame(frame);
+    std::scoped_lock lock(m_error_mutex);
+    m_error_log.clear();
 }
 
 int CRecorder::OnFrameStageNotify()
 {
     ClientFrameStage_t stage = g_hk_client.Context()->curStage;
 
-    // Capture game during FRAME_RENDER_END (while rendering contexts haven't cleaned up)
-    if (stage == FRAME_RENDER_END)
+    if (stage == FRAME_START)
     {
-        // Don't record unless a movie is started and the console is closed (TODO: and no loading screen)
-        if (ShouldRecordFrame())
+        // Start/stop the movie
+        if (m_is_recording != m_movie.has_value())
         {
-            // We don't explicitly lock any mutex.
-            // Assume that nothing is modified while recording.
-            if (g_stream_editor.GetStreams().empty())
+            if (m_is_recording)
             {
-                // HACK: Re-render the frame without the recording indicator.
-                // Frames should be read *before* D3D's `Present` func is called, but... 
-                // `Present` is sometimes dispatched more than once per frame. (This may only be the case for beta-branch GMod. I don't remember.)
-                if (m_record_indicator)
-                {
-                    CViewSetup view_setup;
-                    Interfaces::hlclient->GetPlayerView(view_setup);
-                    Interfaces::hlclient->RenderView(view_setup, VIEW_CLEAR_COLOR, RENDERVIEW_DRAWVIEWMODEL | RENDERVIEW_DRAWHUD);
-                }
-                WriteFrame(DEFAULT_STREAM_NAME);
+                if (!SetupMovie())
+                    StopMovie();
             }
             else
-            {
-                CViewSetup view_setup;
-                Interfaces::hlclient->GetPlayerView(view_setup);
-                float default_fov = view_setup.fov;
-                
-                for (auto stream : g_stream_editor.GetStreams())
-                {
-                    float fov = default_fov;
-                    for (auto tweak = stream->begin<CameraTweak>(); tweak != stream->end<CameraTweak>(); ++tweak)
-                    {
-                        if (tweak->fov_override)
-                            fov = tweak->fov;
-                    }
-
-                    g_active_stream.Set(stream);
-                    g_active_stream.SignalUpdate();
-                    // Update the materials right now, instead of waiting for the next frame.
-                    g_active_stream.UpdateMaterials();
-                    view_setup.fov = fov;
-                    Interfaces::hlclient->RenderView(view_setup, VIEW_CLEAR_COLOR, RENDERVIEW_DRAWVIEWMODEL | RENDERVIEW_DRAWHUD);
-                    WriteFrame(stream->GetName());
-                }
-            }
-
-            ++m_frame_index;
+                CleanupMovie();
         }
+        return 0;
+    }
+
+    if (stage != FRAME_RENDER_END)
+        return 0;
+
+    if (!m_movie)
+        return 0;
+    else if (m_movie->Failed())
+    {
+        StopMovie();
+        CleanupMovie();
+        return 0;
+    }
+    
+    // Don't record unless a movie is started and the console is closed (TODO: and no loading screen)
+    if (!ShouldRecordFrame())
+        return 0;
+    
+    // We don't explicitly lock any mutex.
+    // Assume that nothing is modified while recording.
+    
+    IMatRenderContext* render_ctx = Interfaces::mat_system->GetRenderContext();
+    CViewSetup view_setup;
+    Interfaces::hlclient->GetPlayerView(view_setup);
+
+    // Render "empty" streams first.
+    // The scene is already rendered, so we don't re-render.
+    // This is sub-optimal for multiple empty streams, but having many identical streams is impractical anyway.
+    bool first_stream = true;
+    for (auto& pair : m_movie->GetStreams())
+    {
+        if (!pair.stream->GetRenderTweaks().empty())
+            continue; // Stream has rendering tweaks
+        
+        if (first_stream)
+            g_active_stream.Set(pair.stream);
+        first_stream = false;
+
+        auto frame = m_movie->GetFramePool().PopEmptyFrame();
+        render_ctx->ReadPixels(
+            0, 0, frame->buffer.GetWidth(), frame->buffer.GetHeight(), frame->buffer.GetData(), IMAGE_FORMAT_RGB888
+        );
+        m_movie->GetFramePool().PushFullFrame(frame, pair.writer);
+    }
+    
+    // Next, render streams with tweaks in them.
+    // The scene will have to be re-rendered appropriately.
+    float default_fov = view_setup.fov;
+    for (auto& pair : m_movie->GetStreams())
+    {
+        if (pair.stream->GetRenderTweaks().empty())
+            continue; // Stream has no rendering tweaks
+        
+        float fov = default_fov;
+        for (auto tweak = pair.stream->begin<CameraTweak>(); tweak != pair.stream->end<CameraTweak>(); ++tweak)
+        {
+            if (tweak->fov_override)
+                fov = tweak->fov;
+        }
+
+        g_active_stream.Set(pair.stream);
+        g_active_stream.SignalUpdate();
+        // Update the materials right now, instead of waiting for the next frame.
+        g_active_stream.UpdateMaterials();
+        view_setup.fov = fov;
+        Interfaces::hlclient->RenderView(view_setup, VIEW_CLEAR_COLOR, RENDERVIEW_DRAWVIEWMODEL | RENDERVIEW_DRAWHUD);
+
+        auto frame = m_movie->GetFramePool().PopEmptyFrame();
+        render_ctx->ReadPixels(
+            0, 0, frame->buffer.GetWidth(), frame->buffer.GetHeight(), frame->buffer.GetData(), IMAGE_FORMAT_RGB888
+        );
+        m_movie->GetFramePool().PushFullFrame(frame, pair.writer);
     }
 
     return 0;
 }
 
-bool FrameBufferRGB::WritePNG(std::ostream& output, int compression_level) const
-{
-    auto read_write_fn = [](spng_ctx *ctx, void *user, void *data, size_t n)
-    {
-        std::ostream& output = *(std::ostream*)user;
-        output.write((const char*)data, n);
-        return output ? 0 : SPNG_IO_ERROR;
-    };
-
-    int err = 0;
-    spng_ihdr ihdr = {0};
-    ihdr.width = GetWidth();
-    ihdr.height = GetHeight();
-    ihdr.bit_depth = GetBitDepth();
-    ihdr.color_type = SPNG_COLOR_TYPE_TRUECOLOR;
-
-    FreeThis<spng_ctx, spng_ctx_free> ctx = spng_ctx_new(SPNG_CTX_ENCODER);
-
-    spng_set_ihdr(*ctx, &ihdr);
-    spng_set_png_stream(*ctx, read_write_fn, (void*)&output);
-    spng_set_option(*ctx, SPNG_IMG_COMPRESSION_LEVEL, compression_level > 9 ? 9 : compression_level);
-
-    err = spng_encode_image(*ctx, GetData(), GetDataLength(), SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
-
-    if (err != 0)
-    {
-        fprintf(stderr, __FUNCTION__ "() -> Failed to write PNG. Error code %d\n", err);
-        return false;
-    }
-    
-    return true;
-}
-
-bool FrameBufferRGB::WriteQOI(std::ostream& output) const
-{
-    qoi_desc desc;
-    desc.channels = NUM_CHANNELS;
-    desc.colorspace = QOI_SRGB;
-    desc.width = GetWidth();
-    desc.height = GetHeight();
-
-    // TODO: Redefine QOI_MALLOC to allocate from a reuseable vector.
-    //  It will have to be thread-safe.
-
-    int encoded_len;
-    void* encoded = qoi_encode(m_data, &desc, &encoded_len);
-    if (!encoded)
-        return false;
-    
-    output.write((const char*)encoded, encoded_len);
-    free(encoded);
-    return true;
-}
-
-const char* CRecorder::VideoFormatName(VideoFormat format)
-{
-    const char* const table[] = {
-        "qoi",
-        "png",
-    };
-    return table[(int)format];
-}
-
-const char* CRecorder::VideoFormatDesc(VideoFormat format)
-{
-    const char* const table[] = {
-        "QOI image sequence\nLossless compression\nFast\n(https://qoiformat.org/)",
-        "PNG image sequence\nLossless compression\nSlow",
-    };
-    return table[(int)format];
-}
-
 void CRecorder::ToggleRecording() {
-    IsRecordingMovie() ? (void)StopMovie() : (void)StartMovie(m_input_movie_path);
-}
-
-FramePool::FramePool(
-    size_t num_threads, size_t num_frames,
-    CRecorder::VideoFormat format, int png_compression,
-    uint32_t frame_width, uint32_t frame_height
-) : m_format(format), m_png_compression(png_compression)
-{
-    assert(num_frames > 0 && "Frame pool must contain at least 1 frame");
-
-    m_threads.reserve(num_threads);
-    m_all.reserve(num_frames);
-    m_full.reserve(num_frames);
-    m_empty.reserve(num_frames);
-
-    for (size_t i = 0; i < num_frames; ++i)
-    {
-        m_all.push_back(std::make_shared<Frame>(frame_width, frame_height));
-        m_empty.push_back(m_all.back());
-    }
-
-    for (size_t i = 0; i < num_threads; ++i)
-        m_threads.emplace_back(&WorkerLoop, this);
-}
-
-void FramePool::Finish()
-{
-    {
-        std::lock_guard lock{m_mutex};
-        m_all.clear();
-        m_empty.clear();
-    }
-    m_cv_empty.notify_all();
-    m_cv_full.notify_all();
-    
-    for (auto& thread : m_threads)
-        thread.join();
-    m_threads.clear();
-}
-
-void FramePool::PushFullFrame(FramePtr frame)
-{
-    assert(!frame->path.empty() && "Frame path must be set before call to PushFullFrame()");
-    {
-        std::lock_guard lock{m_mutex};
-        assert((m_all.empty() || m_full.size() < m_all.size()) && "More frames are being pushed than exists in the pool");
-        m_full.push_back(frame);
-    }
-    m_cv_full.notify_one();
-}
-
-FramePool::FramePtr FramePool::PopFullFrame()
-{
-    while (true)
-    {
-        FramePtr back;
-        {
-            std::unique_lock lock{m_mutex};
-            m_cv_full.wait(lock, [this]{ return m_all.empty() || !m_full.empty(); });
-            if (m_all.empty())
-                return nullptr;
-
-            back = m_full.back();
-            m_full.pop_back();
-        }
-        m_cv_full.notify_one();
-        return back;
-    }
-}
-
-void FramePool::PushEmptyFrame(FramePtr frame)
-{
-    frame->path.clear();
-
-    {
-        std::lock_guard lock{m_mutex};
-        assert((m_all.empty() || m_empty.size() < m_all.size()) && "More frames are being pushed than exists in the pool");
-        m_empty.push_back(frame);
-    }
-    m_cv_empty.notify_one();
-}
-
-FramePool::FramePtr FramePool::PopEmptyFrame()
-{
-    while (true)
-    {
-        FramePtr back;
-        {
-            std::unique_lock lock{m_mutex};
-            m_cv_empty.wait(lock, [this]{ return m_all.empty() || !m_empty.empty(); });
-            if (m_all.empty())
-                return nullptr;
-
-            back = m_empty.back();
-            m_empty.pop_back();
-        }
-        m_cv_empty.notify_one();
-        return back;
-    }
-}
-
-void FramePool::WorkerLoop(FramePool* pool)
-{
-    while (FramePtr frame = pool->PopFullFrame())
-    {
-        std::fstream file = std::fstream(frame->path, std::ios::out | std::ios::binary);
-        if (!file)
-        {
-            g_recorder.SetFirstMovieError("Failed to open file for writing: '%s'", frame->path.string().c_str());
-            pool->PushEmptyFrame(frame);
-            break;
-        }
-        
-        bool result = false;
-        switch (pool->m_format)
-        {
-        case CRecorder::VideoFormat::PNG: result = frame->buffer.WritePNG(file, pool->m_png_compression); break;
-        case CRecorder::VideoFormat::QOI: result = frame->buffer.WriteQOI(file); break;
-        default:
-            assert(0 && "Unknown VideoFormat. A switch case may be missing.");
-        }
-        
-        pool->PushEmptyFrame(frame);
-        if (!file)
-            g_recorder.SetFirstMovieError("Failure while writing frame: '%s'", frame->path.string().c_str());
-        else if (!result)
-            g_recorder.SetFirstMovieError("Failed to encode frame: '%s'", frame->path.string().c_str());
-        if (!file || !result)
-            break;
-    }
+    m_is_recording = !m_is_recording;
 }
