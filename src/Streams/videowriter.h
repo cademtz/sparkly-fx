@@ -40,14 +40,19 @@ struct EncoderConfig
 
 /**
  * @brief An interface for writing frames to a video file or image sequence.
+ * 
+ * Each instance corresponds to one video file or one image sequence.
  */
 class VideoWriter
 {
 public:
     virtual ~VideoWriter() {}
-    /// @brief Write the frame buffer. Blocking.
-    /// @return `false` on failure
-    virtual bool WriteFrame(const FrameBufferRGB& buffer) = 0;
+    /**
+     * @brief Write the frame buffer. Blocking.
+     * @param frame_index Index of the frame being written.
+     * @return `false` on failure
+     */
+    virtual bool WriteFrame(const FrameBufferRGB& buffer, size_t frame_index) = 0;
 };
 
 /**
@@ -64,8 +69,8 @@ public:
     ImageWriter(uint32_t width, uint32_t height, Format file_format, std::filesystem::path&& base_path)
             : m_width(width), m_height(height), m_file_format(file_format), m_base_path(std::move(base_path)) {}
 
-    /// @brief Write the next frame to file and increment the frame index
-    bool WriteFrame(const FrameBufferRGB& buffer) override;
+    /// @brief Write the frame to file
+    bool WriteFrame(const FrameBufferRGB& buffer, size_t frame_index) override;
     /// @param compression A value between 0 and 9
     void SetPngCompression(int compression) { m_png_compression = compression; }
 
@@ -78,7 +83,6 @@ private:
     const uint32_t m_height;
     const Format m_file_format;
     int m_png_compression = 6;
-    size_t m_framenum = 0;
     std::filesystem::path m_base_path;
 };
 
@@ -133,6 +137,7 @@ public:
     {
         Frame(uint32_t width, uint32_t height) : buffer(width, height) {}
         FrameBufferRGB buffer;
+        size_t index;
         std::shared_ptr<VideoWriter> writer;
     };
     using FramePtr = std::shared_ptr<Frame>;
@@ -153,8 +158,9 @@ public:
      */
     FramePtr PopEmptyFrame();
     /// @brief Push a frame for a worker thread to pop and use
-    /// @param writer This is simply provided with the frame
-    void PushFullFrame(FramePtr frame, std::shared_ptr<VideoWriter> writer);
+    /// @param index Index of the frame being written. `frame->index` will be assigned this.
+    /// @param writer Method of writing the frame to video. `frame->writer` will be assigned this.
+    void PushFullFrame(FramePtr frame, size_t index, std::shared_ptr<VideoWriter> writer);
 
 private:
     /**

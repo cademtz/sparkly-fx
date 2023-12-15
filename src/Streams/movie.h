@@ -13,7 +13,10 @@ class Stream;
 
 /**
  * @brief Movie structure and encoder.
- * @details Use @ref GetFramePool to fill and dispatch frame buffers for writing.
+ * 
+ * Use @ref GetFramePool to fill and dispatch frame buffers for writing.
+ * Use @ref NextFrameIndex get and increment the current frame index.
+ * 
  * @ref LogError must be called when an error occurs. The movie will not stop otherwise.
  * @see FramePool
  */
@@ -52,10 +55,13 @@ public:
     /// @brief Get the frame pool.
     /// @details Do not call this if @ref Failed is true immediately after construction.
     FramePool& GetFramePool();
+    /// @brief Return the frame index (starting at 0) and increment it.
+    size_t NextFrameIndex() { return m_frame_index++; }
 
 private:
     Movie(const Movie&) = delete;
-    /// @brief Log an error message and cause @ref Failed to return `true` 
+    /// @brief Log an error message and stop the movie.
+    /// @details This causes @ref Failed to return `true`.
     void LogError(const std::string& error);
     static std::string CreateTempAudioName(const char* suffix);
 
@@ -67,5 +73,6 @@ private:
     std::vector<StreamPair> m_streams;
     /// @brief This is wrapped so we don't unnecessarily construct it.
     std::optional<FramePool> m_framepool;
+    size_t m_frame_index = 0;
     bool m_has_errors;
 };
