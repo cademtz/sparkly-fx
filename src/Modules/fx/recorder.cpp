@@ -346,6 +346,8 @@ int CRecorder::OnFrameStageNotify()
     // Don't record unless a movie is started and the console is closed (TODO: and no loading screen)
     if (!ShouldRecordFrame())
         return 0;
+
+    size_t frame_index = m_movie->NextFrameIndex();
     
     // We don't explicitly lock any mutex.
     // Assume that nothing is modified while recording.
@@ -371,7 +373,7 @@ int CRecorder::OnFrameStageNotify()
         render_ctx->ReadPixels(
             0, 0, frame->buffer.GetWidth(), frame->buffer.GetHeight(), frame->buffer.GetData(), IMAGE_FORMAT_RGB888
         );
-        m_movie->GetFramePool().PushFullFrame(frame, pair.writer);
+        m_movie->GetFramePool().PushFullFrame(frame, frame_index, pair.writer);
     }
     
     // Next, render streams with tweaks in them.
@@ -400,7 +402,7 @@ int CRecorder::OnFrameStageNotify()
         render_ctx->ReadPixels(
             0, 0, frame->buffer.GetWidth(), frame->buffer.GetHeight(), frame->buffer.GetData(), IMAGE_FORMAT_RGB888
         );
-        m_movie->GetFramePool().PushFullFrame(frame, pair.writer);
+        m_movie->GetFramePool().PushFullFrame(frame, frame_index, pair.writer);
     }
 
     return 0;

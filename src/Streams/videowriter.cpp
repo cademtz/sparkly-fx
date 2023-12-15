@@ -117,7 +117,7 @@ void EncoderConfig::ShowImguiControls()
     }
 }
 
-bool ImageWriter::WriteFrame(const FrameBufferRGB& buffer)
+bool ImageWriter::WriteFrame(const FrameBufferRGB& buffer, size_t frame_index)
 {
     const wchar_t* file_extension;
     switch (m_file_format)
@@ -128,8 +128,7 @@ bool ImageWriter::WriteFrame(const FrameBufferRGB& buffer)
         assert(0 && "Unknown format. A switch case may be missing.");
     }
 
-    auto suffix = std::to_wstring(m_framenum) + L'.' + file_extension;
-    ++m_framenum;
+    auto suffix = std::to_wstring(frame_index) + L'.' + file_extension;
 
     std::filesystem::path path = m_base_path.wstring() + suffix;
     std::fstream file = std::fstream(path, std::ios::out | std::ios::binary);
@@ -242,10 +241,11 @@ void FramePool::Close()
     m_threads.clear();
 }
 
-void FramePool::PushFullFrame(FramePtr frame, std::shared_ptr<VideoWriter> writer)
+void FramePool::PushFullFrame(FramePtr frame, size_t index, std::shared_ptr<VideoWriter> writer)
 {
     assert(writer != nullptr && "A writer must be provided to write the frame");
     frame->writer = writer;
+    frame->index = index;
 
     {
         std::lock_guard lock{m_mutex};
@@ -305,7 +305,7 @@ void FramePool::WorkerLoop(FramePool* pool)
         std::shared_ptr<VideoWriter> writer = frame->writer;
         assert(writer != nullptr && "frame->writer must be assigned before calling PushFullFrame");
 
-        bool result = writer->WriteFrame(frame->buffer);
+        bool result = writer->WriteFrame(frame->buffer, frame->index);
         pool->PushEmptyFrame(frame);
         if (!result)
             break;
