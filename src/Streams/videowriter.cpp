@@ -2,7 +2,9 @@
 #include <Helper/defer.h>
 #include <Helper/imgui.h>
 #include <Helper/ffmpeg.h>
+#include <ffmpipe/ffmpipe.h>
 #include <fstream>
+#include <sstream>
 #include <cassert>
 #include <cstdio>
 #include <spng.h>
@@ -203,6 +205,35 @@ bool ImageWriter::WriteQOI(const FrameBufferRGB& buffer, std::ostream& output)
     return true;
 }
 
+FFmpegWriter::FFmpegWriter(uint32_t width, uint32_t height, uint32_t framerate, const std::string& output_args, std::filesystem::path&& output_path)
+{
+    std::wstringstream ffmpeg_args;
+    ffmpeg_args << "-c:v rawvideo -f rawvideo -pix_fmt rgb24 -s:v " << width << 'x' << height << " -framerate " << framerate << ' ';
+    ffmpeg_args << "-i - ";
+    ffmpeg_args << output_args.c_str() << " \"" << output_path << '"';
+
+    m_pipe = ffmpipe::Pipe::Create(Helper::FFmpeg::GetDefaultPath(), ffmpeg_args.str());
+}
+
+FFmpegWriter::~FFmpegWriter()
+{
+    if (m_pipe)
+    {
+        // Ensure the termination of FFmpeg without hanging the application.
+        std::thread(
+            [](std::shared_ptr<ffmpipe::Pipe> pipe) { pipe->Close(60'000, true); },
+            m_pipe
+        ).detach();
+    }
+}
+
+bool FFmpegWriter::WriteFrame(const FrameBufferRGB& buffer, size_t frame_index)
+{
+    if (!m_pipe)
+        return false;
+    return m_pipe->Write(buffer.GetData(), buffer.GetDataLength());
+}
+
 FramePool::FramePool(
     size_t num_threads, size_t num_frames,
     uint32_t frame_width, uint32_t frame_height
@@ -244,6 +275,18 @@ void FramePool::Close()
 void FramePool::PushFullFrame(FramePtr frame, size_t index, std::shared_ptr<VideoWriter> writer)
 {
     assert(writer != nullptr && "A writer must be provided to write the frame");
+
+    if (!writer->IsAsync())
+    {
+        // HACK: Write the frame and block to prevent synchronization issues.
+        // FIXME: This can break if frames are pushed out-of-order.
+        //   This also causes blockage, preventing async frames being pushed.
+        //   Perhaps store an index for each synchronous writer. Then only submit frames
+        writer->WriteFrame(frame->buffer, index);
+        PushEmptyFrame(frame);
+        return;
+    }
+
     frame->writer = writer;
     frame->index = index;
 
