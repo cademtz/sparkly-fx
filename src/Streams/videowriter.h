@@ -4,8 +4,10 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <string_view>
 
 class FrameBufferRGB;
+namespace ffmpipe { class Pipe; }
 
 /**
  * @brief Video encoding options.
@@ -32,14 +34,14 @@ struct EncoderConfig
     /// @brief One of the `TYPE_` constants
     const TypeDesc* type = TYPE_PNG;
     int framerate = 60;
-    /// @brief Args appended after the `-i` flag
+    /// @brief Output args appended after the `-i` flag, not including the output file
     std::string ffmpeg_output_args;
     /// @brief A value between 0 and 9
     int png_compression = 1;
 };
 
 /**
- * @brief An interface for writing frames to a video file or image sequence.
+ * @brief An interface for @ref FramePool to write frames to a video file or image sequence.
  * 
  * Each instance corresponds to one video file or one image sequence.
  */
@@ -53,6 +55,11 @@ public:
      * @return `false` on failure
      */
     virtual bool WriteFrame(const FrameBufferRGB& buffer, size_t frame_index) = 0;
+    /**
+     * @brief Whether this instance can write frames out-of-order.
+     * @details This will not 
+     */
+    virtual bool IsAsync() const = 0;
 };
 
 /**
@@ -71,6 +78,7 @@ public:
 
     /// @brief Write the frame to file
     bool WriteFrame(const FrameBufferRGB& buffer, size_t frame_index) override;
+    bool IsAsync() const override { return true; }
     /// @param compression A value between 0 and 9
     void SetPngCompression(int compression) { m_png_compression = compression; }
 
@@ -84,6 +92,23 @@ private:
     const Format m_file_format;
     int m_png_compression = 6;
     std::filesystem::path m_base_path;
+};
+
+class FFmpegWriter : public VideoWriter
+{
+public:
+    /**
+     * @param output_args FFmpeg output args to append after the `-i` flag, not including the output file name.
+     * @param output_path Path of the output file
+     */
+    FFmpegWriter(uint32_t width, uint32_t height, uint32_t framerate, const std::string& output_args, std::filesystem::path&& output_path);
+    ~FFmpegWriter();
+    
+    bool WriteFrame(const FrameBufferRGB& buffer, size_t frame_index) override;
+    bool IsAsync() const override { return false; }
+
+private:
+    std::shared_ptr<ffmpipe::Pipe> m_pipe;
 };
 
 class FrameBufferRGB

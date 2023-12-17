@@ -56,6 +56,8 @@ Movie::Movie(
             png_writer->SetPngCompression(config.png_compression);
             writer = std::move(png_writer);
         }
+        else if (config.type == EncoderConfig::TYPE_FFMPEG)
+            writer = std::make_shared<FFmpegWriter>(width, height, config.framerate, config.ffmpeg_output_args, std::move(stream_path));
         else
         {
             LogError(Helper::sprintf("Invalid or unsupported EncoderConfig type: %s\n", config.type ? config.type->name : "(null)"));
