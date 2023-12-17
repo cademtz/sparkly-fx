@@ -13,3 +13,6 @@
 [submodule "qoi"]
 	path = qoi
 	url = https://github.com/phoboslab/qoi
+[submodule "ffmpipe"]
+	path = ffmpipe
+	url = https://github.com/cademtz/ffmpipe
