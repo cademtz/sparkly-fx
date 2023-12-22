@@ -111,6 +111,33 @@ std::vector<std::filesystem::path> ScanForExecutables()
     return results;
 }
 
+#if defined(_WIN32)
+    #if defined(_M_AMD64)
+        #define AMF_DLL_NAME    L"amfrt64.dll"
+        #define AMF_DLL_NAMEA   "amfrt64.dll"
+    #else
+        #define AMF_DLL_NAME    L"amfrt32.dll"
+        #define AMF_DLL_NAMEA   "amfrt32.dll"
+    #endif
+#endif
+
+bool amf_device_available()
+{
+    static bool init = true;
+    static bool available = false;
+
+    if (init)
+    {
+        init = false;
+        HMODULE handle = LoadLibraryW(AMF_DLL_NAME);
+        available = handle != 0;
+        if (handle)
+            FreeLibrary(handle);
+    }
+
+    return available;
+}
+
 typedef HRESULT(WINAPI *create_dxgi_proc)(const IID *, IDXGIFactory1 **);
 
 static const int blacklisted_adapters[] = {

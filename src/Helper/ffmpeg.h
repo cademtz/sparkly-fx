@@ -30,6 +30,9 @@ inline void SetDefaultPath(const std::filesystem::path& path) {
     return SetDefaultPath(std::filesystem::path(path));
 }
 
+/// @brief True when an AMD device with hardware encoding is present.
+/// @details This will attempt to load a library. Do not call from DllMain.
+bool amf_device_available();
 /// @brief True when an NVIDIA device with hardware encoding is present
 bool nvenc_device_available();
 
