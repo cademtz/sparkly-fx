@@ -74,6 +74,37 @@ void EncoderConfig::ShowImguiControls()
 
         std::filesystem::path ffmpeg_path = Helper::FFmpeg::GetDefaultPath();
         bool has_ffmpeg = !ffmpeg_path.empty();
+
+        if (has_ffmpeg)
+        {
+            ImGui::InputText("Args", &ffmpeg_output_args); ImGui::SameLine();
+            Helper::ImGuiHelpMarker(
+                "Output args for FFmpeg, excluding the output file name.\n"
+                "The args are appended after the input flag.\n"
+                "Examples:\n"
+                "- 20 MB bitrate:           -b:v 20M\n"
+                "- H.264 (Default):         -c:v libx264\n"
+                "- H.264 (Nvidia GPU):      -c:v h264_nvenc\n"
+                "- H.264 (AMD GPU):         -c:v h264_amf\n"
+                "- HEVC (Default):          -c:v libx265\n"
+                "- HEVC (Nvidia GPU):       -c:v hevc_nvenc\n"
+                "- HEVC (AMD GPU):          -c:v hevc_amf\n"
+                "- HuffYUV:                 -c:v huffyuv\n"
+                "- UTVideo:                 -c:v utvideo\n"
+                "Notes:\n"
+                "- Avoid the default H.264 and HEVC codecs. They're slow.\n"
+                "- HuffYUV and UTVideo require an AVI file.\n"
+                "- H.264 with 40+ MB bitrate is practically lossless and super tiny."
+            );
+            ImGui::InputText("File format", &ffmpeg_output_ext); ImGui::SameLine();
+            Helper::ImGuiHelpMarker(
+                "The file extension/container/format.\n"
+                "Examples: 'mkv', 'mp4', 'avi'.\n"
+                "Each container will support different codecs:\n"
+                "- AVI supports HuffYUV and UTVideo"
+            );
+        }
+
         const char* settings_label = has_ffmpeg ? "FFmpeg settings###ffmpeg_settings" : "[!] FFmpeg settings###ffmpeg_settings";
         if (!has_ffmpeg) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,.25,.25,1));
         bool settings_tree = ImGui::TreeNode(settings_label);
@@ -81,36 +112,7 @@ void EncoderConfig::ShowImguiControls()
 
         if (settings_tree)
         {
-            if (has_ffmpeg)
-            {
-                ImGui::InputText("Args", &ffmpeg_output_args); ImGui::SameLine();
-                Helper::ImGuiHelpMarker(
-                    "Output args for FFmpeg, excluding the output file name.\n"
-                    "The args are appended after the input flag.\n"
-                    "Examples:\n"
-                    "- 20 MB bitrate:           -b:v 20M\n"
-                    "- H.264 (Default):         -c:v libx264\n"
-                    "- H.264 (Nvidia GPU):      -c:v h264_nvenc\n"
-                    "- H.264 (AMD GPU):         -c:v h264_amf\n"
-                    "- HEVC (Default):          -c:v libx265\n"
-                    "- HEVC (Nvidia GPU):       -c:v hevc_nvenc\n"
-                    "- HEVC (AMD GPU):          -c:v hevc_amf\n"
-                    "- HuffYUV:                 -c:v huffyuv\n"
-                    "- UTVideo:                 -c:v utvideo\n"
-                    "Notes:\n"
-                    "- Avoid the default H.264 and HEVC codecs. They're slow.\n"
-                    "- HuffYUV and UTVideo require an AVI file.\n"
-                    "- H.264 with 40+ MB bitrate is practically lossless and super tiny."
-                );
-                ImGui::InputText("File format", &ffmpeg_output_ext); ImGui::SameLine();
-                Helper::ImGuiHelpMarker(
-                    "The file extension/container/format.\n"
-                    "Examples: 'mkv', 'mp4', 'avi'.\n"
-                    "Each container will support different codecs:\n"
-                    "- AVI supports HuffYUV and UTVideo"
-                );
-            }
-            else
+            if (!has_ffmpeg)
             {
                 ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,.25,.25,1));
                 ImGui::Text("[!] Select an FFmpeg executable");
