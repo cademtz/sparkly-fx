@@ -32,8 +32,21 @@ Movie::Movie(
         const EncoderConfig& config = default_videoconfig;
         std::filesystem::path stream_path = m_root_path / stream->GetName();
 
-        // For image sequences, create an additional folder to contain it
-        if (config.type != EncoderConfig::TYPE_FFMPEG)
+        if (config.type == EncoderConfig::TYPE_FFMPEG)
+        {
+            if (config.ffmpeg_output_ext.empty())
+            {
+                LogError("File type was blank. FFmpeg cannot generate video.\n");
+                return;
+            }
+
+            std::wstring temp = stream_path.wstring();
+            temp += '.';
+            for (char ch : config.ffmpeg_output_ext)
+                temp += ch;
+            stream_path = temp;
+        }
+        else // For image sequences, create an additional folder to contain it
         {
             std::error_code err;
             std::filesystem::create_directory(stream_path, err);

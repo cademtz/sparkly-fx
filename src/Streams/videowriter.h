@@ -37,7 +37,9 @@ struct EncoderConfig
     const TypeDesc* type = TYPE_PNG;
     int framerate = 60;
     /// @brief Output args appended after the `-i` flag, not including the output file
-    std::string ffmpeg_output_args;
+    std::string ffmpeg_output_args = "-c:v huffyuv";
+    /// @brief The output file extension to use in FFmpeg
+    std::string ffmpeg_output_ext = "avi";
     /// @brief A value between 0 and 9
     int png_compression = 1;
 };
