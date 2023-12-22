@@ -1,7 +1,9 @@
 #include "recorder.h"
 #include <Helper/ffmpeg.h>
+#include <Helper/defer.h>
 #include <Streams/videowriter.h>
 #include <Hooks/ClientHook.h>
+#include <Hooks/OverlayHook.h>
 #include <Modules/Menu.h>
 #include <Modules/Draw.h>
 #include "ActiveStream.h"
@@ -168,7 +170,8 @@ int CRecorder::OnMenu()
 
         int screen_w, screen_h;
         Interfaces::engine->GetScreenSize(screen_w, screen_h);
-        float framepool_ram = screen_w * screen_h * FrameBufferRGB::NUM_CHANNELS * FrameBufferRGB::NUM_BYTES;
+        // Approximate framepool RAM, assuming a 24-bit RGB framebuffer
+        float framepool_ram = screen_w * screen_h * 3;
         framepool_ram = framepool_ram * m_framepool_size / (1024 * 1024);
         
         if (m_is_recording)
@@ -356,6 +359,11 @@ int CRecorder::OnFrameStageNotify()
     CViewSetup view_setup;
     Interfaces::hlclient->GetPlayerView(view_setup);
 
+    IDirect3DSurface9* render_target;
+    if (FAILED(g_hk_overlay.Device()->GetRenderTarget(0, &render_target)))
+        assert(0 && "Failed to get render target");
+    defer { render_target->Release(); };
+
     // Render "empty" streams first.
     // The scene is already rendered, so we don't re-render.
     // This is sub-optimal for multiple empty streams, but having many identical streams is impractical anyway.
@@ -370,9 +378,7 @@ int CRecorder::OnFrameStageNotify()
         first_stream = false;
 
         auto frame = m_movie->GetFramePool().PopEmptyFrame();
-        render_ctx->ReadPixels(
-            0, 0, frame->buffer.GetWidth(), frame->buffer.GetHeight(), frame->buffer.GetData(), IMAGE_FORMAT_RGB888
-        );
+        g_hk_overlay.Device()->StretchRect(render_target, nullptr, frame->buffer.GetSurface(), nullptr, D3DTEXF_NONE);
         m_movie->GetFramePool().PushFullFrame(frame, frame_index, pair.writer);
     }
     
@@ -399,9 +405,7 @@ int CRecorder::OnFrameStageNotify()
         Interfaces::hlclient->RenderView(view_setup, VIEW_CLEAR_COLOR, RENDERVIEW_DRAWVIEWMODEL | RENDERVIEW_DRAWHUD);
 
         auto frame = m_movie->GetFramePool().PopEmptyFrame();
-        render_ctx->ReadPixels(
-            0, 0, frame->buffer.GetWidth(), frame->buffer.GetHeight(), frame->buffer.GetData(), IMAGE_FORMAT_RGB888
-        );
+        g_hk_overlay.Device()->StretchRect(render_target, nullptr, frame->buffer.GetSurface(), nullptr, D3DTEXF_NONE);
         m_movie->GetFramePool().PushFullFrame(frame, frame_index, pair.writer);
     }
 
