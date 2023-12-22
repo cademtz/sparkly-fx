@@ -1,4 +1,5 @@
 #include "videowriter.h"
+#include <Hooks/OverlayHook.h>
 #include <Helper/defer.h>
 #include <Helper/imgui.h>
 #include <Helper/ffmpeg.h>
@@ -119,7 +120,7 @@ void EncoderConfig::ShowImguiControls()
     }
 }
 
-bool ImageWriter::WriteFrame(const FrameBufferRGB& buffer, size_t frame_index)
+bool ImageWriter::WriteFrame(const FrameBufferDx9& buffer, size_t frame_index)
 {
     const wchar_t* file_extension;
     switch (m_file_format)
@@ -143,16 +144,16 @@ bool ImageWriter::WriteFrame(const FrameBufferRGB& buffer, size_t frame_index)
     bool result = false;
     switch (m_file_format)
     {
-    case Format::PNG: result = WritePNG(buffer, file, m_png_compression); break;
-    case Format::QOI: result = WriteQOI(buffer, file); break;
+    case Format::PNG: result = WritePNG(buffer.ToRgb(), file, m_png_compression); break;
+    case Format::QOI: result = WriteQOI(buffer.ToRgb(), file); break;
     }
 
     return true;
 }
 
-bool ImageWriter::WritePNG(const FrameBufferRGB& buffer, std::ostream& output, int compression)
+bool ImageWriter::WritePNG(const FrameBufferRgb& buffer, std::ostream& output, int compression)
 {
-    auto read_write_fn = [](spng_ctx *ctx, void *user, void *data, size_t n)
+    auto write_fn = [](spng_ctx *ctx, void *user, void *data, size_t n)
     {
         std::ostream& output = *(std::ostream*)user;
         output.write((const char*)data, n);
@@ -163,14 +164,14 @@ bool ImageWriter::WritePNG(const FrameBufferRGB& buffer, std::ostream& output, i
     spng_ihdr ihdr = {0};
     ihdr.width = buffer.GetWidth();
     ihdr.height = buffer.GetHeight();
-    ihdr.bit_depth = buffer.GetBitDepth();
+    ihdr.bit_depth = buffer.GetFormatInfo().bitdepth[0];
     ihdr.color_type = SPNG_COLOR_TYPE_TRUECOLOR;
 
     spng_ctx* ctx = spng_ctx_new(SPNG_CTX_ENCODER);
     defer { spng_ctx_free(ctx); };
 
     spng_set_ihdr(ctx, &ihdr);
-    spng_set_png_stream(ctx, read_write_fn, (void*)&output);
+    spng_set_png_stream(ctx, write_fn, (void*)&output);
     spng_set_option(ctx, SPNG_IMG_COMPRESSION_LEVEL, compression > 9 ? 9 : compression);
 
     err = spng_encode_image(ctx, buffer.GetData(), buffer.GetDataLength(), SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
@@ -184,10 +185,10 @@ bool ImageWriter::WritePNG(const FrameBufferRGB& buffer, std::ostream& output, i
     return true;
 }
 
-bool ImageWriter::WriteQOI(const FrameBufferRGB& buffer, std::ostream& output)
+bool ImageWriter::WriteQOI(const FrameBufferRgb& buffer, std::ostream& output)
 {
     qoi_desc desc;
-    desc.channels = buffer.NUM_CHANNELS;
+    desc.channels = buffer.GetFormatInfo().num_channels;
     desc.colorspace = QOI_SRGB;
     desc.width = buffer.GetWidth();
     desc.height = buffer.GetHeight();
@@ -205,10 +206,153 @@ bool ImageWriter::WriteQOI(const FrameBufferRGB& buffer, std::ostream& output)
     return true;
 }
 
+const Helper::D3DFORMAT_info& FrameBufferRgb::GetFormatInfo() const
+{
+    static const Helper::D3DFORMAT_info info = {
+        3,          // stride
+        {8,8,8},    // bitdepth
+        3,          // num_channels
+        true,       // is_uniform_bitdepth
+        false,      // is_float
+        false,      // is_depth
+    };
+    return info;
+}
+
+FrameBufferDx9::FrameBufferDx9(IDirect3DSurface9* surface)
+{
+    D3DSURFACE_DESC desc;
+    if (FAILED(surface->GetDesc(&desc)))
+        assert(0 && "Failed to get D3D surface desc");
+
+    m_width = desc.Width;
+    m_height = desc.Height;
+    m_d3dformat = desc.Format;
+    m_d3dsurface = surface;
+    if (!Helper::GetD3DFormatInfo(m_d3dformat, &m_d3dformat_info))
+        assert(0 && "Invalid or unsupported D3DFORMAT");
+}
+
+FrameBufferDx9::FrameBufferDx9(uint32_t width, uint32_t height, D3DFORMAT d3dformat)
+{
+    m_width = width;
+    m_height = height;
+    m_d3dformat = d3dformat;
+    if (!Helper::GetD3DFormatInfo(m_d3dformat, &m_d3dformat_info))
+        assert(0 && "Invalid or unsupported D3DFORMAT");
+    
+    HRESULT result = g_hk_overlay.Device()->CreateRenderTarget(
+        m_width,
+        m_height,
+        m_d3dformat,
+        D3DMULTISAMPLE_NONE,
+        0,      // MultisampleQuality
+        TRUE,   // Lockable
+        &m_d3dsurface,
+        nullptr // pSharedhandle
+    );
+    if (FAILED(result))
+        assert(0 && "Failed to create render target with desired D3DFORMAT");
+}
+
+FrameBufferRgb FrameBufferDx9::ToRgb() const
+{
+    assert(m_d3dsurface && "Missing a valid surface pointer");
+    FrameBufferRgb frame{GetWidth(), GetHeight()};
+    D3DLOCKED_RECT locked_rect;
+    if (FAILED(m_d3dsurface->LockRect(&locked_rect, nullptr, D3DLOCK_READONLY)))
+        assert(0 && "Failed to lock D3D surface rect");
+    defer { m_d3dsurface->UnlockRect(); };
+    
+    switch (m_d3dformat)
+    {
+    case Helper::D3DFMT_B8G8R8: BlitRgb(&frame, locked_rect); break;
+    case D3DFMT_R8G8B8: BlitBgr(&frame, locked_rect); break;
+    case D3DFMT_A8B8G8R8: BlitRgba(&frame, locked_rect); break;
+    case D3DFMT_A8R8G8B8: BlitBgra(&frame, locked_rect); break;
+    default:
+        assert(0 && "Blitting is not implemented for this D3DFORMAT");
+    }
+
+    return frame;
+}
+
+void FrameBufferDx9::BlitRgb(FrameBufferRgb* dst, D3DLOCKED_RECT src)
+{
+    uint32_t width = dst->GetWidth(), height = dst->GetHeight();
+    size_t dst_stride = dst->GetPixelStride();
+    const size_t src_stride = 3;
+
+    for (uint32_t y = 0; y < height; ++y)
+    {
+        size_t row_size = dst->GetPixelStride() * dst->GetWidth();
+        uint8_t* dst_row = dst->GetData() + y * row_size;
+        const uint8_t* src_row = (const uint8_t*)src.pBits + y * src.Pitch;
+        memcpy(dst_row, src_row, row_size);
+    }
+}
+void FrameBufferDx9::BlitBgr(FrameBufferRgb* dst, D3DLOCKED_RECT src)
+{
+    uint32_t width = dst->GetWidth(), height = dst->GetHeight();
+    size_t dst_stride = dst->GetPixelStride();
+    const size_t src_stride = 3;
+
+    for (uint32_t y = 0; y < height; ++y)
+    {
+        for (uint32_t x = 0; x < width; ++x)
+        {
+            uint8_t* dst_pixel = dst->GetData() + (y * width + x) * dst->GetPixelStride();
+            const uint8_t* src_pixel = (const uint8_t*)src.pBits + y * src.Pitch + x * src_stride;
+            dst_pixel[0] = src_pixel[2];
+            dst_pixel[1] = src_pixel[1];
+            dst_pixel[2] = src_pixel[0];
+        }
+    }
+}
+void FrameBufferDx9::BlitRgba(FrameBufferRgb* dst, D3DLOCKED_RECT src)
+{
+    uint32_t width = dst->GetWidth(), height = dst->GetHeight();
+    size_t dst_stride = dst->GetPixelStride();
+    const size_t src_stride = 4;
+
+    for (uint32_t y = 0; y < height; ++y)
+    {
+        for (uint32_t x = 0; x < width; ++x)
+        {
+            uint8_t* dst_pixel = dst->GetData() + (y * width + x) * dst->GetPixelStride();
+            const uint8_t* src_pixel = (const uint8_t*)src.pBits + y * src.Pitch + x * src_stride;
+            dst_pixel[0] = src_pixel[0];
+            dst_pixel[1] = src_pixel[1];
+            dst_pixel[2] = src_pixel[2];
+        }
+    }
+}
+void FrameBufferDx9::BlitBgra(FrameBufferRgb* dst, D3DLOCKED_RECT src)
+{
+    uint32_t width = dst->GetWidth(), height = dst->GetHeight();
+    size_t dst_stride = dst->GetPixelStride();
+    const size_t src_stride = 4;
+
+    for (uint32_t y = 0; y < height; ++y)
+    {
+        for (uint32_t x = 0; x < width; ++x)
+        {
+            uint8_t* dst_pixel = dst->GetData() + (y * width + x) * dst->GetPixelStride();
+            const uint8_t* src_pixel = (const uint8_t*)src.pBits + y * src.Pitch + x * src_stride;
+            dst_pixel[0] = src_pixel[2];
+            dst_pixel[1] = src_pixel[1];
+            dst_pixel[2] = src_pixel[0];
+        }
+    }
+}
+
 FFmpegWriter::FFmpegWriter(uint32_t width, uint32_t height, uint32_t framerate, const std::string& output_args, std::filesystem::path&& output_path)
 {
+    const char* pix_fmt = Helper::GetD3DFormatAsFFmpegPixFmt(D3DFMT_A8R8G8B8, true);
+    assert(pix_fmt && "No equivalent FFmpeg pix_fmt for given D3DFORMAT");
+
     std::wstringstream ffmpeg_args;
-    ffmpeg_args << "-c:v rawvideo -f rawvideo -pix_fmt rgb24 -s:v " << width << 'x' << height << " -framerate " << framerate << ' ';
+    ffmpeg_args << "-c:v rawvideo -f rawvideo -pix_fmt " << pix_fmt << " -s:v " << width << 'x' << height << " -framerate " << framerate << ' ';
     ffmpeg_args << "-i - ";
     ffmpeg_args << output_args.c_str() << " \"" << output_path << '"';
 
@@ -227,11 +371,22 @@ FFmpegWriter::~FFmpegWriter()
     }
 }
 
-bool FFmpegWriter::WriteFrame(const FrameBufferRGB& buffer, size_t frame_index)
+bool FFmpegWriter::WriteFrame(const FrameBufferDx9& buffer, size_t frame_index)
 {
     if (!m_pipe)
         return false;
-    return m_pipe->Write(buffer.GetData(), buffer.GetDataLength());
+    IDirect3DSurface9* d3dsurface = buffer.GetSurface();
+    D3DLOCKED_RECT locked_rect;
+    if (FAILED(d3dsurface->LockRect(&locked_rect, nullptr, D3DLOCK_READONLY)))
+        return false;
+    defer { d3dsurface->UnlockRect(); };
+    for (uint32_t row = 0; row < buffer.GetHeight(); ++row)
+    {
+        const uint8_t* data = (const uint8_t*)locked_rect.pBits + row * locked_rect.Pitch;
+        if (!m_pipe->Write(data, buffer.GetPixelStride() * buffer.GetWidth()))
+            return false;
+    }
+    return true;
 }
 
 FramePool::FramePool(
@@ -245,10 +400,18 @@ FramePool::FramePool(
     m_full.reserve(num_frames);
     m_empty.reserve(num_frames);
 
-    // Initialize all frames' image buffers, and put them in the empty pool
+    IDirect3DSurface9* render_target;
+    D3DSURFACE_DESC surface_desc;
+    if (FAILED(g_hk_overlay.Device()->GetRenderTarget(0, &render_target)))
+        assert(0 && "Failed to get render target");
+    defer { render_target->Release(); };
+    if (FAILED(render_target->GetDesc(&surface_desc)))
+        assert(0 && "Failed to get the render target's surface desc");
+
+    // Fill the empty-frame pool with empty frames
     for (size_t i = 0; i < num_frames; ++i)
     {
-        m_all.push_back(std::make_shared<Frame>(frame_width, frame_height));
+        m_all.push_back(std::make_shared<Frame>(FrameBufferDx9(frame_width, frame_height, D3DFMT_A8R8G8B8)));
         m_empty.push_back(m_all.back());
     }
 
@@ -275,6 +438,7 @@ void FramePool::Close()
 void FramePool::PushFullFrame(FramePtr frame, size_t index, std::shared_ptr<VideoWriter> writer)
 {
     assert(writer != nullptr && "A writer must be provided to write the frame");
+    assert(frame->buffer.GetWidth() * frame->buffer.GetHeight() != 0 && "Frame buffer must have non-zero size. Resize the buffer before use.");
 
     if (!writer->IsAsync())
     {
@@ -317,6 +481,7 @@ FramePool::FramePtr FramePool::PopFullFrame()
 void FramePool::PushEmptyFrame(FramePtr frame)
 {
     frame->writer = nullptr;
+
     {
         std::lock_guard lock{m_mutex};
         assert((m_all.empty() || m_empty.size() < m_all.size()) && "More frames are being pushed than exists in the pool");

@@ -243,14 +243,15 @@ int DevModule::OnPresent()
         D3DLOCKED_RECT rect;
         if (PRINT_DXRESULT(m_depthreplacement->LockRect(&rect, NULL, D3DLOCK_READONLY)))
         {
-            FrameBufferRGB fb = {m_depthstencil_desc.Width, m_depthstencil_desc.Height};
+            FrameBufferRgb fb = {m_depthstencil_desc.Width, m_depthstencil_desc.Height};
             for (size_t y = 0; y < fb.GetHeight(); ++y)
             {
                 for (size_t x = 0; x < fb.GetWidth(); ++x)
                 {
+                    // Remember to use `Pitch` from `D3DLOCKED_RECT`, as rects are usually rounded up to a power of 2
+                    uint32_t* input = (uint32_t*)((uint8_t*)rect.pBits + x * 4 + y * rect.Pitch);
                     size_t offset = y * fb.GetWidth() + x;
-                    uint32_t* input = (uint32_t*)rect.pBits + offset;
-                    uint8_t* output = fb.GetData() + offset * FrameBufferRGB::NUM_CHANNELS;
+                    uint8_t* output = fb.GetData() + offset * 3;
 
                     double scaled = (double)(input[0] & 0xFFFFFF) / 0xFFFFFF;
                     scaled = std::pow(scaled, (double)m_depthpow);

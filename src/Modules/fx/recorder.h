@@ -15,7 +15,7 @@
 class FramePool;
 class VideoWriter;
 class Stream;
-class FrameBufferRGB;
+class FrameBufferDx9;
 
 class CRecorder : public CModule
 {

@@ -5,8 +5,10 @@
 #include <mutex>
 #include <condition_variable>
 #include <string_view>
+#include <Helper/d3d9.h>
 
-class FrameBufferRGB;
+class FrameBufferDx9;
+class FrameBufferRgb;
 namespace ffmpipe { class Pipe; }
 
 /**
@@ -54,7 +56,7 @@ public:
      * @param frame_index Index of the frame being written.
      * @return `false` on failure
      */
-    virtual bool WriteFrame(const FrameBufferRGB& buffer, size_t frame_index) = 0;
+    virtual bool WriteFrame(const FrameBufferDx9& buffer, size_t frame_index) = 0;
     /**
      * @brief Whether this instance can write frames out-of-order.
      * @details This will not 
@@ -77,14 +79,14 @@ public:
             : m_width(width), m_height(height), m_file_format(file_format), m_base_path(std::move(base_path)) {}
 
     /// @brief Write the frame to file
-    bool WriteFrame(const FrameBufferRGB& buffer, size_t frame_index) override;
+    bool WriteFrame(const FrameBufferDx9& buffer, size_t frame_index) override;
     bool IsAsync() const override { return true; }
     /// @param compression A value between 0 and 9
     void SetPngCompression(int compression) { m_png_compression = compression; }
 
     /// @param compression A value between 0 and 9
-    static bool WritePNG(const FrameBufferRGB& buffer, std::ostream& output, int compression = 7);
-    static bool WriteQOI(const FrameBufferRGB& buffer, std::ostream& output);
+    static bool WritePNG(const FrameBufferRgb& buffer, std::ostream& output, int compression = 7);
+    static bool WriteQOI(const FrameBufferRgb& buffer, std::ostream& output);
 
 private:
     const uint32_t m_width;
@@ -104,40 +106,92 @@ public:
     FFmpegWriter(uint32_t width, uint32_t height, uint32_t framerate, const std::string& output_args, std::filesystem::path&& output_path);
     ~FFmpegWriter();
     
-    bool WriteFrame(const FrameBufferRGB& buffer, size_t frame_index) override;
+    bool WriteFrame(const FrameBufferDx9& buffer, size_t frame_index) override;
     bool IsAsync() const override { return false; }
 
 private:
     std::shared_ptr<ffmpipe::Pipe> m_pipe;
 };
 
-class FrameBufferRGB
+class FrameBufferBase
 {
 public:
-    static constexpr int NUM_CHANNELS = 3;
-    static constexpr int NUM_BYTES = 1;
+    virtual ~FrameBufferBase() {}
+    virtual uint32_t GetWidth() const = 0;
+    virtual uint32_t GetHeight() const = 0;
+    virtual D3DFORMAT GetFormat() const = 0;
+    virtual const Helper::D3DFORMAT_info& GetFormatInfo() const = 0;
+};
 
-    FrameBufferRGB(uint32_t width, uint32_t height)
-        : m_width(width), m_height(height), m_data((uint8_t*)malloc(width * height * NUM_CHANNELS * NUM_BYTES)) { }
-    ~FrameBufferRGB() { free(m_data); }
-
-    void Resize(uint32_t width, uint32_t height)
-    {
-        m_width = width, m_height = height;
-        m_data = (uint8_t*)realloc(m_data, GetDataLength());
+/**
+ * @brief Wrap a read/writeable 24-bit RGB buffer
+ */
+class FrameBufferRgb : public FrameBufferBase
+{
+public:
+    FrameBufferRgb(uint32_t width, uint32_t height)
+        : m_width(width), m_height(height), m_data((uint8_t*)malloc(width * height * 3)) {}
+    ~FrameBufferRgb() { free(m_data); }
+    FrameBufferRgb(FrameBufferRgb&& other) : m_data(other.m_data), m_width(other.m_width), m_height(other.m_height) {
+        other.m_data = nullptr;
     }
-    
-    inline uint8_t GetBitDepth() const { return NUM_BYTES * 8; }
-    inline uint32_t GetDataLength() const { return m_width * m_height * NUM_CHANNELS * NUM_BYTES; }
+
+    uint32_t GetWidth() const override { return m_width; }
+    uint32_t GetHeight() const override { return m_height; }
+    D3DFORMAT GetFormat() const override { return Helper::D3DFMT_B8G8R8; }
+    const Helper::D3DFORMAT_info& GetFormatInfo() const;
     uint8_t* GetData() { return m_data; }
     const uint8_t* GetData() const { return m_data; }
-    uint32_t GetWidth() const { return m_width; }
-    uint32_t GetHeight() const { return m_height; }
+    size_t GetDataLength() const { return m_width * m_height * GetPixelStride(); }
+    size_t GetPixelStride() const { return 3; }
 
 private:
     uint32_t m_width;
     uint32_t m_height;
     uint8_t* m_data;
+};
+
+/**
+ * @brief Wrap a readable Direct3D9 surface
+ */
+class FrameBufferDx9 : public FrameBufferBase
+{
+public:
+    /// @brief Wrap an existing surface
+    /// @details The surface is taken without incrementing its ref count.
+    FrameBufferDx9(IDirect3DSurface9* surface);
+    /// @brief Construct a new surface and wrap it
+    FrameBufferDx9(uint32_t width, uint32_t height, D3DFORMAT d3dformat);
+    ~FrameBufferDx9() {
+        if (m_d3dsurface) m_d3dsurface->Release();
+    }
+    FrameBufferDx9(FrameBufferDx9&& other) : FrameBufferDx9(other.m_d3dsurface) {
+        other.m_d3dsurface = nullptr;
+    }
+
+    /// @brief Convert to a 24-bit RGB surface
+    FrameBufferRgb ToRgb() const;
+    uint32_t GetWidth() const override { return m_width; }
+    uint32_t GetHeight() const override { return m_height; }
+    D3DFORMAT GetFormat() const override { return m_d3dformat; }
+    const Helper::D3DFORMAT_info& GetFormatInfo() const override { return m_d3dformat_info; }
+    IDirect3DSurface9* GetSurface() const { return m_d3dsurface; }
+    uint8_t GetNumChannels() const { return GetFormatInfo().num_channels; }
+    /// @brief The number of bytes between each pixel
+    uint8_t GetPixelStride() const { return GetFormatInfo().stride; }
+
+private:
+
+    static void BlitRgb(FrameBufferRgb* dst, D3DLOCKED_RECT src);
+    static void BlitBgr(FrameBufferRgb* dst, D3DLOCKED_RECT src);
+    static void BlitRgba(FrameBufferRgb* dst, D3DLOCKED_RECT src);
+    static void BlitBgra(FrameBufferRgb* dst, D3DLOCKED_RECT src);
+
+    uint32_t m_width = 0;
+    uint32_t m_height = 0;
+    IDirect3DSurface9* m_d3dsurface = nullptr;
+    D3DFORMAT m_d3dformat = D3DFMT_UNKNOWN;
+    Helper::D3DFORMAT_info m_d3dformat_info = {0};
 };
 
 /**
@@ -160,8 +214,8 @@ public:
      */
     struct Frame
     {
-        Frame(uint32_t width, uint32_t height) : buffer(width, height) {}
-        FrameBufferRGB buffer;
+        Frame(FrameBufferDx9&& buffer) : buffer(std::move(buffer)) {}
+        FrameBufferDx9 buffer;
         size_t index;
         std::shared_ptr<VideoWriter> writer;
     };
