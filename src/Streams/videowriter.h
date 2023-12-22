@@ -103,7 +103,7 @@ public:
      * @param output_args FFmpeg output args to append after the `-i` flag, not including the output file name.
      * @param output_path Path of the output file
      */
-    FFmpegWriter(uint32_t width, uint32_t height, uint32_t framerate, const std::string& output_args, std::filesystem::path&& output_path);
+    FFmpegWriter(uint32_t width, uint32_t height, uint32_t framerate, const std::string& output_args, const std::filesystem::path& output_path);
     ~FFmpegWriter();
     
     bool WriteFrame(const FrameBufferDx9& buffer, size_t frame_index) override;
