@@ -41,6 +41,8 @@ private:
     int OnDraw();
     int OnMenu();
     int OnFrameStageNotify();
+    /// @brief This replaces the game's vanilla recording behavior
+    int OnWriteMovieFrame();
     /// @brief Write the next frame for the stream
     /// @param stream If there are no streams, use `nullptr`
     void WriteFrame(std::shared_ptr<Stream> stream);

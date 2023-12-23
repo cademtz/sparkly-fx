@@ -4,6 +4,7 @@
 #include <Streams/videowriter.h>
 #include <Hooks/ClientHook.h>
 #include <Hooks/OverlayHook.h>
+#include <Hooks/fx/VideoModeHook.h>
 #include <Modules/Menu.h>
 #include <Modules/Draw.h>
 #include "ActiveStream.h"
@@ -53,6 +54,7 @@ void CRecorder::StartListening()
     Listen(EVENT_DRAW, [this]{ return OnDraw(); });
     Listen(EVENT_MENU, [this]{ return OnMenu(); });
     Listen(EVENT_FRAMESTAGENOTIFY, [this]{ return OnFrameStageNotify(); });
+    Listen(EVENT_WRITE_MOVIE_FRAME, [this]{ return OnWriteMovieFrame(); });
 }
 
 int CRecorder::OnPostImguiInput()
@@ -413,6 +415,13 @@ int CRecorder::OnFrameStageNotify()
         m_movie->GetFramePool().PushFullFrame(frame, frame_index, pair.writer);
     }
 
+    return 0;
+}
+
+int CRecorder::OnWriteMovieFrame()
+{
+    if (IsRecordingMovie())
+        return Return_NoOriginal;
     return 0;
 }
 
