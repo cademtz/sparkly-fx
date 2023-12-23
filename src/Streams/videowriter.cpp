@@ -371,7 +371,13 @@ void FrameBufferDx9::BlitBgra(FrameBufferRgb* dst, D3DLOCKED_RECT src)
 
 FFmpegWriter::FFmpegWriter(uint32_t width, uint32_t height, uint32_t framerate, const std::string& output_args, const std::filesystem::path& output_path)
 {
-    const char* pix_fmt = Helper::GetD3DFormatAsFFmpegPixFmt(D3DFMT_A8R8G8B8, true);
+    IDirect3DSurface9* render_target;
+    D3DSURFACE_DESC desc;
+    g_hk_overlay.Device()->GetRenderTarget(0, &render_target);
+    render_target->GetDesc(&desc);
+    render_target->Release();
+
+    const char* pix_fmt = Helper::GetD3DFormatAsFFmpegPixFmt(desc.Format, true);
     assert(pix_fmt && "No equivalent FFmpeg pix_fmt for given D3DFORMAT");
 
     std::wstringstream ffmpeg_args;
