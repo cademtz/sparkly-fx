@@ -15,10 +15,10 @@ void VideoModeHook::Hook()
     size_t videomode_offset = 0;
 #ifdef _M_AMD64 
 #elif defined(_M_IX86)
-#endif
-
     videomode_ref = Sig::FindPattern("engine.dll", "8B 0D ? ? ? ? 8B 01 FF 50 20 8B 4D 0C ");
     videomode_offset = 2;
+#endif
+
     if (!videomode_ref)
     {
         printf("IVideoMode could not be found (it may be outdated). Recording will perform slower than normal.\n");
