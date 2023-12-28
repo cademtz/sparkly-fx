@@ -52,6 +52,7 @@ void CRecorder::StartListening()
 
     Listen(EVENT_POST_IMGUI_INPUT, [this]{ return OnPostImguiInput(); });
     Listen(EVENT_DRAW, [this]{ return OnDraw(); });
+    Listen(EVENT_DX9PRESENT, [this]{ return OnPresent(); });
     Listen(EVENT_MENU, [this]{ return OnMenu(); });
     Listen(EVENT_FRAMESTAGENOTIFY, [this]{ return OnFrameStageNotify(); });
     Listen(EVENT_WRITE_MOVIE_FRAME, [this]{ return OnWriteMovieFrame(); });
@@ -93,8 +94,15 @@ int CRecorder::OnDraw()
     return 0;
 }
 
-int CRecorder::OnMenu()
+int CRecorder::OnPresent()
 {
+    if (!m_render_target)
+        g_hk_overlay.Device()->GetRenderTarget(0, &m_render_target);
+    return 0;
+}
+
+int CRecorder::OnMenu()
+{   
     if (ImGui::CollapsingHeader("Recording"))
     {
         bool has_errors = !GetErrorLog()->empty();
