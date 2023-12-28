@@ -373,11 +373,6 @@ int CRecorder::OnFrameStageNotify()
     CViewSetup view_setup;
     Interfaces::hlclient->GetPlayerView(view_setup);
 
-    IDirect3DSurface9* render_target;
-    if (FAILED(g_hk_overlay.Device()->GetRenderTarget(0, &render_target)))
-        assert(0 && "Failed to get render target");
-    defer { render_target->Release(); };
-
     // Render "empty" streams first.
     // The scene is already rendered, so we don't re-render.
     // This is sub-optimal for multiple empty streams, but having many identical streams is impractical anyway.
@@ -392,7 +387,7 @@ int CRecorder::OnFrameStageNotify()
         first_stream = false;
 
         auto frame = m_movie->GetFramePool().PopEmptyFrame();
-        g_hk_overlay.Device()->StretchRect(render_target, nullptr, frame->buffer.GetSurface(), nullptr, D3DTEXF_NONE);
+        g_hk_overlay.Device()->StretchRect(m_render_target, nullptr, frame->buffer.GetSurface(), nullptr, D3DTEXF_NONE);
         m_movie->GetFramePool().PushFullFrame(frame, frame_index, pair.writer);
     }
     
@@ -419,7 +414,7 @@ int CRecorder::OnFrameStageNotify()
         Interfaces::hlclient->RenderView(view_setup, VIEW_CLEAR_COLOR, RENDERVIEW_DRAWVIEWMODEL | RENDERVIEW_DRAWHUD);
 
         auto frame = m_movie->GetFramePool().PopEmptyFrame();
-        g_hk_overlay.Device()->StretchRect(render_target, nullptr, frame->buffer.GetSurface(), nullptr, D3DTEXF_NONE);
+        g_hk_overlay.Device()->StretchRect(m_render_target, nullptr, frame->buffer.GetSurface(), nullptr, D3DTEXF_NONE);
         m_movie->GetFramePool().PushFullFrame(frame, frame_index, pair.writer);
     }
 
