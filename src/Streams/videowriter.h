@@ -5,6 +5,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <string_view>
+#include <unordered_set>
 #include <Helper/d3d9.h>
 
 class FrameBufferDx9;
@@ -60,8 +61,8 @@ public:
      */
     virtual bool WriteFrame(const FrameBufferDx9& buffer, size_t frame_index) = 0;
     /**
-     * @brief Whether this instance can write frames out-of-order.
-     * @details This will not 
+     * @brief Whether this instance supports async and unordered writes.
+     * @details When false, the FramePool will ensure that writes are ordered and synchronous.
      */
     virtual bool IsAsync() const = 0;
 };
@@ -250,7 +251,13 @@ private:
      * @return `nullptr` if all work is finished.
      */
     FramePtr PopFullFrame();
-    /// @brief Free a frame after it's been written, returning it to the pool.
+    /**
+     * @brief Free a frame after it's been written, returning it to the pool.
+     * 
+     * The `frame->writer` pointer must be valid.
+     * If the writer is synchronous, it will become useable for a new thread again.
+     * @param frame A valid pointer with a valid buffer and writer.
+     */
     void PushEmptyFrame(FramePtr frame);
     static void WorkerLoop(FramePool* pool);
 
@@ -262,6 +269,8 @@ private:
     std::vector<FramePtr> m_empty;
     /// @brief Frames that are filled with pixels
     std::vector<FramePtr> m_full;
+    /// @brief Synchronous writers that are currently in use
+    std::unordered_set<const VideoWriter*> m_sync_writers;
     /// @brief The list of threads waiting on @ref m_empty
     std::condition_variable m_cv_empty;
     /// @brief The list of threads waiting on @ref m_full
