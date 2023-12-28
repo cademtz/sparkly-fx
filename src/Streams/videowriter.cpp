@@ -452,9 +452,10 @@ FramePool::FramePool(
 void FramePool::Close()
 {
     {
-        std::lock_guard lock{m_mutex};
+        std::scoped_lock lock{m_mutex};
         m_all.clear();
         m_empty.clear();
+        m_sync_writers.clear();
     }
     m_cv_empty.notify_all();
     m_cv_full.notify_all();
@@ -469,22 +470,11 @@ void FramePool::PushFullFrame(FramePtr frame, size_t index, std::shared_ptr<Vide
     assert(writer != nullptr && "A writer must be provided to write the frame");
     assert(frame->buffer.GetWidth() * frame->buffer.GetHeight() != 0 && "Frame buffer must have non-zero size. Resize the buffer before use.");
 
-    if (!writer->IsAsync())
-    {
-        // HACK: Write the frame and block to prevent synchronization issues.
-        // FIXME: This can break if frames are pushed out-of-order.
-        //   This also causes blockage, preventing async frames being pushed.
-        //   Perhaps store an index for each synchronous writer. Then only submit frames
-        writer->WriteFrame(frame->buffer, index);
-        PushEmptyFrame(frame);
-        return;
-    }
-
     frame->writer = writer;
     frame->index = index;
 
     {
-        std::lock_guard lock{m_mutex};
+        std::scoped_lock lock{m_mutex};
         assert((m_all.empty() || m_full.size() < m_all.size()) && "More frames are being pushed than exists in the pool");
         m_full.push_back(frame);
     }
@@ -493,30 +483,59 @@ void FramePool::PushFullFrame(FramePtr frame, size_t index, std::shared_ptr<Vide
 
 FramePool::FramePtr FramePool::PopFullFrame()
 {
-    FramePtr back;
+    FramePtr popped;
     {
         std::unique_lock lock{m_mutex};
-        m_cv_full.wait(lock, [this]{ return m_all.empty() || !m_full.empty(); });
-        if (m_all.empty())
+        // Index of the best frame to pop
+        size_t frame_index = ~(size_t)0;
+        // Wait for a good frame to pop
+        m_cv_full.wait(lock, [this, &frame_index]
+        {
+            if (m_all.empty())
+                return true; // The pool was emptied. Resume.
+            
+            // Only pop a frame whose writer isn't currently in use
+            for (size_t i = 0; i < m_full.size(); ++i)
+            {
+                if (m_sync_writers.find(m_full[i]->writer.get()) == m_sync_writers.end())
+                {
+                    frame_index = i;
+                    return true;
+                }
+            }
+            return false;
+        });
+        if (frame_index == ~(size_t)0)
             return nullptr;
 
-        back = m_full.back();
-        m_full.pop_back();
+        popped = std::move(m_full[frame_index]);
+        if (!popped->writer->IsAsync()) // List the writer as currently in use
+            m_sync_writers.emplace(popped->writer.get());
+        m_full.erase(m_full.begin() + frame_index);
     }
     m_cv_full.notify_one();
-    return back;
+    return popped;
 }
 
 void FramePool::PushEmptyFrame(FramePtr frame)
 {
-    frame->writer = nullptr;
+    bool is_sync_writer_useable = false;
+    assert(frame->writer && "frame->writer must be a valid pointer");
 
     {
-        std::lock_guard lock{m_mutex};
+        std::scoped_lock lock{m_mutex};
         assert((m_all.empty() || m_empty.size() < m_all.size()) && "More frames are being pushed than exists in the pool");
-        m_empty.push_back(frame);
+        if (frame->writer)
+        {
+            if (m_sync_writers.erase(frame->writer.get()) && !m_full.empty())
+                is_sync_writer_useable = true;
+        }
+        frame->writer = nullptr;
+        m_empty.emplace_back(std::move(frame));
     }
     m_cv_empty.notify_one();
+    if (is_sync_writer_useable)
+        m_cv_full.notify_one();
 }
 
 FramePool::FramePtr FramePool::PopEmptyFrame()
