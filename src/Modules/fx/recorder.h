@@ -39,6 +39,7 @@ public:
 private:
     int OnPostImguiInput();
     int OnDraw();
+    int OnPresent();
     int OnMenu();
     int OnFrameStageNotify();
     /// @brief This replaces the game's vanilla recording behavior
@@ -53,6 +54,10 @@ private:
     /// @brief Only call this before/after the logic to write frames.
     /// Don't use from the menu, which may be mid-frame on the same thread.
     void CleanupMovie();
+
+    /// @brief Render target used during the last Present call.
+    /// @details Use this instead of accidentally getting a random render target.
+    class IDirect3DSurface9* m_render_target;
 
     // === Menu options === //
 
