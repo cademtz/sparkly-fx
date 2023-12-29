@@ -57,7 +57,7 @@ private:
 
     /// @brief Render target used during the last Present call.
     /// @details Use this instead of accidentally getting a random render target.
-    class IDirect3DSurface9* m_render_target;
+    class IDirect3DSurface9* m_render_target = nullptr;
 
     // === Menu options === //
 
