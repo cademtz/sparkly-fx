@@ -381,9 +381,13 @@ FFmpegWriter::FFmpegWriter(uint32_t width, uint32_t height, uint32_t framerate, 
     assert(pix_fmt && "No equivalent FFmpeg pix_fmt for given D3DFORMAT");
 
     std::wstringstream ffmpeg_args;
-    ffmpeg_args << "-y -c:v rawvideo -f rawvideo -pix_fmt " << pix_fmt << " -s:v " << width << 'x' << height << " -framerate " << framerate << ' ';
+    // Global flags
+    ffmpeg_args << "-y -loglevel warning ";
+    // Input flags
+    ffmpeg_args << "-c:v rawvideo -f rawvideo -pix_fmt " << pix_fmt << " -s:v " << width << 'x' << height << " -framerate " << framerate << ' ';
     ffmpeg_args << "-i - ";
-    ffmpeg_args << output_args.c_str() << " \"" << output_path << '"';
+    // Output flags
+    ffmpeg_args << output_args.c_str() << " \"" << output_path.c_str() << '"';
 
     m_pipe = ffmpipe::Pipe::Create(Helper::FFmpeg::GetDefaultPath(), ffmpeg_args.str());
 }
