@@ -3,7 +3,7 @@
 DECL_EVENT(EVENT_WRITE_MOVIE_FRAME);
 
 /**
- * @brief Hook the engine's private IVideoMode instance
+ * @brief Hook the engine's private IVideoMode instance to stop unnecessary ReadPixels calls
  */
 class VideoModeHook : public CBaseHook
 {
