@@ -6,6 +6,9 @@ DECL_EVENT(EVENT_VIEW_DRAW_FADE);
 
 class IMaterial;
 
+/**
+ * @brief Hook ViewDrawFade to control flashes from flashbangs and teleporters.
+ */
 class RenderViewHook : public CBaseHook
 {
 public:
