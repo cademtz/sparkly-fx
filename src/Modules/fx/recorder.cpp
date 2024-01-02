@@ -44,6 +44,22 @@ void CRecorder::StartListening()
             printf("Failed to get working directory");
     }
 
+    // Find FFmpeg and a good default encoder config
+    {
+        auto ffmpeg_path_list = Helper::FFmpeg::ScanForExecutables();
+        if (Helper::FFmpeg::GetDefaultPath().empty() && !ffmpeg_path_list.empty())
+            Helper::FFmpeg::SetDefaultPath(ffmpeg_path_list.front());
+
+        auto ffmpeg_path = Helper::FFmpeg::GetDefaultPath();
+        bool has_ffmpeg = !ffmpeg_path.empty();
+        if (has_ffmpeg)
+            m_videoconfig.type = EncoderConfig::TYPE_FFMPEG;
+        
+        auto& preset = EncoderConfig::GetFFmpegPresets().front();
+        m_videoconfig.ffmpeg_output_args = preset.args;
+        m_videoconfig.ffmpeg_output_ext = preset.file_ext;
+    }
+
     // By default, allocate 1 frame for every thread/core.
     m_framepool_size = std::thread::hardware_concurrency();
     if (m_framepool_size <= 1)
@@ -102,7 +118,7 @@ int CRecorder::OnMenu()
         bool has_errors = !GetErrorLog()->empty();
         if (has_errors)
         {
-            ImGui::Text("Errors:"); ImGui::SameLine();
+            ImGui::Text("Error log:"); ImGui::SameLine();
             if (ImGui::Button("Clear"))
                 ClearErrorLog();
             
@@ -151,6 +167,8 @@ int CRecorder::OnMenu()
         if (m_is_recording)
             ImGui::BeginDisabled();
 
+        if (m_movie_path.empty())
+            ImGui::TextColored(ImVec4(1,1,0,1), "[!] Choose an output folder below");
         ImGui::Text("Output folder:"); ImGui::SameLine();
         Helper::ImGuiHelpMarker(
             "This folder will contain the movie files.\n"
