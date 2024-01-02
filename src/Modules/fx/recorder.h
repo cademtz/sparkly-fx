@@ -39,11 +39,12 @@ public:
 private:
     int OnPostImguiInput();
     int OnDraw();
-    int OnPresent();
     int OnMenu();
     int OnFrameStageNotify();
     /// @brief This replaces the game's vanilla recording behavior
     int OnWriteMovieFrame();
+    /// @brief This replaces the game's vanilla recording behavior
+    int OnReadPixels();
     /// @brief Write the next frame for the stream
     /// @param stream If there are no streams, use `nullptr`
     void WriteFrame(std::shared_ptr<Stream> stream);
@@ -54,10 +55,8 @@ private:
     /// @brief Only call this before/after the logic to write frames.
     /// Don't use from the menu, which may be mid-frame on the same thread.
     void CleanupMovie();
-
-    /// @brief Render target used during the last Present call.
-    /// @details Use this instead of accidentally getting a random render target.
-    class IDirect3DSurface9* m_render_target = nullptr;
+    void CopyCurrentFrameToSurface(class IDirect3DSurface9* dst);
+    bool m_read_pixels = false;
 
     // === Menu options === //
 

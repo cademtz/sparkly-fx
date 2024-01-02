@@ -5,6 +5,7 @@
 #include <Hooks/ClientHook.h>
 #include <Hooks/OverlayHook.h>
 #include <Hooks/fx/VideoModeHook.h>
+#include <Hooks/fx/ShaderApiHook.h>
 #include <Modules/Menu.h>
 #include <Modules/Draw.h>
 #include "ActiveStream.h"
@@ -52,10 +53,10 @@ void CRecorder::StartListening()
 
     Listen(EVENT_POST_IMGUI_INPUT, [this]{ return OnPostImguiInput(); });
     Listen(EVENT_DRAW, [this]{ return OnDraw(); });
-    Listen(EVENT_DX9PRESENT, [this]{ return OnPresent(); });
     Listen(EVENT_MENU, [this]{ return OnMenu(); });
     Listen(EVENT_FRAMESTAGENOTIFY, [this]{ return OnFrameStageNotify(); });
     Listen(EVENT_WRITE_MOVIE_FRAME, [this]{ return OnWriteMovieFrame(); });
+    Listen(EVENT_READ_PIXELS, [this]{ return OnReadPixels(); });
 }
 
 int CRecorder::OnPostImguiInput()
@@ -91,13 +92,6 @@ int CRecorder::OnDraw()
         gDraw.List()->AddText(ImVec2(text_corner.x + text_height + text_space, text_corner.y), text_color, text.data());
     }
 
-    return 0;
-}
-
-int CRecorder::OnPresent()
-{
-    if (!m_render_target)
-        g_hk_overlay.Device()->GetRenderTarget(0, &m_render_target);
     return 0;
 }
 
@@ -328,6 +322,20 @@ void CRecorder::ClearErrorLog()
     m_error_log.clear();
 }
 
+void CRecorder::CopyCurrentFrameToSurface(IDirect3DSurface9* dst)
+{
+    // This is a very indirect way to properly wait for rendering to finish.
+    // ReadPixels has beeen hooked to do the waiting for us without reading the pixels.
+    // The IShaderAPI's `ReadPixels` impl also calls `FlushBufferedPrimitives`, so we call that too.
+    Interfaces::mat_system->GetRenderContext()->ReadPixels(0, 0, 0, 0, nullptr, IMAGE_FORMAT_BGRX8888);
+    g_hk_shaderapi.ShaderApi()->FlushBufferedPrimitives();
+
+    IDirect3DSurface9* render_target;
+    g_hk_overlay.Device()->GetRenderTarget(0, &render_target);
+    defer { render_target->Release(); };
+    g_hk_overlay.Device()->StretchRect(render_target, nullptr, dst, nullptr, D3DTEXF_NONE);
+}
+
 int CRecorder::OnFrameStageNotify()
 {
     ClientFrameStage_t stage = g_hk_client.Context()->curStage;
@@ -373,32 +381,20 @@ int CRecorder::OnFrameStageNotify()
     CViewSetup view_setup;
     Interfaces::hlclient->GetPlayerView(view_setup);
 
-    // Render "empty" streams first.
-    // The scene is already rendered, so we don't re-render.
-    // This is sub-optimal for multiple empty streams, but having many identical streams is impractical anyway.
-    bool first_stream = true;
-    for (auto& pair : m_movie->GetStreams())
+    // If there is only one stream and it has no rendering effects, then don't re-render anything.
+    if (m_movie->GetStreams().size() == 1 && m_movie->GetStreams()[0].stream->GetRenderTweaks().empty())
     {
-        if (!pair.stream->GetRenderTweaks().empty())
-            continue; // Stream has rendering tweaks
-        
-        if (first_stream)
-            g_active_stream.Set(pair.stream);
-        first_stream = false;
-
+        auto& pair = m_movie->GetStreams().front();
         auto frame = m_movie->GetFramePool().PopEmptyFrame();
-        g_hk_overlay.Device()->StretchRect(m_render_target, nullptr, frame->buffer.GetSurface(), nullptr, D3DTEXF_NONE);
+        CopyCurrentFrameToSurface(frame->buffer.GetSurface());
         m_movie->GetFramePool().PushFullFrame(frame, frame_index, pair.writer);
+        return 0;
     }
     
-    // Next, render streams with tweaks in them.
-    // The scene will have to be re-rendered appropriately.
+    // Here, many streams exist with different effects, so we will re-render for each of them.
     float default_fov = view_setup.fov;
     for (auto& pair : m_movie->GetStreams())
     {
-        if (pair.stream->GetRenderTweaks().empty())
-            continue; // Stream has no rendering tweaks
-        
         float fov = default_fov;
         for (auto tweak = pair.stream->begin<CameraTweak>(); tweak != pair.stream->end<CameraTweak>(); ++tweak)
         {
@@ -414,7 +410,7 @@ int CRecorder::OnFrameStageNotify()
         Interfaces::hlclient->RenderView(view_setup, VIEW_CLEAR_COLOR, RENDERVIEW_DRAWVIEWMODEL | RENDERVIEW_DRAWHUD);
 
         auto frame = m_movie->GetFramePool().PopEmptyFrame();
-        g_hk_overlay.Device()->StretchRect(m_render_target, nullptr, frame->buffer.GetSurface(), nullptr, D3DTEXF_NONE);
+        CopyCurrentFrameToSurface(frame->buffer.GetSurface());
         m_movie->GetFramePool().PushFullFrame(frame, frame_index, pair.writer);
     }
 
@@ -423,6 +419,15 @@ int CRecorder::OnFrameStageNotify()
 
 int CRecorder::OnWriteMovieFrame()
 {
+    if (IsRecordingMovie())
+        return Return_NoOriginal;
+    return 0;
+}
+
+int CRecorder::OnReadPixels()
+{
+    if (m_read_pixels)
+        return 0;
     if (IsRecordingMovie())
         return Return_NoOriginal;
     return 0;

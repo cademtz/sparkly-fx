@@ -3,4 +3,5 @@ target_sources(xsdk-base PRIVATE
     ModelRenderHook.cpp
     RenderViewHook.cpp
     VideoModeHook.cpp
+    ShaderApiHook.cpp
 )
