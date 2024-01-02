@@ -26,6 +26,60 @@ const EncoderConfig::TypeDesc* EncoderConfig::TYPE_QOI = &type_descs[0];
 const EncoderConfig::TypeDesc* EncoderConfig::TYPE_PNG = &type_descs[1];
 const EncoderConfig::TypeDesc* EncoderConfig::TYPE_FFMPEG = &type_descs[2];
 
+static std::vector<EncoderConfig::FFmpegPreset> MakeFFmpegPresets()
+{
+    std::vector<EncoderConfig::FFmpegPreset> presets;
+    presets.emplace_back(
+        "HuffYUV (RGB)",
+        "Lossless RGB encoded with HuffYUV.\n"
+        "Huff YUV is fast with relatively small video size.",
+
+        "-c:v huffyuv", "avi"
+    );
+    presets.emplace_back(
+        "UTVideo (RGB)",
+        "Lossless RGB encoded with UTVideo.\n"
+        "UT Video is fast with smaller video size than HuffYUV.\n"
+        "This codec is less common and may not work in some software.",
+        
+        "-c:v utvideo", "avi"
+    );
+
+    std::string h264 = "-c:v libx264";
+    std::string hevc = "-c:v libx265";
+    std::string msg = "";
+    if (Helper::FFmpeg::nvenc_device_available())
+        h264 = "-c:v h264_nvenc", hevc = "-c:v hevc_nvenc";
+    else if (Helper::FFmpeg::amf_device_available())
+        h264 = "-c:v h264_amf", hevc = "-c:v hevc_amf";
+    else
+        msg = "\n[!] Hardware acceleration was not found! This preset might be slow!";
+    
+    presets.emplace_back(
+        "H.264 HD (YUV)",
+        "Almost-lossless YUV encoded with H.264." + msg,
+        h264 + " -b:v 128M", "mp4"
+    );
+    presets.emplace_back(
+        "H.264 SD (YUV)",
+        "Lossy YUV encoded with H.264." + msg,
+        h264 + " -b:v 24M", "mp4"
+    );
+    presets.emplace_back(
+        "HEVC SD (YUV)",
+        "Lossy YUV encoded with HEVC." + msg,
+        hevc + " -b:v 16M", "mp4"
+    );
+
+    return presets;
+}
+
+const std::vector<EncoderConfig::FFmpegPreset>& EncoderConfig::GetFFmpegPresets()
+{
+    static auto presets = MakeFFmpegPresets();
+    return presets;
+}
+
 const EncoderConfig::TypeDesc* EncoderConfig::Types() {
     return type_descs;
 }
@@ -37,7 +91,7 @@ void EncoderConfig::ShowImguiControls()
 {
     ImGui::InputInt("Framerate", &framerate);
 
-    if (ImGui::BeginCombo("Video format", type->name))
+    if (ImGui::BeginCombo("Video encoder", type->name))
     {
         for (size_t i = 0; i < EncoderConfig::NumTypes(); ++i)
         {
@@ -47,13 +101,12 @@ void EncoderConfig::ShowImguiControls()
                 type = type_desc;
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone))
                 ImGui::SetTooltip("%s", type_desc->desc);
-            // TODO: Why was this necessary? Remove if safe.
-            //if (item_selected)
-            //    ImGui::SetItemDefaultFocus();
             ImGui::PopID();
         }
         ImGui::EndCombo();
     }
+
+    ImGui::SeparatorText("Encoder settings");
 
     if (type == EncoderConfig::TYPE_PNG)
     {
@@ -63,21 +116,36 @@ void EncoderConfig::ShowImguiControls()
     }
     else if (type == EncoderConfig::TYPE_FFMPEG)
     {
+        static const std::vector<FFmpegPreset> ffmpeg_presets = MakeFFmpegPresets();
         static auto ffmpeg_path_list = Helper::FFmpeg::ScanForExecutables();
-        bool is_initialized = false;
-        if (!is_initialized) // Find a good default FFmpeg path
-        {
-            is_initialized = true;
-            if (Helper::FFmpeg::GetDefaultPath().empty() && !ffmpeg_path_list.empty())
-                Helper::FFmpeg::SetDefaultPath(ffmpeg_path_list.front());
-        }
 
         std::filesystem::path ffmpeg_path = Helper::FFmpeg::GetDefaultPath();
         bool has_ffmpeg = !ffmpeg_path.empty();
 
         if (has_ffmpeg)
         {
-            ImGui::InputText("Args", &ffmpeg_output_args); ImGui::SameLine();
+            static const FFmpegPreset* prev_preset = &ffmpeg_presets.front();
+            if (ImGui::BeginCombo("FFmpeg preset", prev_preset->name.c_str()))
+            {
+                for (auto& preset : ffmpeg_presets)
+                {
+                    if (ImGui::Selectable(preset.name.c_str(), &preset == prev_preset))
+                    {
+                        prev_preset = &preset;
+                        ffmpeg_output_args = preset.args;
+                        ffmpeg_output_ext = preset.file_ext;
+                    }
+                    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone) && ImGui::BeginTooltip())
+                    {
+                        ImGui::TextUnformatted(preset.desc.c_str());
+                        ImGui::EndTooltip();
+                    }
+                }
+                ImGui::EndCombo();
+            }
+
+            ImGui::InputText("Args", &ffmpeg_output_args);
+            ImGui::SameLine();
             Helper::ImGuiHelpMarker(
                 "Output args for FFmpeg, excluding the output file name.\n"
                 "The args are appended after the input flag.\n"
@@ -94,6 +162,7 @@ void EncoderConfig::ShowImguiControls()
                 "Notes:\n"
                 "- Avoid the default H.264 and HEVC codecs. They're slow.\n"
                 "- HuffYUV and UTVideo require an AVI file.\n"
+                "- UTVideo is smaller and equal to HuffYUV, but it's less common."
                 "- H.264 with 40+ MB bitrate is practically lossless and super tiny."
             );
             ImGui::InputText("File format", &ffmpeg_output_ext); ImGui::SameLine();
@@ -113,11 +182,7 @@ void EncoderConfig::ShowImguiControls()
         if (settings_tree)
         {
             if (!has_ffmpeg)
-            {
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,.25,.25,1));
-                ImGui::Text("[!] Select an FFmpeg executable");
-                ImGui::PopStyleColor();
-            }
+                ImGui::TextColored(ImVec4(1,.25,.25,1), "[!] Select an FFmpeg executable");
             
             ImGui::Text("FFmpeg executable:");
             ImGui::InputText("##ffmpeg_path", &ffmpeg_path.string(), ImGuiInputTextFlags_ReadOnly);

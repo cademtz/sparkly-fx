@@ -24,6 +24,12 @@ struct EncoderConfig
         const char* name;
         const char* desc;
     };
+    struct FFmpegPreset
+    {
+        std::string name, desc, args, file_ext;
+        FFmpegPreset(std::string name, std::string desc, std::string args, std::string file_ext)
+            : name(name), desc(desc), args(args), file_ext(file_ext) {}
+    };
     
     static const TypeDesc* Types();
     static size_t NumTypes();
@@ -43,6 +49,10 @@ struct EncoderConfig
     std::string ffmpeg_output_ext = "avi";
     /// @brief A value between 0 and 9
     int png_compression = 1;
+
+    /// @brief A list of FFmpeg presets
+    /// @details The first preset is the safest for all use cases.
+    static const std::vector<FFmpegPreset>& GetFFmpegPresets();
 };
 
 /**
