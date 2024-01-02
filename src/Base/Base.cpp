@@ -312,7 +312,10 @@ static LONG NTAPI MyVectoredHandler(struct _EXCEPTION_POINTERS* info) {
 		log_file.close();
 	}
 
-	static bool is_first_time = true;
+	// This exception nag is really annoying and unnecessary.
+	// I'll leave the commented code here incase it's useful later.
+
+	/*static bool is_first_time = true;
 	if (is_first_time)
 	{
 		std::basic_stringstream<TCHAR> msg;
@@ -339,7 +342,7 @@ static LONG NTAPI MyVectoredHandler(struct _EXCEPTION_POINTERS* info) {
 			TEXT("Unhandled exception"),
 			MB_OK | MB_ICONWARNING
 		);
-	}
+	}*/
 
 	return EXCEPTION_CONTINUE_SEARCH;
 }
