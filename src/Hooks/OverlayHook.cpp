@@ -181,6 +181,18 @@ void** COverlayHook::GetDeviceVtable_CreateDevice(std::string* out_error)
 		&present_params, &d3d_device
 	);
 
+	// Device creation can fail when `present_params.Windowed` does not match the game's windowed state.
+	// Let's try again with the opposite value.
+	if (FAILED(err))
+	{
+		present_params.Windowed = !present_params.Windowed;
+		err = d3d->CreateDevice(
+			D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, temp_window,
+			D3DCREATE_SOFTWARE_VERTEXPROCESSING,
+			&present_params, &d3d_device
+		);
+	}
+
 	DestroyWindow(temp_window);
 	UnregisterClass(wnd_class.lpszClassName, NULL);
 
