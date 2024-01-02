@@ -92,7 +92,7 @@ private:
     /// @brief Should we iterate all materials and update them?
     bool m_should_update_materials = false;
     bool m_should_update_fog = false;
-    std::vector<std::pair<Helper::RestoringConVar, std::string>> m_convars;
+    std::vector<Helper::RestoringConVar> m_convars;
     /// @brief Parameters stored during the last DrawModelExecute call
     LastDrawParams m_last_dme_params;
     /**

@@ -85,8 +85,8 @@ void ActiveStream::UpdateMaterials()
 
 void ActiveStream::UpdateConVars()
 {
-    for (auto& pair : m_convars)
-        pair.first.Restore();
+    for (auto& convar : m_convars)
+        convar.Restore();
     m_convars.clear();
 
     if (!m_stream)
@@ -115,7 +115,7 @@ void ActiveStream::UpdateConVars()
         std::string args = std::string(cmd.args);
         Helper::RestoringConVar restoring_cvar {cvar};
         restoring_cvar.SetValue(args.c_str());
-        m_convars.push_back(std::make_pair(std::move(restoring_cvar), std::move(args)));
+        m_convars.push_back(std::move(restoring_cvar));
     }
 }
 
