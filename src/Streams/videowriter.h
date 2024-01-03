@@ -7,10 +7,33 @@
 #include <string_view>
 #include <unordered_set>
 #include <Helper/d3d9.h>
+#include <Helper/threading.h>
+#include <Helper/str.h>
 
 class FrameBufferDx9;
 class FrameBufferRgb;
 namespace ffmpipe { class Pipe; }
+
+/**
+ * @brief A global, thread-safe video log
+ */
+class VideoLog
+{
+public:
+    /// @brief Append text to the error log. Newlines should be added.
+    static void AppendError(std::string_view text) { *GetError() += text; }
+    /// @brief Append text to the error log. Newlines should be added.
+    template <class... TArgs>
+    static void AppendError(const char* fmt, TArgs&&... args) {
+        AppendError(Helper::sprintf(fmt, std::forward<TArgs>(args)...));
+    }
+    static void ClearError() { GetError()->clear(); }
+    static Helper::LockedRef<std::string> GetError() { return Helper::LockedRef<std::string>(error, mutex); }
+
+private:
+    static inline std::string error;
+    static inline std::mutex mutex;
+};
 
 /**
  * @brief Video encoding options.
@@ -234,15 +257,21 @@ public:
     };
     using FramePtr = std::shared_ptr<Frame>;
 
-    /// @brief Fill the pool and spawn threads
+    /**
+     * @brief Initialize the frame pool and spawn threads.
+     * @param num_threads Number of worker threads to spawn.
+     * @param num_frames Number of frame buffers in the pool.
+     */
     FramePool(
         size_t num_threads, size_t num_frames,
         uint32_t frame_width, uint32_t frame_height
     );
     ~FramePool() { Close(); }
 
-    /// @brief Stop accepting new work, wait for all threads to end, and drain the pool
+    /// @brief Stop accepting new work, wait for all threads to end, and drain the pool.
+    /// @details Do not call this from within the pool's own worker thread(s).
     void Close();
+    bool IsClosed() const { return m_all.empty(); }
     /**
      * @brief Block indefinitely until an empty frame can be popped, or work has finished.
      * @details Fill this frame and pass it to @ref PushFullFrame.
@@ -286,4 +315,6 @@ private:
     /// @brief The list of threads waiting on @ref m_full
     std::condition_variable m_cv_full;
     std::mutex m_mutex;
+    /// @brief Locked during @ref Close to prevent repeated closing.
+    std::mutex m_close_mutex;
 };

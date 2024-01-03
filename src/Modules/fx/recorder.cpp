@@ -115,15 +115,15 @@ int CRecorder::OnMenu()
 {   
     if (ImGui::CollapsingHeader("Recording"))
     {
-        bool has_errors = !GetErrorLog()->empty();
+        bool has_errors = !VideoLog::GetError()->empty();
         if (has_errors)
         {
             ImGui::Text("Error log:"); ImGui::SameLine();
             if (ImGui::Button("Clear"))
-                ClearErrorLog();
+                VideoLog::ClearError();
             
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
-            auto locked_error_log = GetErrorLog();
+            auto locked_error_log = VideoLog::GetError();
             ImGui::InputTextMultiline("##error_log",
                 locked_error_log->data(), locked_error_log->length(), ImVec2(0,0), ImGuiInputTextFlags_ReadOnly
             );
@@ -230,17 +230,17 @@ bool CRecorder::SetupMovie()
     if (m_movie)
         return true;
     
-    ClearErrorLog();
+    VideoLog::ClearError();
 
     if (m_movie_path.empty())
     {
-        AppendErrorLog("No folder was given for recording");
+        VideoLog::AppendError("No folder was given for recording\n");
         return false;
     }
     
     if (!Interfaces::engine->IsInGame())
     {
-        AppendErrorLog("Must be in-game to record\n");
+        VideoLog::AppendError("Must be in-game to record\n");
         return false;
     }
 
@@ -259,9 +259,8 @@ bool CRecorder::SetupMovie()
         }
 
         m_movie.emplace(
-            screen_w, screen_h, std::filesystem::path{m_movie_path}, *stream_list, m_framepool_size,
-            [this](std::string_view str) { AppendErrorLog(str); },
-            m_videoconfig
+            screen_w, screen_h, std::filesystem::path{m_movie_path}, *stream_list,
+            m_framepool_size, m_videoconfig
         );
     }
 
@@ -300,7 +299,7 @@ static void AttemptToMovieTempAudioFile(std::filesystem::path&& old_path, std::f
         std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_MS));
     }
 
-    g_recorder.FormatErrorLog("Failed to move temp audio file (%s): '%s' -> '%s'\n",
+    VideoLog::AppendError("Failed to move temp audio file (%s): '%s' -> '%s'\n",
         err.message().c_str(),
         old_path.string().c_str(),
         new_path.string().c_str()
@@ -324,20 +323,6 @@ void CRecorder::CleanupMovie()
     std::filesystem::path old_audio_path = game_dir / m_movie->GetTempAudioName();
     std::thread(AttemptToMovieTempAudioFile, std::move(old_audio_path), std::move(new_audio_path)).detach();
     m_movie = std::nullopt;
-}
-
-Helper::LockedRef<std::string> CRecorder::GetErrorLog() {
-    return {m_error_log, m_error_mutex};
-}
-void CRecorder::AppendErrorLog(std::string_view str)
-{
-    std::scoped_lock lock(m_error_mutex);
-    m_error_log.append(str);
-}
-void CRecorder::ClearErrorLog()
-{
-    std::scoped_lock lock(m_error_mutex);
-    m_error_log.clear();
 }
 
 void CRecorder::CopyCurrentFrameToSurface(IDirect3DSurface9* dst)
@@ -379,7 +364,7 @@ int CRecorder::OnFrameStageNotify()
 
     if (!m_movie)
         return 0;
-    else if (m_movie->Failed())
+    else if (m_movie->Failed() || m_movie->GetFramePool().IsClosed())
     {
         StopMovie();
         CleanupMovie();
@@ -399,11 +384,13 @@ int CRecorder::OnFrameStageNotify()
     CViewSetup view_setup;
     Interfaces::hlclient->GetPlayerView(view_setup);
 
-    // If there is only one stream and it has no rendering effects, then don't re-render anything.
+    // If there is only one stream and it has no rendering effects, then take this fast path.
     if (m_movie->GetStreams().size() == 1 && m_movie->GetStreams()[0].stream->GetRenderTweaks().empty())
     {
         auto& pair = m_movie->GetStreams().front();
         auto frame = m_movie->GetFramePool().PopEmptyFrame();
+        if (frame == nullptr)
+            return 0; // The FramePool was closed
         CopyCurrentFrameToSurface(frame->buffer.GetSurface());
         m_movie->GetFramePool().PushFullFrame(frame, frame_index, pair.writer);
         return 0;
@@ -428,6 +415,8 @@ int CRecorder::OnFrameStageNotify()
         Interfaces::hlclient->RenderView(view_setup, VIEW_CLEAR_COLOR, RENDERVIEW_DRAWVIEWMODEL | RENDERVIEW_DRAWHUD);
 
         auto frame = m_movie->GetFramePool().PopEmptyFrame();
+        if (frame == nullptr)
+            break; // The FramePool was closed
         CopyCurrentFrameToSurface(frame->buffer.GetSurface());
         m_movie->GetFramePool().PushFullFrame(frame, frame_index, pair.writer);
     }

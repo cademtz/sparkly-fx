@@ -225,7 +225,7 @@ bool ImageWriter::WriteFrame(const FrameBufferDx9& buffer, size_t frame_index)
     std::fstream file = std::fstream(path, std::ios::out | std::ios::binary);
     if (!file)
     {
-        //g_recorder.SetFirstMovieError("Failed to open file for writing: '%s'", path.string().c_str());
+        VideoLog::AppendError("Failed to open file for writing: '%s'\n", path.string().c_str());
         return false;
     }
     
@@ -234,6 +234,12 @@ bool ImageWriter::WriteFrame(const FrameBufferDx9& buffer, size_t frame_index)
     {
     case Format::PNG: result = WritePNG(buffer.ToRgb(), file, m_png_compression); break;
     case Format::QOI: result = WriteQOI(buffer.ToRgb(), file); break;
+    }
+
+    if (!file)
+    {
+        VideoLog::AppendError("Failed to write to existing file '%s'\n", path.string().c_str());
+        return false;
     }
 
     return true;
@@ -266,7 +272,7 @@ bool ImageWriter::WritePNG(const FrameBufferRgb& buffer, std::ostream& output, i
 
     if (err != 0)
     {
-        fprintf(stderr, __FUNCTION__ "() -> Failed to write PNG. Error code %d\n", err);
+        VideoLog::AppendError("Failed to encode PNG. SPNG error code: %d\n", err);
         return false;
     }
     
@@ -287,7 +293,10 @@ bool ImageWriter::WriteQOI(const FrameBufferRgb& buffer, std::ostream& output)
     int encoded_len;
     void* encoded = qoi_encode(buffer.GetData(), &desc, &encoded_len);
     if (!encoded)
+    {
+        VideoLog::AppendError("Failed to encode QOI\n");
         return false;
+    }
     
     output.write((const char*)encoded, encoded_len);
     free(encoded);
@@ -455,6 +464,7 @@ FFmpegWriter::FFmpegWriter(uint32_t width, uint32_t height, uint32_t framerate, 
     ffmpeg_args << output_args.c_str() << " \"" << output_path.c_str() << '"';
 
     m_pipe = ffmpipe::Pipe::Create(Helper::FFmpeg::GetDefaultPath(), ffmpeg_args.str());
+    m_pipe->SetPrintFunc([](std::string_view text) { VideoLog::AppendError(text); });
 }
 
 FFmpegWriter::~FFmpegWriter()
@@ -472,17 +482,28 @@ FFmpegWriter::~FFmpegWriter()
 bool FFmpegWriter::WriteFrame(const FrameBufferDx9& buffer, size_t frame_index)
 {
     if (!m_pipe)
+    {
+        VideoLog::AppendError("Failed to create FFmpeg pipe\n");
         return false;
+    }
+
     IDirect3DSurface9* d3dsurface = buffer.GetSurface();
     D3DLOCKED_RECT locked_rect;
     if (FAILED(d3dsurface->LockRect(&locked_rect, nullptr, D3DLOCK_READONLY)))
+    {
+        VideoLog::AppendError("Failed to lock d3d surface\n");
         return false;
+    }
+
     defer { d3dsurface->UnlockRect(); };
     for (uint32_t row = 0; row < buffer.GetHeight(); ++row)
     {
         const uint8_t* data = (const uint8_t*)locked_rect.pBits + row * locked_rect.Pitch;
         if (!m_pipe->Write(data, buffer.GetPixelStride() * buffer.GetWidth()))
+        {
+            VideoLog::AppendError("Failed to write pixels to FFmpeg. It may have closed.\n");
             return false;
+        }
     }
     return true;
 }
@@ -520,6 +541,10 @@ FramePool::FramePool(
 
 void FramePool::Close()
 {
+    std::scoped_lock closing_lock{m_close_mutex};
+    if (IsClosed())
+        return;
+    
     {
         std::scoped_lock lock{m_mutex};
         m_all.clear();
@@ -532,10 +557,14 @@ void FramePool::Close()
     for (auto& thread : m_threads)
         thread.join();
     m_threads.clear();
+    m_full.clear();
 }
 
 void FramePool::PushFullFrame(FramePtr frame, size_t index, std::shared_ptr<VideoWriter> writer)
 {
+    if (IsClosed())
+        return;
+
     assert(writer != nullptr && "A writer must be provided to write the frame");
     assert(frame->buffer.GetWidth() * frame->buffer.GetHeight() != 0 && "Frame buffer must have non-zero size. Resize the buffer before use.");
 
@@ -544,7 +573,7 @@ void FramePool::PushFullFrame(FramePtr frame, size_t index, std::shared_ptr<Vide
 
     {
         std::scoped_lock lock{m_mutex};
-        assert((m_all.empty() || m_full.size() < m_all.size()) && "More frames are being pushed than exists in the pool");
+        assert(m_full.size() < m_all.size() && "More frames are being pushed than exists in the pool");
         m_full.push_back(frame);
     }
     m_cv_full.notify_one();
@@ -560,8 +589,8 @@ FramePool::FramePtr FramePool::PopFullFrame()
         // Wait for a good frame to pop
         m_cv_full.wait(lock, [this, &frame_index]
         {
-            if (m_all.empty())
-                return true; // The pool was emptied. Resume.
+            if (IsClosed())
+                return true; // The pool was closed. Stop waiting.
             
             // Only pop a frame whose writer isn't currently in use
             for (size_t i = 0; i < m_full.size(); ++i)
@@ -588,12 +617,15 @@ FramePool::FramePtr FramePool::PopFullFrame()
 
 void FramePool::PushEmptyFrame(FramePtr frame)
 {
+    if (IsClosed())
+        return;
+    
     bool is_sync_writer_useable = false;
     assert(frame->writer && "frame->writer must be a valid pointer");
 
     {
         std::scoped_lock lock{m_mutex};
-        assert((m_all.empty() || m_empty.size() < m_all.size()) && "More frames are being pushed than exists in the pool");
+        assert(m_empty.size() < m_all.size() && "More frames are being pushed than exists in the pool");
         if (frame->writer)
         {
             if (m_sync_writers.erase(frame->writer.get()) && !m_full.empty())
@@ -612,8 +644,8 @@ FramePool::FramePtr FramePool::PopEmptyFrame()
     FramePtr back;
     {
         std::unique_lock lock{m_mutex};
-        m_cv_empty.wait(lock, [this]{ return m_all.empty() || !m_empty.empty(); });
-        if (m_all.empty())
+        m_cv_empty.wait(lock, [this]{ return IsClosed() || !m_empty.empty(); });
+        if (IsClosed())
             return nullptr;
 
         back = m_empty.back();
@@ -633,6 +665,12 @@ void FramePool::WorkerLoop(FramePool* pool)
         bool result = writer->WriteFrame(frame->buffer, frame->index);
         pool->PushEmptyFrame(frame);
         if (!result)
-            break;
+        {
+            VideoLog::AppendError("`writer->WriteFrame` failed. The FramePool will close.\n");
+            // We can't call Close from within a worker thread, or it would have to wait on itself.
+            // A new thread is spanwed to do this.
+            std::thread([](FramePool* pool) { pool->Close(); }, pool).detach();
+            return;
+        }
     }
 }

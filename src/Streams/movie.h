@@ -28,7 +28,6 @@ public:
         std::shared_ptr<Stream> stream;
         std::shared_ptr<VideoWriter> writer;
     };
-    using ErrorCallback = std::function<void(std::string_view)>;
 
     /***
      * @brief Set up all directories and structures.
@@ -36,13 +35,12 @@ public:
      * @param root_path The directory to containt all movie files.
      * This directory is created automatically.
      * @param framepool_size Number of frame buffers to reserve
-     * @param error_callback Called with an error message
      * @param default_videoconfig The video config to use for all streams without an override
      */
     Movie(
         uint32_t width, uint32_t height,
         std::filesystem::path&& root_path, const std::vector<std::shared_ptr<Stream>>& streams,
-        size_t framepool_size, ErrorCallback error_callback, const EncoderConfig& default_videoconfig
+        size_t framepool_size, const EncoderConfig& default_videoconfig
     );
 
     const std::string& GetTempAudioName() const { return m_temp_audio_name; }
@@ -51,7 +49,7 @@ public:
     const std::vector<StreamPair>& GetStreams() const { return m_streams; }
     std::vector<StreamPair>& GetStreams() { return m_streams; }
     /// @brief True if the movie failed to initialize 
-    bool Failed() const { return m_has_errors; }
+    bool Failed() const { return m_failed; }
     /// @brief Get the frame pool.
     /// @details Do not call this if @ref Failed is true immediately after construction.
     FramePool& GetFramePool();
@@ -60,19 +58,15 @@ public:
 
 private:
     Movie(const Movie&) = delete;
-    /// @brief Log an error message and stop the movie.
-    /// @details This causes @ref Failed to return `true`.
-    void LogError(const std::string& error);
     static std::string CreateTempAudioName(const char* suffix);
 
     /// @brief The folder to contain all movie files
     const std::filesystem::path m_root_path;
     /// @brief Name of the temp audio file
     const std::string m_temp_audio_name;
-    const ErrorCallback m_error_callback;
     std::vector<StreamPair> m_streams;
     /// @brief This is wrapped so we don't unnecessarily construct it.
     std::optional<FramePool> m_framepool;
     size_t m_frame_index = 0;
-    bool m_has_errors;
+    bool m_failed = false;
 };
