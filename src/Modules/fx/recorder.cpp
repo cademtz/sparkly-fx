@@ -174,7 +174,7 @@ int CRecorder::OnMenu()
             "This folder will contain the movie files.\n"
             "The folder will be created automatically, if it doesn't exist."
         );
-        ImGui::InputText("##output_folder", &m_movie_path.string(), ImGuiInputTextFlags_ReadOnly); ImGui::SameLine();
+        ImGui::InputText("##output_folder", &m_movie_path.u8string(), ImGuiInputTextFlags_ReadOnly); ImGui::SameLine();
         if (ImGui::Button("Browse"))
         {
             auto optional_path = Helper::OpenFolderDialog(L"Select the output folder");
@@ -207,8 +207,8 @@ int CRecorder::OnMenu()
         ImGui::BeginDisabled();
         ImGui::Text("Framepool RAM: %f MB", framepool_ram);
         ImGui::Text("Framepool threads: %u", std::thread::hardware_concurrency());
-        ImGui::TextWrapped("Game directory: %s", game_dir.string().c_str());
-        ImGui::TextWrapped("Working directory: %s", working_dir.string().c_str());
+        ImGui::TextWrapped("Game directory: %s", game_dir.u8string().c_str());
+        ImGui::TextWrapped("Working directory: %s", working_dir.u8string().c_str());
         ImGui::EndDisabled();
     }
 
@@ -301,8 +301,8 @@ static void AttemptToMovieTempAudioFile(std::filesystem::path&& old_path, std::f
 
     VideoLog::AppendError("Failed to move temp audio file (%s): '%s' -> '%s'\n",
         err.message().c_str(),
-        old_path.string().c_str(),
-        new_path.string().c_str()
+        old_path.u8string().c_str(),
+        new_path.u8string().c_str()
     );
 }
 
