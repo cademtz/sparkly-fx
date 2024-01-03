@@ -185,7 +185,7 @@ void EncoderConfig::ShowImguiControls()
                 ImGui::TextColored(ImVec4(1,.25,.25,1), "[!] Select an FFmpeg executable");
             
             ImGui::Text("FFmpeg executable:");
-            ImGui::InputText("##ffmpeg_path", &ffmpeg_path.string(), ImGuiInputTextFlags_ReadOnly);
+            ImGui::InputText("##ffmpeg_path", &ffmpeg_path.u8string(), ImGuiInputTextFlags_ReadOnly);
             ImGui::SameLine();
             if (ImGui::Button("Browse"))
             {
@@ -225,7 +225,7 @@ bool ImageWriter::WriteFrame(const FrameBufferDx9& buffer, size_t frame_index)
     std::fstream file = std::fstream(path, std::ios::out | std::ios::binary);
     if (!file)
     {
-        VideoLog::AppendError("Failed to open file for writing: '%s'\n", path.string().c_str());
+        VideoLog::AppendError("Failed to open file for writing: '%s'\n", path.u8string().c_str());
         return false;
     }
     
@@ -238,7 +238,7 @@ bool ImageWriter::WriteFrame(const FrameBufferDx9& buffer, size_t frame_index)
 
     if (!file)
     {
-        VideoLog::AppendError("Failed to write to existing file '%s'\n", path.string().c_str());
+        VideoLog::AppendError("Failed to write to existing file '%s'\n", path.u8string().c_str());
         return false;
     }
 

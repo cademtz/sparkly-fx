@@ -20,7 +20,7 @@ Movie::Movie(
     if (err)
     {
         VideoLog::AppendError(
-            "Failed to create folder (%s): '%s'\n", err.message().c_str(), m_root_path.string().c_str()
+            "Failed to create folder (%s): '%s'\n", err.message().c_str(), m_root_path.u8string().c_str()
         );
         m_failed = true;
         return;
@@ -53,7 +53,7 @@ Movie::Movie(
             if (err)
             {
                 VideoLog::AppendError(
-                    "Failed to create folder (%s): '%s'\n", err.message().c_str(), stream_path.string().c_str()
+                    "Failed to create folder (%s): '%s'\n", err.message().c_str(), stream_path.u8string().c_str()
                 );
                 m_failed = true;
                 return;
