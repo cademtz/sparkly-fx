@@ -11,19 +11,18 @@
 Movie::Movie(
     uint32_t width, uint32_t height,
     std::filesystem::path&& root_path, const std::vector<std::shared_ptr<Stream>>& streams,
-    size_t framepool_size, ErrorCallback error_callback, const EncoderConfig& default_videoconfig
-)   : m_root_path(std::move(root_path)),
-    m_temp_audio_name(CreateTempAudioName(".wav")),
-    m_error_callback(error_callback)
+    size_t framepool_size, const EncoderConfig& default_videoconfig
+)   : m_root_path(std::move(root_path)), m_temp_audio_name(CreateTempAudioName(".wav"))
 {
     // Create the movie directory structure
     std::error_code err;
     std::filesystem::create_directory(m_root_path, err);
     if (err)
     {
-        LogError(Helper::sprintf(
+        VideoLog::AppendError(
             "Failed to create folder (%s): '%s'\n", err.message().c_str(), m_root_path.string().c_str()
-        ));
+        );
+        m_failed = true;
         return;
     }
 
@@ -36,7 +35,8 @@ Movie::Movie(
         {
             if (config.ffmpeg_output_ext.empty())
             {
-                LogError("File type was blank. FFmpeg cannot generate video.\n");
+                VideoLog::AppendError("File type was blank. FFmpeg cannot generate video.\n");
+                m_failed = true;
                 return;
             }
 
@@ -52,9 +52,10 @@ Movie::Movie(
             std::filesystem::create_directory(stream_path, err);
             if (err)
             {
-                LogError(Helper::sprintf(
+                VideoLog::AppendError(
                     "Failed to create folder (%s): '%s'\n", err.message().c_str(), stream_path.string().c_str()
-                ));
+                );
+                m_failed = true;
                 return;
             }
             stream_path /= "frame_";
@@ -73,7 +74,8 @@ Movie::Movie(
             writer = std::make_shared<FFmpegWriter>(width, height, config.framerate, config.ffmpeg_output_args, std::move(stream_path));
         else
         {
-            LogError(Helper::sprintf("Invalid or unsupported EncoderConfig type: %s\n", config.type ? config.type->name : "(null)"));
+            VideoLog::AppendError("Invalid or unsupported EncoderConfig type: %s\n", config.type ? config.type->name : "(null)");
+            m_failed = true;
             return;
         }
 
@@ -91,13 +93,6 @@ FramePool& Movie::GetFramePool()
     if (!m_framepool)
         assert(0 && "Do not call GetFramePool when `Failed() == true` immediately after construction");
     return *m_framepool;
-}
-
-void Movie::LogError(const std::string& error)
-{
-    if (m_error_callback)
-        m_error_callback(error);
-    m_has_errors = true;
 }
 
 std::string Movie::CreateTempAudioName(const char* suffix)
