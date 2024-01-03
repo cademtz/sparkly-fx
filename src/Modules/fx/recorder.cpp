@@ -196,8 +196,8 @@ int CRecorder::OnMenu()
 
         int screen_w, screen_h;
         Interfaces::engine->GetScreenSize(screen_w, screen_h);
-        // Approximate framepool RAM, assuming a 24-bit RGB framebuffer
-        float framepool_ram = screen_w * screen_h * 3;
+        // Approximate framepool RAM, assuming a 32-bit XRGB framebuffer
+        float framepool_ram = screen_w * screen_h * 4;
         framepool_ram = framepool_ram * m_framepool_size / (1024 * 1024);
         
         if (m_is_recording)
