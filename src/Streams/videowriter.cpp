@@ -162,7 +162,7 @@ void EncoderConfig::ShowImguiControls()
                 "Notes:\n"
                 "- Avoid the default H.264 and HEVC codecs. They're slow.\n"
                 "- HuffYUV and UTVideo require an AVI file.\n"
-                "- UTVideo is smaller and equal to HuffYUV, but it's less common."
+                "- UTVideo is smaller and equal to HuffYUV, but it's less common.\n"
                 "- H.264 with 40+ MB bitrate is practically lossless and super tiny."
             );
             ImGui::InputText("File format", &ffmpeg_output_ext); ImGui::SameLine();
