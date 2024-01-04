@@ -16,3 +16,6 @@
 [submodule "ffmpipe"]
 	path = ffmpipe
 	url = https://github.com/cademtz/ffmpipe
+[submodule "json"]
+	path = json
+	url = https://github.com/nlohmann/json
