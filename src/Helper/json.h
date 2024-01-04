@@ -21,7 +21,7 @@ namespace Helper
     {
         if (!json)
             return nullptr;
-        return FromJson(json, key);
+        return FromJson(*json, key);
     }
     
     /// @brief Get a value from JSON if the key is present
