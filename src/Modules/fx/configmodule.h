@@ -32,6 +32,10 @@ protected:
 
 private:
     int OnMenu();
+    /// @brief Autosave happen in here to keep everything in the UI thread
+    int OnPresent();
+    static inline int autosave_mins = 1;
+    static inline bool autosave = true;
 };
 
 /**
