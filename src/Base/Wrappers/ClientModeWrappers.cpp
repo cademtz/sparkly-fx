@@ -71,6 +71,9 @@ void IClientModeWrapperSDK::PostRenderVGui() {
 void IClientModeWrapperSDK::OverrideView(CViewSetup* pSetup) {
 	return m_int->OverrideView(pSetup);
 }
+vgui::Panel* IClientModeWrapperSDK::GetViewport() {
+	return m_int->GetViewport();
+}
 
 bool IClientModeWrapperCSGO::ShouldDrawDetailObjects() {
 	return m_int->ShouldDrawDetailObjects();
@@ -104,4 +107,7 @@ void IClientModeWrapperCSGO::PostRenderVGui() {
 }
 void IClientModeWrapperCSGO::OverrideView(CViewSetup* pSetup) {
 	return m_int->OverrideView(pSetup);
+}
+vgui::Panel* IClientModeWrapperCSGO::GetViewport() {
+	return m_int->GetViewport();
 }
