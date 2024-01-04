@@ -54,7 +54,6 @@ void CommandTweak::OnMenu()
     {
         const std::pair<const char*, const char*> presets[] = {
             {"Hide viewmodel", "r_drawviewmodel 0"},
-            {"Hide HUD", "cl_drawhud 0"},
             {"Hide props", "r_drawstaticprops 0"},
             {"Hide shadows", "r_shadows 0"},
             {"Hide skybox", "r_skybox 0\nr_3dsky 0"},
