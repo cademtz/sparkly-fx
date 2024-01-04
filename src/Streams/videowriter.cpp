@@ -3,6 +3,7 @@
 #include <Helper/defer.h>
 #include <Helper/imgui.h>
 #include <Helper/ffmpeg.h>
+#include <Helper/json.h>
 #include <ffmpipe/ffmpipe.h>
 #include <fstream>
 #include <sstream>
@@ -206,6 +207,41 @@ void EncoderConfig::ShowImguiControls()
             ImGui::TreePop();
         }
     }
+}
+
+void EncoderConfig::FromJson(const nlohmann::json* j)
+{
+    std::string type_string;
+    int safe_png_compression;
+    Helper::FromJson(j, "type", type_string);
+    Helper::FromJson(j, "framerate", framerate);
+    Helper::FromJson(j, "ffmpeg_output_args", ffmpeg_output_args);
+    Helper::FromJson(j, "ffmpeg_output_ext", ffmpeg_output_ext);
+    Helper::FromJson(j, "png_compression", safe_png_compression);
+    
+    safe_png_compression = max(safe_png_compression, 0);
+    safe_png_compression = min(safe_png_compression, 7);
+    png_compression = safe_png_compression;
+
+    for (size_t i = 0; i < NumTypes(); ++i)
+    {
+        if (type_string == Types()[i].name)
+        {
+            type = &Types()[i];
+            break;
+        }
+    }
+}
+
+nlohmann::json EncoderConfig::ToJson()
+{
+    return {
+        {"type", type->name},
+        {"framerate", framerate},
+        {"ffmpeg_output_args", ffmpeg_output_args},
+        {"ffmpeg_output_ext", ffmpeg_output_ext},
+        {"png_compression", png_compression},
+    };
 }
 
 bool ImageWriter::WriteFrame(const FrameBufferDx9& buffer, size_t frame_index)

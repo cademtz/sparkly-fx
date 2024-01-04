@@ -231,6 +231,7 @@ int CRecorder::OnConfigSave()
         {"m_autostop_recording",    m_autostop_recording},
         {"m_framepool_size",        m_framepool_size},
         {"m_movie_path",            m_movie_path},
+        {"m_videoconfig",           m_videoconfig.ToJson()}
     };
     ConfigModule::GetOutput().emplace("Recorder", std::move(j));
     return 0;
@@ -242,13 +243,18 @@ int CRecorder::OnConfigLoad()
     if (!j)
         return 0;
     
+    int safe_framepool_size;
     Helper::FromJson(j, "m_record_indicator", m_record_indicator);
     Helper::FromJson(j, "m_autoresume_demo", m_autoresume_demo);
     Helper::FromJson(j, "m_autopause_demo", m_autopause_demo);
     Helper::FromJson(j, "m_autoclose_menu", m_autoclose_menu);
     Helper::FromJson(j, "m_autostop_recording", m_autostop_recording);
-    Helper::FromJson(j, "m_framepool_size", m_framepool_size);
+    Helper::FromJson(j, "m_framepool_size", safe_framepool_size);
     Helper::FromJson(j, "m_movie_path", m_movie_path);
+    m_videoconfig.FromJson(Helper::FromJson(j, "m_videoconfig"));
+    safe_framepool_size = min(safe_framepool_size, 128);
+    safe_framepool_size = max(safe_framepool_size, 1);
+    m_framepool_size = safe_framepool_size;
     return 0;
 }
 
