@@ -1,4 +1,5 @@
 #include "recorder.h"
+#include <Helper/json.h>
 #include <Helper/ffmpeg.h>
 #include <Helper/defer.h>
 #include <Streams/videowriter.h>
@@ -6,6 +7,7 @@
 #include <Hooks/OverlayHook.h>
 #include <Hooks/fx/VideoModeHook.h>
 #include <Hooks/fx/ShaderApiHook.h>
+#include <Modules/fx/configmodule.h>
 #include <Modules/Menu.h>
 #include <Modules/Draw.h>
 #include "ActiveStream.h"
@@ -73,6 +75,8 @@ void CRecorder::StartListening()
     Listen(EVENT_FRAMESTAGENOTIFY, [this]{ return OnFrameStageNotify(); });
     Listen(EVENT_WRITE_MOVIE_FRAME, [this]{ return OnWriteMovieFrame(); });
     Listen(EVENT_READ_PIXELS, [this]{ return OnReadPixels(); });
+    Listen(EVENT_CONFIG_SAVE, [this] { return OnConfigSave(); });
+    Listen(EVENT_CONFIG_LOAD, [this] { return OnConfigLoad(); });
 }
 
 int CRecorder::OnPostImguiInput()
@@ -214,6 +218,37 @@ int CRecorder::OnMenu()
 
     if (IsRecordingMovie() && m_autostop_recording)
         StopMovie();
+    return 0;
+}
+
+int CRecorder::OnConfigSave()
+{
+    nlohmann::json j = {
+        {"m_record_indicator",      m_record_indicator},
+        {"m_autoresume_demo",       m_autoresume_demo},
+        {"m_autopause_demo",        m_autopause_demo},
+        {"m_autoclose_menu",        m_autoclose_menu},
+        {"m_autostop_recording",    m_autostop_recording},
+        {"m_framepool_size",        m_framepool_size},
+        {"m_movie_path",            m_movie_path},
+    };
+    ConfigModule::GetOutput().emplace("Recorder", std::move(j));
+    return 0;
+}
+
+int CRecorder::OnConfigLoad()
+{
+    const nlohmann::json* j = Helper::FromJson(ConfigModule::GetInput(), "Recorder");
+    if (!j)
+        return 0;
+    
+    Helper::FromJson(j, "m_record_indicator", m_record_indicator);
+    Helper::FromJson(j, "m_autoresume_demo", m_autoresume_demo);
+    Helper::FromJson(j, "m_autopause_demo", m_autopause_demo);
+    Helper::FromJson(j, "m_autoclose_menu", m_autoclose_menu);
+    Helper::FromJson(j, "m_autostop_recording", m_autostop_recording);
+    Helper::FromJson(j, "m_framepool_size", m_framepool_size);
+    Helper::FromJson(j, "m_movie_path", m_movie_path);
     return 0;
 }
 
