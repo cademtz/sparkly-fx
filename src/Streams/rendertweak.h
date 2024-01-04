@@ -108,6 +108,10 @@ public:
 class CameraTweak : public RenderTweak
 {
 public:
+    enum HudChoice : int {
+        HUD_DEFAULT, HUD_DISABLED, HUD_ENABLED
+    };
+
     const char* GetName() const override { return "Camera"; }
     std::shared_ptr<RenderTweak> Clone() const override {
         return std::make_shared<CameraTweak>(*this);
@@ -117,6 +121,7 @@ public:
     float fov = 90;
     bool fov_override = false;
     bool hide_fade = false;
+    HudChoice hud = HudChoice::HUD_DEFAULT;
 };
 
 class FogTweak : public RenderTweak

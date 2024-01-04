@@ -346,6 +346,17 @@ void CameraTweak::OnMenu()
 
     ImGui::Checkbox("Hide fade effects", &hide_fade); ImGui::SameLine();
     Helper::ImGuiHelpMarker("This hides the effects of flashbangs, teleporters, and other mechanics that normally cover the screen.");
+
+    const std::array<const char*, 3> HUDCHOICE_STRINGS = { "Default", "Disabled", "Enabled" };
+    if (ImGui::BeginCombo("HUD visiblity", HUDCHOICE_STRINGS[hud]))
+    {
+        for (int i = 0; i < HUDCHOICE_STRINGS.size(); ++i)
+        {
+            if (ImGui::Selectable(HUDCHOICE_STRINGS[i], i == hud))
+                hud = (HudChoice)i;
+        }
+        ImGui::EndCombo();
+    }
 }
 
 void FogTweak::OnMenu()
