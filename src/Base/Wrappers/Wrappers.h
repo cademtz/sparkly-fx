@@ -61,6 +61,7 @@ typedef unsigned short MaterialHandle_t;
 class ConCommandBase;
 class ConCommand;
 class ConVar;
+namespace vgui { Panel; }
 
 class IEngineClientWrapper
 {
@@ -139,6 +140,7 @@ public:
 	virtual void	PostRender(void) = 0;
 	virtual void	PostRenderVGui() = 0;
 	virtual void	OverrideView(CViewSetup* pSetup) = 0;
+	virtual vgui::Panel* GetViewport() = 0;
 };
 
 class IClientEntityListWrapper

@@ -25,6 +25,7 @@ public:
 	virtual void	PostRender(void);
 	virtual void	PostRenderVGui();
 	virtual void	OverrideView(CViewSetup* pSetup);
+	vgui::Panel*	GetViewport() override;
 };
 
 class IClientModeWrapperCSGO : public IClientModeWrapper
@@ -48,4 +49,5 @@ public:
 	virtual void	PostRender(void);
 	virtual void	PostRenderVGui();
 	virtual void	OverrideView(CViewSetup* pSetup);
+	vgui::Panel*	GetViewport() override;
 };
