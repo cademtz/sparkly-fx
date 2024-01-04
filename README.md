@@ -2,7 +2,8 @@
 A video recording tool for Team Fortress 2, developed using xsdk-base.
 
 Features:
-- Record compressed image formats (QOI, PNG)
+- Record various image and video formats with/without FFmpeg
+- Faster-than-realtime recording with multi-threading and hardware-acceleration
 - Output multiple streams/layers
 - Highly customizeable streams (Multiple mattes, visibility filters, color adjustment, unlimited FOV)
 
