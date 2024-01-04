@@ -11,21 +11,21 @@ class IClientModeWrapperSDK : public IClientModeWrapper
 public:
 	IClientModeWrapperSDK(void* ClientMode) : m_int((IClientMode*)ClientMode) { }
 
-	virtual void* Inst() { return m_int; }
-	virtual int GetOffset(EOffsets Offset);
+	void* Inst() override { return m_int; }
+	int GetOffset(EOffsets Offset) override;
 
-	virtual bool	ShouldDrawDetailObjects();
-	virtual bool	ShouldDrawEntity(C_BaseEntity* pEnt);
-	virtual bool	ShouldDrawLocalPlayer(C_BasePlayer* pPlayer);
-	virtual bool	ShouldDrawParticles();
-	virtual bool	CreateMove(float flInputSampleTime, CUserCmd* cmd);
-	virtual bool	ShouldDrawViewModel(void);
-	virtual bool	ShouldDrawCrosshair(void);
-	virtual void	PreRender(CViewSetup* pSetup);
-	virtual void	PostRender(void);
-	virtual void	PostRenderVGui();
-	virtual void	OverrideView(CViewSetup* pSetup);
-	vgui::Panel*	GetViewport() override;
+	bool	ShouldDrawDetailObjects() override;
+	bool	ShouldDrawEntity(C_BaseEntity* pEnt) override;
+	bool	ShouldDrawLocalPlayer(C_BasePlayer* pPlayer) override;
+	bool	ShouldDrawParticles() override;
+	bool	CreateMove(float flInputSampleTime, CUserCmd* cmd) override;
+	bool	ShouldDrawViewModel(void) override;
+	bool	ShouldDrawCrosshair(void) override;
+	void	PreRender(CViewSetup* pSetup) override;
+	void	PostRender(void) override;
+	void	PostRenderVGui() override;
+	void	OverrideView(CViewSetup* pSetup) override;
+	vgui::Panel* GetViewport() override;
 };
 
 class IClientModeWrapperCSGO : public IClientModeWrapper
@@ -35,19 +35,19 @@ class IClientModeWrapperCSGO : public IClientModeWrapper
 public:
 	IClientModeWrapperCSGO(void* ClientMode) : m_int((IClientModeCSGO*)ClientMode) { }
 
-	virtual void* Inst() { return m_int; }
-	virtual int GetOffset(EOffsets Offset);
+	void* Inst() override { return m_int; }
+	int GetOffset(EOffsets Offset) override;
 
-	virtual bool	ShouldDrawDetailObjects();
-	virtual bool	ShouldDrawEntity(C_BaseEntity* pEnt);
-	virtual bool	ShouldDrawLocalPlayer(C_BasePlayer* pPlayer);
-	virtual bool	ShouldDrawParticles();
-	virtual bool	CreateMove(float flInputSampleTime, CUserCmd* cmd);
-	virtual bool	ShouldDrawViewModel(void);
-	virtual bool	ShouldDrawCrosshair(void);
-	virtual void	PreRender(CViewSetup* pSetup);
-	virtual void	PostRender(void);
-	virtual void	PostRenderVGui();
-	virtual void	OverrideView(CViewSetup* pSetup);
-	vgui::Panel*	GetViewport() override;
+	bool	ShouldDrawDetailObjects() override;
+	bool	ShouldDrawEntity(C_BaseEntity* pEnt) override;
+	bool	ShouldDrawLocalPlayer(C_BasePlayer* pPlayer) override;
+	bool	ShouldDrawParticles() override;
+	bool	CreateMove(float flInputSampleTime, CUserCmd* cmd) override;
+	bool	ShouldDrawViewModel(void) override;
+	bool	ShouldDrawCrosshair(void) override;
+	void	PreRender(CViewSetup* pSetup) override;
+	void	PostRender(void) override;
+	void	PostRenderVGui() override;
+	void	OverrideView(CViewSetup* pSetup) override;
+	vgui::Panel* GetViewport() override;
 };
