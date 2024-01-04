@@ -243,7 +243,7 @@ int CRecorder::OnConfigLoad()
     if (!j)
         return 0;
     
-    int safe_framepool_size;
+    int safe_framepool_size = m_framepool_size;
     Helper::FromJson(j, "m_record_indicator", m_record_indicator);
     Helper::FromJson(j, "m_autoresume_demo", m_autoresume_demo);
     Helper::FromJson(j, "m_autopause_demo", m_autopause_demo);
