@@ -14,6 +14,7 @@
 #include <SDK/view_shared.h>
 #include <SDK/icvar.h>
 #include <SDK/convar.h>
+#include <SDK/IPanel.h>
 
 void ActiveStream::StartListening()
 {
@@ -38,6 +39,7 @@ void ActiveStream::Set(Stream::Ptr stream)
     m_stream = stream;
     UpdateFog();
     UpdateConVars();
+    UpdateHud();
 }
 
 void ActiveStream::SignalUpdate(Stream::Ptr stream, uint32_t flags)
@@ -48,6 +50,7 @@ void ActiveStream::SignalUpdate(Stream::Ptr stream, uint32_t flags)
     if (stream == nullptr || m_stream == stream)
     {
         m_should_update_materials |= (bool)(flags & UPDATE_MATERIALS);
+        UpdateHud();
         if (flags & UPDATE_FOG)
             UpdateFog();
         if (flags & UPDATE_CONVARS)
@@ -241,13 +244,43 @@ int ActiveStream::PostDrawModelExecute()
 int ActiveStream::OnFrameStageNotify()
 {
     ClientFrameStage_t stage = g_hk_client.Context()->curStage;
-    if (stage == FRAME_RENDER_START)
-    {
-        auto lock = ReadLock();
-        if (m_should_update_materials)
-            UpdateMaterials();
-    }
+    if (stage != FRAME_RENDER_START)
+        return 0;
+        
+    auto lock = ReadLock();
+    if (m_should_update_materials)
+        UpdateMaterials();
+
+    // Always call this so that commands like `cl_drawhud` don't override our changes
+    UpdateHud();
+
     return 0;
+}
+
+void ActiveStream::UpdateHud()
+{
+    if (!m_stream)
+        return;
+
+    // Show/hide the HUD
+
+    class PanelPlaceholder
+    {
+    public:
+        virtual vgui::VPANEL GetVPanel() = 0;
+    };
+
+    vgui::VPANEL viewport = ((PanelPlaceholder*)Interfaces::client->GetViewport())->GetVPanel();
+    static ConVar* cl_drawhud = Interfaces::cvar->FindVar("cl_drawhud");
+    bool is_visible = Interfaces::panels->IsVisible(viewport);
+    bool new_visibility = cl_drawhud->GetBool();
+
+    auto cam_tweak = m_stream->begin<CameraTweak>();
+    if (cam_tweak != m_stream->end<CameraTweak>() && cam_tweak->hud != CameraTweak::HUD_DEFAULT)
+        new_visibility = cam_tweak->hud == CameraTweak::HUD_ENABLED;
+    
+    if (is_visible != new_visibility)
+        Interfaces::panels->SetVisible(viewport, new_visibility);
 }
 
 int ActiveStream::OnOverrideView()

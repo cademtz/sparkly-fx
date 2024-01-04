@@ -77,6 +77,7 @@ private:
         std::array<float, 4> color;
     };
 
+    void UpdateHud();
     void UpdateFog();
     void UpdateConVars();
     /// @brief Store a material's original params (if not already stored)
