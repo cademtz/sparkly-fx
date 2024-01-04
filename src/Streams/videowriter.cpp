@@ -212,7 +212,7 @@ void EncoderConfig::ShowImguiControls()
 void EncoderConfig::FromJson(const nlohmann::json* j)
 {
     std::string type_string;
-    int safe_png_compression;
+    int safe_png_compression = png_compression;
     Helper::FromJson(j, "type", type_string);
     Helper::FromJson(j, "framerate", framerate);
     Helper::FromJson(j, "ffmpeg_output_args", ffmpeg_output_args);
