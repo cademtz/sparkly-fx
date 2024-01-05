@@ -10,6 +10,7 @@
 #include <Helper/imgui.h>
 #include <Helper/threading.h>
 #include <Modules/Menu.h>
+#include <Modules/fx/recorder.h>
 #include <Hooks/OverlayHook.h>
 
 #define CURRENT_CONFIG "config.json"
@@ -128,7 +129,7 @@ int ConfigModule::OnMenu()
 
 int ConfigModule::OnPresent()
 {
-    if (!autosave)
+    if (!autosave || g_recorder.IsRecordingMovie())
         return 0;
     
     static auto prev_time = std::chrono::steady_clock::now();
