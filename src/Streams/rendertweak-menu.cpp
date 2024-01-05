@@ -226,7 +226,8 @@ void ModelTweak::OnMenu()
 
     if (ImGui::BeginCombo("Material", custom_material ? custom_material->GetName().c_str() : MATERIAL_CHOICE_NAME[(int)render_effect]))
     {
-        for (int i = 0; i < (int)MaterialChoice::_COUNT; ++i)
+        // Purposely don't display the fake CUSTOM value. It only exists to indicate that `custom_material` is used instead.
+        for (int i = 0; i < (int)MaterialChoice::CUSTOM; ++i)
         {
             if (ImGui::Selectable(MATERIAL_CHOICE_NAME[i], i == (int)render_effect))
             {
