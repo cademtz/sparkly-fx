@@ -63,27 +63,36 @@ int StreamEditor::OnConfigSave()
     nlohmann::json j_streams = nlohmann::json::array();
     for (Stream::ConstPtr stream : m_streams)
        j_streams.emplace_back(stream->ToJson());
-    ConfigModule::GetOutput().emplace("Streams", std::move(j_streams));
+    
+    nlohmann::json j = {
+        {"m_preview", m_preview},
+        {"m_streams", std::move(j_streams)}
+    };
+    ConfigModule::GetOutput().emplace("Streams", std::move(j));
     return 0;
 }
 
 int StreamEditor::OnConfigLoad()
 {
-    Stream::Ptr new_preview = nullptr;
     const nlohmann::json* j = Helper::FromJson(ConfigModule::GetInput(), "Streams");
-    if (!j || !j->is_array() || j->empty())
+    Helper::FromJson(j, "m_preview", m_preview);
+    const nlohmann::json* j_streams = Helper::FromJson(j, "m_streams");
+
+    if (!j_streams || !j_streams->is_array() || j_streams->empty())
         return 0;
 
     m_streams.clear();
-    for (auto& j_stream : *j)
+    for (auto& j_stream : *j_streams)
     {
         Stream::Ptr stream = Stream::CreateFromJson(&j_stream);
         if (stream)
             m_streams.emplace_back(std::move(stream));
     }
 
-    if (m_stream_index >= 0 && m_stream_index < m_streams.size())
-        g_active_stream.Set(m_streams[m_stream_index]);
+    Stream::Ptr new_preview = nullptr;
+    if (m_preview && m_stream_index >= 0 && m_stream_index < m_streams.size())
+        new_preview = m_streams[m_stream_index];
+    g_active_stream.Set(new_preview);
     return 0;
 }
 
