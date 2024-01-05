@@ -9,7 +9,7 @@
 #include <Helper/d3d9.h>
 #include <Helper/threading.h>
 #include <Helper/str.h>
-#include <Modules/fx/configmodule.h>
+#include <Helper/json.h>
 
 class FrameBufferDx9;
 class FrameBufferRgb;
@@ -40,7 +40,7 @@ private:
  * @brief Video encoding options.
  * @details Mainly for use with the GUI and config system.
  */
-class EncoderConfig : public JsonConfigurable
+class EncoderConfig : public Helper::JsonConfigurable
 {
 public:
     struct TypeDesc
@@ -76,7 +76,7 @@ public:
     /// @brief Render the ImGui controls. It's best to push a unique ID before calling.
     void ShowImguiControls();
     void FromJson(const nlohmann::json* json) override;
-    nlohmann::json ToJson() override;
+    nlohmann::json ToJson() const override;
 
     /// @brief A list of FFmpeg presets
     /// @details The first preset is the safest for all use cases.

@@ -129,7 +129,7 @@ int ConfigModule::OnMenu()
 int ConfigModule::OnPresent()
 {
     if (!autosave)
-        return;
+        return 0;
     
     static auto prev_time = std::chrono::steady_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::minutes>(std::chrono::steady_clock::now() - prev_time);
@@ -182,6 +182,16 @@ bool ConfigModule::Save(std::ostream& output)
 }
 bool ConfigModule::Save(const std::filesystem::path& path)
 {
+    std::error_code err;
+    std::filesystem::path parent_path = path.parent_path();
+    std::filesystem::create_directory(parent_path, err);
+    if (err)
+    {
+        AppendError(Helper::sprintf(
+            "Failed to create folder for config: '%s'\n", parent_path.u8string().c_str()
+        ));
+        return false;
+    }
     std::fstream file{ path, std::ios::out };
     if (!file)
     {
@@ -228,8 +238,10 @@ bool ConfigModule::Load(std::istream& input)
         // Check the version in metadata
         const nlohmann::json* j = Helper::FromJson(*cfg_root_input, "metadata");
         int version_major, version_minor;
-        if (!j || !Helper::FromJson(j, "version", version_major) || !Helper::FromJson(j, "version", version_minor))
-        {
+        if (!j
+            || !Helper::FromJson(j, "version_major", version_major)
+            || !Helper::FromJson(j, "version_minor", version_minor)
+        ) {
             AppendError("Missing or invalid 'metadata' object in config\n");
             return false;
         }

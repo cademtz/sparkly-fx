@@ -35,7 +35,7 @@ const std::array<const char*, 27> MaterialTweak::TEXTURE_GROUPS = {
     TEXTURE_GROUP_MORPH_TARGETS,
 };
 
-void CommandTweak::GetCommandList(std::vector<Helper::ParsedCommand>* output)
+void CommandTweak::GetCommandList(std::vector<Helper::ParsedCommand>* output) const
 {
     size_t offset = 0;
     Helper::ParsedCommand cmd;
@@ -76,17 +76,6 @@ bool ModelTweak::IsModelAffected(const std::string& path) const
 
 bool ModelTweak::IsEffectInvisible() const {
     return render_effect == MaterialChoice::INVISIBLE || color_multiply[3] == 0;
-}
-
-const char* ModelTweak::MaterialChoiceName(MaterialChoice value)
-{
-    switch (value)
-    {
-    case MaterialChoice::NORMAL: return "Normal";
-    case MaterialChoice::CUSTOM: return "Custom";
-    case MaterialChoice::INVISIBLE: return "Invisible";
-    }
-    return nullptr;
 }
 
 bool MaterialTweak::IsMaterialAffected(class IMaterial* material) const

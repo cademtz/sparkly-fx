@@ -1,9 +1,9 @@
 #include "videowriter.h"
+#include <nlohmann/json.hpp>
 #include <Hooks/OverlayHook.h>
 #include <Helper/defer.h>
 #include <Helper/imgui.h>
 #include <Helper/ffmpeg.h>
-#include <Helper/json.h>
 #include <ffmpipe/ffmpipe.h>
 #include <fstream>
 #include <sstream>
@@ -233,7 +233,7 @@ void EncoderConfig::FromJson(const nlohmann::json* j)
     }
 }
 
-nlohmann::json EncoderConfig::ToJson()
+nlohmann::json EncoderConfig::ToJson() const
 {
     return {
         {"type", type->name},

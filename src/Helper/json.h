@@ -1,8 +1,27 @@
 #pragma once
-#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 namespace Helper
 {
+    /**
+     * @brief The interface to save/load instance properties with JSON data.
+     */
+    class JsonConfigurable
+    {
+    public:
+        virtual ~JsonConfigurable() {}
+        /**
+         * @brief Read properties from JSON
+         * @param json A JSON pointer. May be `nullptr`.
+         * 
+         * Use the JSON helpers to safely read values which may not be present.
+         * @see Helper::FromJson
+         */
+        virtual void FromJson(const nlohmann::json* json) = 0;
+        /// @brief Write properties to JSON
+        virtual nlohmann::json ToJson() const = 0;
+    };
+
     /// @brief Get a value pointer from JSON if the key is present
     /// @return `nullptr` if no value was obtained
     template <class TKey>
@@ -31,7 +50,11 @@ namespace Helper
     {
         if (const nlohmann::json* found = FromJson(json, key))
         {
-            found->get_to(value);
+            try {
+                found->get_to(value);
+            } catch (nlohmann::json::exception e) {
+                return false;
+            }
             return true;
         }
         return false;

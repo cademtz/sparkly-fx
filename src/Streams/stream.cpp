@@ -1,4 +1,5 @@
 #include "stream.h"
+#include <nlohmann/json.hpp>
 #include "materials.h"
 #include <Base/Interfaces.h>
 #include <SDK/texture_group_names.h>
@@ -9,6 +10,64 @@ Stream::Ptr Stream::Clone(std::string&& new_name) const
     for (auto& tweak : m_tweaks)
         clone->m_tweaks.emplace_back(std::move(tweak->Clone()));
     return clone;
+}
+
+nlohmann::json Stream::ToJson() const
+{
+    nlohmann::json j = {
+        {"name", GetName()}
+    };
+
+    nlohmann::json j_tweak_arr = nlohmann::json::array();
+    for (RenderTweak::ConstPtr tweak : m_tweaks)
+        j_tweak_arr.emplace_back(tweak->ToJson());
+    j.emplace("tweaks", std::move(j_tweak_arr));
+    return j;
+}
+void Stream::FromJson(const nlohmann::json* j)
+{
+    if (!j)
+        return;
+    
+    std::string safe_name;
+    if (Helper::FromJson(j, "name", safe_name))
+    {
+        for (size_t i = 0; i < safe_name.size(); ++i)
+        {
+            if (safe_name[i] < 0x20 || safe_name[i] > 0x7E)
+            {
+                safe_name.erase(safe_name.begin() + i);
+                --i;
+            }
+        }
+
+        if (safe_name.empty())
+            safe_name = "unnamed";
+        if (safe_name.size() > MAX_PATH)
+            safe_name.resize(MAX_PATH);
+        m_name = std::move(safe_name);
+    }
+
+    const nlohmann::json* j_tweak_arr = Helper::FromJson(j, "tweaks");
+    if (j_tweak_arr && j_tweak_arr->is_array())
+    {
+        for (auto& j_tweak : *j_tweak_arr)
+        {
+            RenderTweak::Ptr tweak = RenderTweak::CreateFromJson(&j_tweak);
+            if (tweak)
+                m_tweaks.emplace_back(std::move(tweak));
+        }
+    }
+}
+Stream::Ptr Stream::CreateFromJson(const nlohmann::json* json)
+{
+    if (!json)
+        return nullptr;
+    Stream::Ptr stream = std::make_shared<Stream>("");
+    stream->FromJson(json);
+    if (stream->m_name.empty())
+        return nullptr;
+    return stream;
 }
 
 const std::vector<std::shared_ptr<const Stream>>& Stream::GetPresets()
