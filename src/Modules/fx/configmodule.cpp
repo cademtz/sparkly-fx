@@ -129,6 +129,21 @@ int ConfigModule::OnMenu()
 
 int ConfigModule::OnPresent()
 {
+    // TODO: Instead of this, we should run this after all modules have finished setting up (via StartListening).
+    //  It will have to happen at the end of Base::HookThread.
+    //  Also rely on static initialization more so that this loading can't race against the construction, which is usually in StartListening
+    static bool first_time = true;
+    if (first_time)
+    {
+        // If the config fails to load, there probably wasn't one at all. Drop a shiny, default config!
+        if (!Load(CONFIG_PATH))
+        {
+            if (!std::filesystem::exists(CONFIG_PATH))
+                Save(CONFIG_PATH);
+        }
+        first_time = false;
+    }
+
     if (!autosave || g_recorder.IsRecordingMovie())
         return 0;
     
