@@ -1,22 +1,33 @@
 #pragma once
+#include <Helper/json.h>
 #include "rendertweak.h"
 #include <string>
 #include <memory>
 
-/// @brief A combination of render tweaks to be used while rendering a frame
-class Stream
+/**
+ * @brief A combination of render tweaks to be used while rendering a frame.
+ */
+class Stream : public Helper::JsonConfigurable
 {
 public:
     using Ptr = std::shared_ptr<Stream>;
     using ConstPtr = std::shared_ptr<const Stream>;
     using ElementType = RenderTweak::Ptr;
 
+    /// @brief Construct a stream
+    /// @param name A non-empty ASCII name
     Stream(std::string&& name) : m_name(std::move(name)) {} 
 
     Ptr Clone(std::string&& new_name) const;
     std::string& GetName() { return m_name; }
     const std::string& GetName() const { return m_name; }
     std::vector<ElementType>& GetRenderTweaks() { return m_tweaks; }
+    nlohmann::json ToJson() const override;
+    void FromJson(const nlohmann::json* json) override;
+    /// @brief Create a new instance from JSON
+    /// @return `nullptr` if the json object does not specify the stream name
+    static Ptr CreateFromJson(const nlohmann::json* json);
+
     static const std::vector<ConstPtr>& GetPresets();
     
     template <class T>

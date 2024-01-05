@@ -24,6 +24,26 @@ std::string sprintf(const char* fmt, ...)
     return buffer;
 }
 
+std::string tolower(std::string_view input)
+{
+    std::string str;
+    str.reserve(input.size());
+    for (char c : input)
+        str.push_back(std::tolower(c));
+    return str;
+}
+
+int stricmp(std::string_view a, std::string_view b)
+{
+    for (size_t i = 0; i < a.size(); ++i)
+    {
+        int diff = std::tolower(a[i]) - std::tolower(b[i]);
+        if (diff)
+            return diff;
+    }
+    return 0;
+}
+
 size_t ParseCommandName(const char* str, std::string_view* output)
 {
     if (!str[0])

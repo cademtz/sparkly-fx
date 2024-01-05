@@ -1,4 +1,5 @@
 #include "recorder.h"
+#include <nlohmann/json.hpp>
 #include <Helper/json.h>
 #include <Helper/ffmpeg.h>
 #include <Helper/defer.h>

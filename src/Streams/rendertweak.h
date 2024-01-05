@@ -4,6 +4,7 @@
 #include <memory>
 #include <array>
 #include <string>
+#include <Helper/json.h>
 
 namespace Helper { class ParsedCommand; }
 class CBaseEntity;
@@ -11,8 +12,8 @@ class ClientClass;
 enum class FilterChoice : int { ALL, WHITELIST, BLACKLIST, _COUNT };
 
 /// @brief Configurable variables for one part of the rendering process.
-/// Each subclass will typically provide settings for a specific, hooked render function.
-class RenderTweak
+/// @details Each subclass will typically provide settings for a specific, hooked render function.
+class RenderTweak : public Helper::JsonConfigurable
 {
 public:
     using Ptr = std::shared_ptr<RenderTweak>;
@@ -20,15 +21,26 @@ public:
     
     virtual ~RenderTweak() {}
     
-    /// @return A user-friendly class name
+    /// @return A class-specific display name. Must be unique.
     virtual const char* GetName() const = 0;
     virtual std::shared_ptr<RenderTweak> Clone() const = 0;
     /// @brief Display the controls to edit the tweak
     virtual void OnMenu() = 0;
+    nlohmann::json ToJson() const override;
+    void FromJson(const nlohmann::json* json) override;
+    /// @brief Create a new instance from JSON
+    /// @return `nullptr` if the json object does not specify the stream type and name
+    static Ptr CreateFromJson(const nlohmann::json* json);
 
     /// @brief An array of every RenderTweak subclass.
     /// Useful for displaying all types.
     static const std::vector<ConstPtr> default_tweaks;
+
+protected:
+    /// @brief Convert properties to a JSON object without a `tweak_type` key
+    virtual nlohmann::json SubclassToJson() const = 0;
+    /// @brief Read properties from a JSON object
+    virtual void SubclassFromJson(const nlohmann::json* json) = 0;
 };
 
 class CommandTweak : public RenderTweak
@@ -40,16 +52,23 @@ public:
     }
     void OnMenu() override;
     /// @brief Split @ref commands into individual commands and add them to a vector
-    void GetCommandList(std::vector<Helper::ParsedCommand>* output);
+    void GetCommandList(std::vector<Helper::ParsedCommand>* output) const;
 
     /// @brief Console commands separated by newlines or semicolons
     std::string commands;
+
+protected:
+    nlohmann::json SubclassToJson() const override;
+    void SubclassFromJson(const nlohmann::json* json) override;
 };
 
 class ModelTweak : public RenderTweak
 {
 public:
-    enum class MaterialChoice : int { NORMAL, INVISIBLE, CUSTOM, _COUNT = CUSTOM };
+    enum class MaterialChoice : int { NORMAL, INVISIBLE, CUSTOM, _COUNT };
+    static inline const std::array<const char*, 3> MATERIAL_CHOICE_NAME = {
+        "Normal", "Custom", "Invisible"
+    };
 
     const char* GetName() const override { return "Models"; }
     std::shared_ptr<RenderTweak> Clone() const override {
@@ -62,8 +81,6 @@ public:
     bool IsModelAffected(const std::string& path) const;
     /// @return `true` if the effect will make an entity invisible
     bool IsEffectInvisible() const;
-
-    static const char* MaterialChoiceName(MaterialChoice value);
 
     /// @brief Chooses whether entities should be filtered, and which ones
     FilterChoice filter_choice = FilterChoice::ALL;
@@ -81,6 +98,10 @@ public:
     bool filter_weapon = false;
     bool filter_wearable = false;
     bool filter_projectile = false;
+
+protected:
+    nlohmann::json SubclassToJson() const override;
+    void SubclassFromJson(const nlohmann::json* json) override;
 };
 
 class MaterialTweak : public RenderTweak
@@ -103,6 +124,10 @@ public:
     /// @brief This will affect props specially, since typical material overrides doesn't work on them.
     bool props = false;
     FilterChoice filter_choice = FilterChoice::ALL;
+
+protected:
+    nlohmann::json SubclassToJson() const override;
+    void SubclassFromJson(const nlohmann::json* json) override;
 };
 
 class CameraTweak : public RenderTweak
@@ -110,6 +135,9 @@ class CameraTweak : public RenderTweak
 public:
     enum HudChoice : int {
         HUD_DEFAULT, HUD_DISABLED, HUD_ENABLED
+    };
+    static inline const std::array<const char*, 3> HUD_CHOICE_NAME = {
+        "Default", "Disabled", "Enabled"
     };
 
     const char* GetName() const override { return "Camera"; }
@@ -122,6 +150,10 @@ public:
     bool fov_override = false;
     bool hide_fade = false;
     HudChoice hud = HudChoice::HUD_DEFAULT;
+
+protected:
+    nlohmann::json SubclassToJson() const override;
+    void SubclassFromJson(const nlohmann::json* json) override;
 };
 
 class FogTweak : public RenderTweak
@@ -142,6 +174,10 @@ public:
     int skyfog_start;
     int skyfog_end;
     std::array<float, 3> skyfog_color;
+
+protected:
+    nlohmann::json SubclassToJson() const override;
+    void SubclassFromJson(const nlohmann::json* json) override;
 };
 
 inline const std::vector<RenderTweak::ConstPtr> RenderTweak::default_tweaks = {

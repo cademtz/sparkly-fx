@@ -1,13 +1,17 @@
+#include <array>
+#include <algorithm>
+#include <imgui.h>
+#include <imgui/misc/cpp/imgui_stdlib.h>
+#include <nlohmann/json.hpp>
+#include <Helper/json.h>
 #include "StreamEditor.h"
 #include "ActiveStream.h"
 #include "recorder.h"
 #include <Modules/Menu.h>
+#include "configmodule.h"
 #include <Streams/materials.h>
-#include <imgui/misc/cpp/imgui_stdlib.h>
 #include <SDK/KeyValues.h>
 #include <Base/Interfaces.h>
-#include <array>
-#include <algorithm>
 
 #define POPUP_STREAM_RENAMER "##popup_stream_renamer"
 #define POPUP_STREAM_PRESETS "##popup_stream_presets"
@@ -19,6 +23,8 @@ void StreamEditor::StartListening()
 {
     CustomMaterial::CreateDefaultMaterials();
     Listen(EVENT_MENU, [this]{ return OnMenu(); });
+    Listen(EVENT_CONFIG_SAVE, [this]{ return OnConfigSave(); });
+    Listen(EVENT_CONFIG_LOAD, [this]{ return OnConfigLoad(); });
 }
 
 void StreamEditor::OnEndMovie()
@@ -48,6 +54,36 @@ int StreamEditor::OnMenu()
             ImGui::EndDisabled();
     }
 
+    return 0;
+}
+
+int StreamEditor::OnConfigSave()
+{
+    auto lock = g_active_stream.ReadLock();
+    nlohmann::json j_streams = nlohmann::json::array();
+    for (Stream::ConstPtr stream : m_streams)
+       j_streams.emplace_back(stream->ToJson());
+    ConfigModule::GetOutput().emplace("Streams", std::move(j_streams));
+    return 0;
+}
+
+int StreamEditor::OnConfigLoad()
+{
+    Stream::Ptr new_preview = nullptr;
+    const nlohmann::json* j = Helper::FromJson(ConfigModule::GetInput(), "Streams");
+    if (!j || !j->is_array() || j->empty())
+        return 0;
+
+    m_streams.clear();
+    for (auto& j_stream : *j)
+    {
+        Stream::Ptr stream = Stream::CreateFromJson(&j_stream);
+        if (stream)
+            m_streams.emplace_back(std::move(stream));
+    }
+
+    if (m_stream_index >= 0 && m_stream_index < m_streams.size())
+        g_active_stream.Set(m_streams[m_stream_index]);
     return 0;
 }
 

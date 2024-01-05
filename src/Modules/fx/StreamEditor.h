@@ -21,6 +21,8 @@ public:
     
 private:
     int OnMenu();
+    int OnConfigSave();
+    int OnConfigLoad();
     void ShowStreamListEditor();
     /// @brief Rename a stream, or create one if `stream == nullptr`
     void PopupStreamRenamer(Stream::Ptr stream);

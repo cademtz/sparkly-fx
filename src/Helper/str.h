@@ -2,11 +2,32 @@
 #include <cstring>
 #include <string>
 #include <string_view>
+#include <algorithm>
 
 namespace Helper
 {
     /// @brief Print a format string to a new `std::string`
     std::string sprintf(const char* fmt, ...);
+    std::string tolower(std::string_view input);
+    int stricmp(std::string_view a, std::string_view b);
+
+    template <class TList, class TStr>
+    auto FirstInsensitiveStr(const TList& list, const TStr& str)
+    {
+        return std::find_if(list.begin(), list.end(),
+            [&str](auto& next_str) { return !stricmp(next_str, str); }
+        );
+    }
+
+    template <class TList, class TStr>
+    auto FirstStr(const TList& list, const TStr& str)
+    {
+        return std::find_if(list.begin(), list.end(),
+            [&str](auto& next_str) {
+                return std::basic_string_view(next_str) != std::basic_string_view(str);
+            }
+        );
+    }
 
     /// @brief Case-insensitive search for `substr` in `str`
     /// @return The first occurence of `substr` in `str`, or `nullptr`

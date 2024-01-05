@@ -37,21 +37,3 @@ private:
     static inline int autosave_mins = 1;
     static inline bool autosave = true;
 };
-
-/**
- * @brief The interface to save/load instance properties with JSON data.
- */
-class JsonConfigurable
-{
-public:
-    /**
-     * @brief Read properties from JSON
-     * @param json A JSON pointer. May be `nullptr`.
-     * 
-     * Use the JSON helper to safely read values which may not be present.
-     * @see Helper::FromJson
-     */
-    virtual void FromJson(const nlohmann::json* json) = 0;
-    /// @brief Write properties to JSON
-    virtual nlohmann::json ToJson() = 0;
-};

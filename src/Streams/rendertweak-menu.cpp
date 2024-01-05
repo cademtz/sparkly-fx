@@ -19,6 +19,8 @@
  * If such special tweaks/values are modified, call @ref ActiveStream::SignalUpdate to make it re-apply them.
  */
 
+#include <algorithm>
+#include <nlohmann/json.hpp>
 #include "rendertweak.h"
 #include "materials.h"
 #include <Modules/fx/ActiveStream.h>
@@ -32,6 +34,95 @@
 #include <imgui.h>
 #include <array>
 #include <utility>
+
+static std::array<const char*, (size_t)FilterChoice::_COUNT> FILTER_CHOICE_NAME = {
+    "All", "Whitelist", "Blacklist"
+};
+
+/**
+ * @brief A string-insensitive conversion for `str` in `list`
+ * @param out_value The output, which will be the index of `str` on success
+ * @return `true` if `out_value` was assigned
+ */
+template <class TList, class TEnum>
+static bool StringToEnum(const TList& list, std::string_view str, TEnum* out_value)
+{
+    auto it = Helper::FirstInsensitiveStr(list, str);
+    if (it == list.end())
+        return false;
+    *out_value = (TEnum)(it - list.begin());
+    return true;
+}
+
+/// @brief Read an RGBA object as created by @ref RgbaToJson
+/// @param out_color May be partially-or-not modified, depending on which JSON values are present.
+template <size_t TSize>
+static void ColorFromJson(const nlohmann::json* j, std::array<float, TSize>* out_color)
+{
+    if (!j || !j->is_array() || j->size() < TSize)
+        return;
+    
+    for (size_t i = 0; i < TSize; ++i)
+    {
+        auto& j_num = j->at(i);
+        if (!j_num.is_number())
+            break;
+        float flt = j_num.get<float>();
+        flt = max(0, flt);
+        flt = min(1, flt);
+        out_color->at(i) = flt;
+    }
+}
+/// @brief Convert RGBA to a JSON object
+template <size_t TSize>
+static nlohmann::json ColorToJson(const std::array<float, TSize>& color) {
+    return color;
+}
+
+nlohmann::json RenderTweak::ToJson() const
+{
+    nlohmann::json j = SubclassToJson();
+    j.emplace("tweak_type", Helper::tolower(GetName()));
+    return j;
+}
+void RenderTweak::FromJson(const nlohmann::json* json)
+{
+    std::string class_name;
+    if (!Helper::FromJson(json, "tweak_type", class_name))
+        return;
+    
+    bool is_correct_type = false;
+    for (RenderTweak::ConstPtr tweak : RenderTweak::default_tweaks)
+    {
+        if (class_name == Helper::tolower(std::string(tweak->GetName())))
+        {
+            is_correct_type = true;
+            break;
+        }
+    }
+    if (!is_correct_type)
+        return;
+    
+    SubclassFromJson(json);
+}
+RenderTweak::Ptr RenderTweak::CreateFromJson(const nlohmann::json* json)
+{
+    std::string class_name;
+    if (!Helper::FromJson(json, "tweak_type", class_name))
+        return nullptr;
+    
+    for (RenderTweak::ConstPtr tweak : RenderTweak::default_tweaks)
+    {
+        if (!Helper::stricmp(class_name, tweak->GetName()))
+        {
+            RenderTweak::Ptr new_tweak = tweak->Clone();
+            new_tweak->SubclassFromJson(json);
+            return new_tweak;
+        }
+    }
+
+    return nullptr;
+}
 
 void CommandTweak::OnMenu()
 {
@@ -85,16 +176,59 @@ void CommandTweak::OnMenu()
         g_active_stream.SignalUpdate(nullptr, ActiveStream::UPDATE_CONVARS);
 }
 
+nlohmann::json CommandTweak::SubclassToJson() const
+{
+    nlohmann::json j;
+    nlohmann::json j_commands = nlohmann::json::array();
+    
+    std::vector<Helper::ParsedCommand> parsed_cmds;
+    GetCommandList(&parsed_cmds);
+    for (auto& cmd : parsed_cmds)
+    {
+        if (cmd.args.empty())
+            j_commands.push_back(std::string(cmd.name));
+        else
+            j_commands.push_back(std::string(cmd.name) + ' ' + std::string(cmd.args));
+    }
+    j.emplace("commands", std::move(j_commands));
+    return j;
+}
+void CommandTweak::SubclassFromJson(const nlohmann::json* json)
+{
+    const nlohmann::json* j_commands = Helper::FromJson(json, "commands");
+    if (!j_commands || !j_commands->is_array())
+        return;
+
+    commands.clear();
+    
+    for (auto& j_cmd : *j_commands)
+    {
+        Helper::ParsedCommand parsed_cmd;
+
+        if (!Helper::ParseNextCommand(j_cmd.get_ref<const std::string&>().c_str(), &parsed_cmd))
+            continue;
+        
+        std::string str_cmd = std::string(parsed_cmd.name);
+        if (!parsed_cmd.args.empty())
+        {
+            str_cmd += ' ';
+            str_cmd.append(parsed_cmd.args);
+        }
+        commands.append(std::move(str_cmd));
+        commands += '\n';
+    }
+}
+
 void ModelTweak::OnMenu()
 {
     const char* const ENTITY_POPUP = "##popup_add_class";
     const char* const MODEL_POPUP = "##popup_add_model";
 
-    if (ImGui::BeginCombo("Material", custom_material ? custom_material->GetName().c_str() : MaterialChoiceName(render_effect)))
+    if (ImGui::BeginCombo("Material", custom_material ? custom_material->GetName().c_str() : MATERIAL_CHOICE_NAME[(int)render_effect]))
     {
         for (int i = 0; i < (int)MaterialChoice::_COUNT; ++i)
         {
-            if (ImGui::Selectable(MaterialChoiceName((MaterialChoice)i), i == (int)render_effect))
+            if (ImGui::Selectable(MATERIAL_CHOICE_NAME[i], i == (int)render_effect))
             {
                 render_effect = (MaterialChoice)i;
                 custom_material = nullptr;
@@ -290,6 +424,93 @@ void ModelTweak::OnMenu()
     }
 }
 
+nlohmann::json ModelTweak::SubclassToJson() const
+{
+    nlohmann::json j = {
+        {"filter_choice", Helper::tolower(FILTER_CHOICE_NAME[(size_t)filter_choice])},
+        {"render_effect", Helper::tolower(MATERIAL_CHOICE_NAME[(int)render_effect])},
+        {"color_multiply", ColorToJson(color_multiply)},
+        {"filter_player", filter_player},
+        {"filter_weapon", filter_weapon},
+        {"filter_wearable", filter_wearable},
+        {"filter_projectile", filter_projectile},
+    };
+
+    if (custom_material)
+        j.emplace("custom_material", Helper::tolower(custom_material->GetName()));
+    else
+        j.emplace("custom_material", nullptr);
+
+    nlohmann::json j_classes = nlohmann::json::array();
+    for (ClientClass* cl_class : classes)
+        j_classes.emplace_back(cl_class->GetName());
+    j.emplace("classes", std::move(j_classes));
+
+    nlohmann::json j_model_paths = nlohmann::json::array();
+    for (const std::string& path : model_paths)
+        j_model_paths.push_back(path);
+    j.emplace("model_paths", std::move(j_model_paths));
+    return j;
+}
+void ModelTweak::SubclassFromJson(const nlohmann::json* json)
+{
+    std::string filter_choice_name;
+    std::string render_effect_name;
+    const nlohmann::json* j_color;
+    std::string material_name;
+    const nlohmann::json* j_classes;
+    const nlohmann::json* j_model_paths;
+
+    Helper::FromJson(json, "filter_choice", filter_choice_name);
+    Helper::FromJson(json, "render_effect", render_effect_name);
+    j_color = Helper::FromJson(json, "color_multiply");
+    Helper::FromJson(json, "filter_player", filter_player);
+    Helper::FromJson(json, "filter_weapon", filter_weapon);
+    Helper::FromJson(json, "filter_wearable", filter_wearable);
+    Helper::FromJson(json, "filter_projectile", filter_projectile);
+    Helper::FromJson(json, "custom_material", material_name);
+    j_classes = Helper::FromJson(json, "classes");
+    j_model_paths = Helper::FromJson(json, "model_paths");
+
+    ColorFromJson(j_color, &color_multiply);
+
+    if (!filter_choice_name.empty())
+        StringToEnum(FILTER_CHOICE_NAME, filter_choice_name, &filter_choice);
+
+    if (!render_effect_name.empty())
+        StringToEnum(MATERIAL_CHOICE_NAME, render_effect_name, &render_effect);
+    
+    if (!material_name.empty())
+    {
+        auto it = std::find_if(CustomMaterial::GetAll().begin(), CustomMaterial::GetAll().end(),
+            [&](auto& mat){ return !Helper::stricmp(render_effect_name, mat->GetName()); }
+        );
+        if (it != CustomMaterial::GetAll().end())
+            custom_material = *it;
+    }
+    if (j_classes && j_classes->is_array())
+    {
+        for (auto& j_name : *j_classes)
+        {
+            std::string str_name = j_name.get<std::string>();
+            ClientClass* next_class = Interfaces::hlclient->GetAllClasses();
+            for (; next_class; next_class = next_class->m_pNext)
+            {
+                if (!Helper::stricmp(str_name, next_class->GetName()))
+                {
+                    classes.emplace(next_class);
+                    break;
+                }
+            }
+        }
+    }
+    if (j_model_paths && j_model_paths->is_array())
+    {
+        for (auto& j_path : *j_model_paths)
+            model_paths.emplace(j_path.get<std::string>());
+    }
+}
+
 void MaterialTweak::OnMenu()
 {
     bool should_update = false;
@@ -331,6 +552,51 @@ void MaterialTweak::OnMenu()
         g_active_stream.SignalUpdate(nullptr, ActiveStream::UPDATE_MATERIALS);
 }
 
+nlohmann::json MaterialTweak::SubclassToJson() const
+{
+    nlohmann::json j = {
+        {"color_multiply", ColorToJson(color_multiply)},
+        {"props", props},
+        {"filter_choice", Helper::tolower(FILTER_CHOICE_NAME[(int)filter_choice])},
+    };
+
+    nlohmann::json j_groups = nlohmann::json::array();
+    for (size_t i = 0; i < TEXTURE_GROUPS.size(); ++i)
+    {
+        if (groups[i])
+            j_groups.emplace_back(Helper::tolower(TEXTURE_GROUPS[i]));
+    }
+    j.emplace("groups", std::move(j_groups));
+    return j;
+}
+void MaterialTweak::SubclassFromJson(const nlohmann::json* json)
+{
+    const nlohmann::json* j_color;
+    const nlohmann::json* j_groups;
+    std::string filter_choice_name;
+
+    j_color = Helper::FromJson(json, "color_multiply");
+    j_groups = Helper::FromJson(json, "groups");
+    Helper::FromJson(json, "props", props);
+    Helper::FromJson(json, "filter_choice", filter_choice_name);
+
+    ColorFromJson(j_color, &color_multiply);
+    
+    if (j_groups && j_groups->is_array())
+    {
+        memset(groups.data(), sizeof(groups), 0);
+        for (auto& j_str : *j_groups)
+        {
+            size_t index;
+            if (StringToEnum(TEXTURE_GROUPS, j_str.get_ref<const nlohmann::json::string_t&>(), &index))
+                groups[index] = true;
+        }
+    }
+
+    if (!filter_choice_name.empty())
+        StringToEnum(FILTER_CHOICE_NAME, filter_choice_name, &filter_choice);
+}
+
 void CameraTweak::OnMenu()
 {
     ImGui::Checkbox("FOV override", &fov_override);
@@ -346,16 +612,37 @@ void CameraTweak::OnMenu()
     ImGui::Checkbox("Hide fade effects", &hide_fade); ImGui::SameLine();
     Helper::ImGuiHelpMarker("This hides the effects of flashbangs, teleporters, and other mechanics that normally cover the screen.");
 
-    const std::array<const char*, 3> HUDCHOICE_STRINGS = { "Default", "Disabled", "Enabled" };
-    if (ImGui::BeginCombo("HUD visiblity", HUDCHOICE_STRINGS[hud]))
+    if (ImGui::BeginCombo("HUD visiblity", HUD_CHOICE_NAME[hud]))
     {
-        for (int i = 0; i < HUDCHOICE_STRINGS.size(); ++i)
+        for (int i = 0; i < HUD_CHOICE_NAME.size(); ++i)
         {
-            if (ImGui::Selectable(HUDCHOICE_STRINGS[i], i == hud))
+            if (ImGui::Selectable(HUD_CHOICE_NAME[i], i == hud))
                 hud = (HudChoice)i;
         }
         ImGui::EndCombo();
     }
+}
+
+nlohmann::json CameraTweak::SubclassToJson() const
+{
+    return {
+        {"fov", fov},
+        {"fov_override", fov_override},
+        {"hide_fade", hide_fade},
+        {"hud", Helper::tolower(HUD_CHOICE_NAME[hud])},
+    };
+}
+void CameraTweak::SubclassFromJson(const nlohmann::json* json)
+{
+    std::string hud_choice_name;
+
+    Helper::FromJson(json, "fov", fov);
+    Helper::FromJson(json, "fov_override", fov_override);
+    Helper::FromJson(json, "hide_fade", hide_fade);
+    Helper::FromJson(json, "hud", hud_choice_name);
+
+    if (!hud_choice_name.empty())
+        StringToEnum(HUD_CHOICE_NAME, hud_choice_name, &hud);
 }
 
 void FogTweak::OnMenu()
@@ -374,4 +661,35 @@ void FogTweak::OnMenu()
 
     if (should_update)
         g_active_stream.SignalUpdate(nullptr, ActiveStream::UPDATE_FOG);
+}
+
+nlohmann::json FogTweak::SubclassToJson() const
+{
+    return {
+        {"fog_enabled", fog_enabled},
+        {"fog_start", fog_start},
+        {"fog_end", fog_end},
+        {"fog_color", ColorToJson(fog_color)},
+        {"skyfog_enabled", skyfog_enabled},
+        {"skyfog_start", skyfog_start},
+        {"skyfog_end", skyfog_end},
+        {"skyfog_color", ColorToJson(skyfog_color)},
+    };
+}
+void FogTweak::SubclassFromJson(const nlohmann::json* json)
+{
+    const nlohmann::json* j_fog_color;
+    const nlohmann::json* j_skyfog_color;
+
+    Helper::FromJson(json, "fog_enabled", fog_enabled);
+    Helper::FromJson(json, "fog_start", fog_start);
+    Helper::FromJson(json, "fog_end", fog_end);
+    j_fog_color = Helper::FromJson(json, "fog_color");
+    Helper::FromJson(json, "skyfog_enabled", skyfog_enabled);
+    Helper::FromJson(json, "skyfog_start", skyfog_start);
+    Helper::FromJson(json, "skyfog_end", skyfog_end);
+    j_skyfog_color = Helper::FromJson(json, "skyfog_color");
+
+    ColorFromJson(j_fog_color, &fog_color);
+    ColorFromJson(j_skyfog_color, &skyfog_color);
 }
