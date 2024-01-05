@@ -67,7 +67,7 @@ class ModelTweak : public RenderTweak
 public:
     enum class MaterialChoice : int { NORMAL, INVISIBLE, CUSTOM, _COUNT };
     static inline const std::array<const char*, 3> MATERIAL_CHOICE_NAME = {
-        "Normal", "Custom", "Invisible"
+        "Normal", "Invisible", "Custom"
     };
 
     const char* GetName() const override { return "Models"; }
