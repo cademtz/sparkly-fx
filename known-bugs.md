@@ -2,7 +2,7 @@
 
 **Note: Some bugs in the preview are "fake". They don't exist while recording.**
 
-"Fake" bugs (only visible with preview enabled):
+"Fake" or unrelated bugs (preview artifacts or TF2 bugs):
 - The "Fog depth" preset makes the skybox look glitchy.
     - Cause: The skybox was turned off.
     - Fix: Already fixed. The skybox is filled with black while recording.
@@ -10,11 +10,11 @@
     - Cause: The game reloaded some materials, and sparkly-fx did not update them appropriately.
     - Hack: Toggle the preview on/off.
     - Fix: Update materials when new ones are added/modified, or update them every frame.
+- HUD is disabled/enabled in all streams when using `cl_drawhud` for a single stream.
+    - Cause: `cl_drawhud` only takes effect when `ClientModeShared::Update()` is called. Not during rendering.
+    - Fix: Use the HUD setting in the Camera tweak.
 
 Real bugs *(should get fixed)*:
-- HUD is disabled in all streams if only one stream disables it.
-    - Cause: `cl_drawhud` only takes effect once void `ClientModeShared::Update()` is called.
-    - Fix: Call the update function or get the viewport panel and call `SetVisible` on it.
 - The recording indicator may appear in saved movie frames.
     - Cause: Screen is sometimes not cleared before next frame, or indicator draws too early.
     - Hack: Disable this in the "Recording" settings.
