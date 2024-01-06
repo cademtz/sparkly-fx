@@ -176,9 +176,6 @@ std::optional<stdfs::path> OpenFileDialog(
     if (FAILED(CoInitialize(nullptr)))
         return std::nullopt;
     
-    if (initial_path && initial_path->empty()) // If the initial path is empty, then ignore it
-        initial_path = nullptr;
-    
     IFileDialog* dlg;
     HRESULT err;
     if (save_dialog)
@@ -194,12 +191,12 @@ std::optional<stdfs::path> OpenFileDialog(
         if (title)
             dlg->SetTitle(title);
 
-        if (initial_path)
+        if (initial_path && !initial_path->empty())
         {
             IShellItem* default_folder;
             if (SUCCEEDED(SHCreateItemFromParsingName(initial_path->c_str(), nullptr, IID_PPV_ARGS(&default_folder))))
             {
-                dlg->SetDefaultFolder(default_folder);
+                dlg->SetFolder(default_folder);
                 default_folder->Release();
             }
         }
