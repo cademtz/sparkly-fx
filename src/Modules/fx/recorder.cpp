@@ -182,7 +182,7 @@ int CRecorder::OnMenu()
         ImGui::InputText("##output_folder", &m_movie_path.u8string(), ImGuiInputTextFlags_ReadOnly); ImGui::SameLine();
         if (ImGui::Button("Browse"))
         {
-            auto optional_path = Helper::OpenFolderDialog(L"Select the output folder");
+            auto optional_path = Helper::OpenFolderDialog(L"Select the output folder", &m_movie_path);
             if (optional_path)
                 m_movie_path = std::move(*optional_path);
         }

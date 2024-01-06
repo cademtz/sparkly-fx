@@ -176,6 +176,9 @@ std::optional<stdfs::path> OpenFileDialog(
     if (FAILED(CoInitialize(nullptr)))
         return std::nullopt;
     
+    if (initial_path->empty()) // If the initial path is empty, then ignore it
+        initial_path = nullptr;
+    
     IFileDialog* dlg;
     HRESULT err;
     if (save_dialog)
