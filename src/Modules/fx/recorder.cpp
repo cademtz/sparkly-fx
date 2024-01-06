@@ -361,7 +361,7 @@ void CRecorder::CleanupMovie()
     // Sometimes the audio file cannot be renamed because the engine is still writing to it.
     // The solution? Retry a couple times in another thread.
 
-    std::filesystem::path new_audio_path = m_movie_path / "audio.wav";
+    std::filesystem::path new_audio_path = m_movie->GetRootPath() / "audio.wav";
     std::filesystem::path old_audio_path = game_dir / m_movie->GetTempAudioName();
     std::thread(AttemptToMovieTempAudioFile, std::move(old_audio_path), std::move(new_audio_path)).detach();
     m_movie = std::nullopt;

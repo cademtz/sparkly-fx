@@ -61,7 +61,7 @@ private:
     static std::string CreateTempAudioName(const char* suffix);
 
     /// @brief The folder to contain all movie files
-    const std::filesystem::path m_root_path;
+    std::filesystem::path m_root_path;
     /// @brief Name of the temp audio file
     const std::string m_temp_audio_name;
     std::vector<StreamPair> m_streams;
