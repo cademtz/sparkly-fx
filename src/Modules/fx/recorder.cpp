@@ -225,6 +225,7 @@ int CRecorder::OnMenu()
 int CRecorder::OnConfigSave()
 {
     nlohmann::json j = {
+        {"m_record_bind",           m_record_bind.ToJson()},
         {"m_record_indicator",      m_record_indicator},
         {"m_autoresume_demo",       m_autoresume_demo},
         {"m_autopause_demo",        m_autopause_demo},
@@ -245,6 +246,7 @@ int CRecorder::OnConfigLoad()
         return 0;
     
     int safe_framepool_size = m_framepool_size;
+    m_record_bind.FromJson(Helper::FromJson(j, "m_record_bind"));
     Helper::FromJson(j, "m_record_indicator", m_record_indicator);
     Helper::FromJson(j, "m_autoresume_demo", m_autoresume_demo);
     Helper::FromJson(j, "m_autopause_demo", m_autopause_demo);
