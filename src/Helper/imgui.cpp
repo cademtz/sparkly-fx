@@ -1,4 +1,5 @@
 #include "imgui.h"
+#include <nlohmann/json.hpp>
 #include <array>
 #include <cstdio>
 #include <cassert>
@@ -146,6 +147,43 @@ void KeyBind::KeysToString(char* buffer, size_t buffer_len, const ImGuiKey* keys
         names[i] = ImGui::GetKeyName(keys[i]);
     
     sprintf_s(buffer, buffer_len, fmt, names[0], names[1], names[2], names[3]);
+}
+
+nlohmann::json KeyBind::ToJson() const
+{
+    nlohmann::json array = nlohmann::json::array();
+    for (size_t i = 0; i < m_num_keys; ++i)
+        array.emplace_back(ImGui::GetKeyName(m_keys[i]));
+    return array;
+}
+
+void KeyBind::FromJson(const nlohmann::json* json)
+{
+    if (!json || !json->is_array())
+        return;
+    
+    m_num_keys = 0;
+    m_is_down = false;
+    for (size_t i = 0; i < json->size() && i < MAX_KEYS; ++i, ++m_num_keys)
+    {
+        const nlohmann::json& j_string = json->at(i);
+        if (!j_string.is_string())
+            break;
+        auto& key_name = j_string.get_ref<const std::string&>();
+        
+        bool was_found = false;
+        for (ImGuiKey key_id = ImGuiKey_NamedKey_BEGIN; key_id < ImGuiKey_NamedKey_END; key_id = (ImGuiKey)(key_id+1))
+        {
+            if (key_name == ImGui::GetKeyName(key_id))
+            {
+                m_keys[i] = key_id;
+                was_found = true;
+                break;
+            }
+        }
+        if (!was_found)
+            break;
+    }
 }
 
 void ImGuiHelpMarker(const char* desc)
