@@ -20,18 +20,19 @@ Movie::Movie(
     if (!err)
     {
         uint32_t i = 0;
-        for (; i < UINT32_MAX; ++i)
+        constexpr uint32_t limit = 10'000;
+        for (; i < limit; ++i)
         {
-            std::filesystem::path next_take = m_root_path / Helper::sprintf("take_%03d", i);
+            std::filesystem::path next_take = m_root_path / Helper::sprintf("take%04d", i);
             if (std::filesystem::create_directory(next_take, err) && !err)
             {
                 m_root_path = std::move(next_take);
                 break;
             }
         }
-        if (i == UINT32_MAX)
+        if (i == limit)
         {
-            VideoLog::AppendError("Too many 'take_' folders in: '%s'\n", m_root_path.u8string().c_str());
+            VideoLog::AppendError("Too many 'take' folders in: '%s'\n", m_root_path.u8string().c_str());
             m_failed = true;
             return;
         }
