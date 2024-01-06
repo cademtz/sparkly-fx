@@ -17,6 +17,26 @@ Movie::Movie(
     // Create the movie directory structure
     std::error_code err;
     std::filesystem::create_directory(m_root_path, err);
+    if (!err)
+    {
+        uint32_t i = 0;
+        for (; i < UINT32_MAX; ++i)
+        {
+            std::filesystem::path next_take = m_root_path / Helper::sprintf("take_%03d", i);
+            if (std::filesystem::create_directory(next_take, err) && !err)
+            {
+                m_root_path = std::move(next_take);
+                break;
+            }
+        }
+        if (i == UINT32_MAX)
+        {
+            VideoLog::AppendError("Too many 'take_' folders in: '%s'\n", m_root_path.u8string().c_str());
+            m_failed = true;
+            return;
+        }
+    }
+
     if (err)
     {
         VideoLog::AppendError(
