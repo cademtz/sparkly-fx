@@ -1,6 +1,7 @@
 #pragma once
 #include <imgui.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
+#include "json.h"
 #include <cstdint>
 #include <filesystem>
 #include <optional>
@@ -10,7 +11,7 @@ namespace Helper
 {
     namespace stdfs = std::filesystem;
 
-    class KeyBind
+    class KeyBind : public JsonConfigurable
     {
     public:
         void OnMenu(const char* Label);
@@ -19,6 +20,9 @@ namespace Helper
         bool Poll();
         bool IsDown() const { return m_is_down; }
         bool IsBound() const { return m_num_keys; }
+
+        nlohmann::json ToJson() const override;
+        void FromJson(const nlohmann::json* json) override;
     
     private:
         static const int MAX_KEYS = 4;
