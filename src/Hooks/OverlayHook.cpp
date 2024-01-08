@@ -44,6 +44,7 @@ void COverlayHook::Hook()
 	m_jmp_reset.Hook(vtable[16], &Hooked_Reset);
 	m_jmp_present.Hook(vtable[17], &Hooked_Present);
 	m_jmp_setstencil.Hook(vtable[39], &Hooked_SetDepthStencilSurface);
+	m_jmp_setrendertarget.Hook(vtable[37], &Hooked_SetRenderTarget);
 }
 
 void COverlayHook::Unhook()
@@ -51,6 +52,7 @@ void COverlayHook::Unhook()
 	m_jmp_reset.Unhook();
 	m_jmp_present.Unhook();
 	m_jmp_setstencil.Unhook();
+	m_jmp_setrendertarget.Unhook();
 }
 
 void COverlayHook::ReplaceDepthStencil(IDirect3DSurface9* old_stencil, IDirect3DSurface9* new_stencil) {
@@ -58,6 +60,12 @@ void COverlayHook::ReplaceDepthStencil(IDirect3DSurface9* old_stencil, IDirect3D
 }
 void COverlayHook::RestoreDepthStencil(IDirect3DSurface9* old_stencil) {
 	m_stencilmap.erase(old_stencil);
+}
+void COverlayHook::ReplaceRenderTarget(IDirect3DSurface9* old_target, IDirect3DSurface9* new_target) {
+	m_rendertarget_map[old_target] = new_target;
+}
+void COverlayHook::RestoreRenderTarget(IDirect3DSurface9* old_target) {
+	m_rendertarget_map.erase(old_target);
 }
 
 HRESULT COverlayHook::Reset(D3DPRESENT_PARAMETERS* Params)
@@ -85,6 +93,21 @@ HRESULT WINAPI COverlayHook::Hooked_SetDepthStencilSurface(IDirect3DDevice9* thi
 	if (it != g_hk_overlay.m_stencilmap.end())
 		pNewZStencil = it->second;
 	return g_hk_overlay.SetDepthStencilSurface(pNewZStencil);
+}
+
+HRESULT WINAPI COverlayHook::Hooked_SetRenderTarget(IDirect3DDevice9* thisptr, DWORD RenderTargetIndex, IDirect3DSurface9* pRenderTarget)
+{
+	g_hk_overlay.m_dev = thisptr;
+	auto it = g_hk_overlay.m_rendertarget_map.find(pRenderTarget);
+	if (it != g_hk_overlay.m_rendertarget_map.end())
+		pRenderTarget = it->second;
+	return g_hk_overlay.SetRenderTarget(RenderTargetIndex, pRenderTarget);
+}
+
+HRESULT COverlayHook::SetRenderTarget(DWORD RenderTargetIndex, IDirect3DSurface9* pRenderTarget)
+{
+	static auto original = m_jmp_setrendertarget.Original<decltype(Hooked_SetRenderTarget)*>();
+	return original(m_dev, RenderTargetIndex, pRenderTarget);
 }
 
 HRESULT WINAPI COverlayHook::Hooked_Reset(IDirect3DDevice9* thisptr, D3DPRESENT_PARAMETERS* Params)
