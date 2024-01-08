@@ -24,6 +24,9 @@ public:
 	void ReplaceDepthStencil(IDirect3DSurface9* old_stencil, IDirect3DSurface9* new_stencil);
 	void RestoreDepthStencil(IDirect3DSurface9* old_stencil);
 	HRESULT SetDepthStencilSurface(IDirect3DSurface9* pNewZStencil);
+	void ReplaceRenderTarget(IDirect3DSurface9* old_target, IDirect3DSurface9* new_target);
+	void RestoreRenderTarget(IDirect3DSurface9* old_target);
+	HRESULT SetRenderTarget(DWORD RenderTargetIndex, IDirect3DSurface9* pRenderTarget);
 
 private:
 	IDirect3DDevice9* m_dev;
@@ -38,9 +41,12 @@ private:
 	// === Sparkly FX code === //
 
 	CJumpHook m_jmp_setstencil;
+	CJumpHook m_jmp_setrendertarget;
 	std::unordered_map<IDirect3DSurface9*, IDirect3DSurface9*> m_stencilmap;
+	std::unordered_map<IDirect3DSurface9*, IDirect3DSurface9*> m_rendertarget_map;
 
 	static HRESULT WINAPI Hooked_SetDepthStencilSurface(IDirect3DDevice9* thisptr, IDirect3DSurface9* pNewZStencil);
+	static HRESULT WINAPI Hooked_SetRenderTarget(IDirect3DDevice9* thisptr, DWORD RenderTargetIndex, IDirect3DSurface9* pRenderTarget);
 	/**
 	 * @brief Get the device vtable by signature scanning
 	 * @param out_error A string to store the error message
