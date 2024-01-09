@@ -1,9 +1,7 @@
 #include <Modules/BaseModule.h>
 #include <Modules/Menu.h>
 #include <Modules/Draw.h>
-#include <Modules/fx/recorder.h>
 #include <Hooks/OverlayHook.h>
-#include <Streams/videowriter.h>
 #include <Base/Interfaces.h>
 #include <SDK/client_class.h>
 #include <imgui/imgui_internal.h>
@@ -13,12 +11,10 @@
 #include <mutex>
 #include <d3d9.h>
 #include <Helper/dxerr.h>
-#include <Helper/defer.h>
-#include <fstream>
+#include <Helper/imgui.h>
 
 #define PRINT_DXRESULT(expr) PrintDXResult(expr, #expr)
 
-const uint32_t FOURCC_INTZ = MAKEFOURCC('I','N','T','Z');
 bool PrintDXResult(HRESULT err, const char* expr);
 
 class DevModule : public CModule {
@@ -27,15 +23,10 @@ protected:
 
 private:
     bool m_buffers_initialized = false;
-    bool m_dump_depth = false;
-    std::array<char, MAX_PATH + 1> m_dump_filename = {"depth.png"};
-    float m_depthpow = 90;
     D3DSURFACE_DESC m_depthstencil_desc;
     D3DSURFACE_DESC m_rendertarget_desc;
     IDirect3DSurface9* m_depthstencil;
     IDirect3DSurface9* m_rendertarget;
-    IDirect3DSurface9* m_depthreplacement = nullptr;
-    IDirect3DSurface9* m_rendertarget_replacement = nullptr;
     std::vector<std::pair<std::string, Vector>> m_3dmarkers;
     std::mutex m_3dmarkers_mutex;
 
@@ -44,12 +35,10 @@ private:
     int OnReset();
     int OnPresent();
 
-    void DumpDepth();
 
     static void DisplayPropertyTree(RecvProp* prop);
     static void DisplayTataTableTree(RecvTable* table);
     static void DisplaySurfaceInfo(const D3DSURFACE_DESC& desc, const char* label);
-    IDirect3DSurface9* CreateTextureGetSurface(UINT Width,UINT Height,DWORD Usage,D3DFORMAT Format,D3DPOOL Pool);
 };
 
 DevModule g_devmodule;
@@ -112,32 +101,10 @@ int DevModule::OnMenu()
         ImGui::TreePop();
     }
 
-    m_dump_depth |= ImGui::Button("Dump depth");
-    ImGui::InputText("Dump file (PNG)", m_dump_filename.data(), m_dump_filename.size() - 1);
-    ImGui::SliderFloat("Depth pow", &m_depthpow, 0, UINT8_MAX, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-
     if (m_buffers_initialized)
     {
         DisplaySurfaceInfo(m_rendertarget_desc, "Render target");
         DisplaySurfaceInfo(m_depthstencil_desc, "Depth stencil");
-    }
-
-    if (!m_depthreplacement || !m_rendertarget_replacement)
-    {
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
-        if (!m_depthreplacement) {
-            ImGui::TextWrapped(
-                "Your hardware does not support the 'INTZ' depth format.\n"
-                "Depth buffer will be unavailable."
-            );
-        }
-        if (!m_rendertarget_replacement) {
-            ImGui::TextWrapped(
-                "Failed to create render target with disabled anti-aliasing.\n"
-                "Try disabling anti-aliasing to dump depth."
-            );
-        }
-        ImGui::PopStyleColor();
     }
     
     static size_t selected_marker = 0;
@@ -212,8 +179,6 @@ int DevModule::OnDraw()
 int DevModule::OnReset()
 {
     m_buffers_initialized = false;
-    m_depthreplacement = nullptr;
-    m_rendertarget_replacement = nullptr;
     return 0;
 }
 
@@ -230,119 +195,10 @@ int DevModule::OnPresent()
 
         m_depthstencil->GetDesc(&m_depthstencil_desc);
         m_rendertarget->GetDesc(&m_rendertarget_desc);
-
-        if (!(m_depthreplacement = CreateTextureGetSurface(
-            m_depthstencil_desc.Width, m_depthstencil_desc.Height,
-            D3DUSAGE_DEPTHSTENCIL, (D3DFORMAT)FOURCC_INTZ, D3DPOOL_DEFAULT)
-        )) {
-            printf("Failed to create replacement depth texture\n");
-        }
-
-        if (m_rendertarget_desc.MultiSampleType == D3DMULTISAMPLE_NONE)
-            m_rendertarget_replacement = m_rendertarget;
-        else if (!PRINT_DXRESULT(device->CreateRenderTarget(
-                m_rendertarget_desc.Width, m_rendertarget_desc.Height,
-                m_rendertarget_desc.Format, D3DMULTISAMPLE_NONE, 0,
-                TRUE, &m_rendertarget_replacement, nullptr
-        ))) {
-            printf("Failed to create color replacement texture\n");
-        }
-        
         m_buffers_initialized = true;
     }
 
-    DumpDepth();
-
     return 0;
-}
-
-void DevModule::DumpDepth()
-{
-    IDirect3DDevice9* device = g_hk_overlay.Device();
-    if (!m_dump_depth)
-        return;
-
-    defer
-    {
-        if (!m_dump_depth)
-        {
-            g_hk_overlay.RestoreRenderTarget(m_rendertarget);
-            g_hk_overlay.RestoreDepthStencil(m_depthstencil);
-            g_hk_overlay.SetRenderTarget(0, m_rendertarget);
-            g_hk_overlay.SetDepthStencilSurface(m_depthstencil);
-        }
-    };
-    
-    IDirect3DSurface9* depth;
-    if (!m_buffers_initialized
-        || !m_depthreplacement
-        || !m_rendertarget_replacement
-        || !PRINT_DXRESULT(device->GetDepthStencilSurface(&depth))
-    )
-    {
-        m_dump_depth = false;
-        return;
-    }
-
-    defer { depth->Release(); };
-    
-    if (depth != m_depthreplacement)
-    {
-        g_hk_overlay.ReplaceRenderTarget(m_rendertarget, m_rendertarget_replacement);
-        g_hk_overlay.ReplaceDepthStencil(m_depthstencil, m_depthreplacement);
-        g_hk_overlay.SetRenderTarget(0, m_rendertarget_replacement);
-        g_hk_overlay.SetDepthStencilSurface(m_depthreplacement);
-        return;
-    }
-
-    m_dump_depth = false;
-
-    D3DLOCKED_RECT rect;
-    if (!PRINT_DXRESULT(depth->LockRect(&rect, NULL, D3DLOCK_READONLY)))
-        return;
-
-    FrameBufferRgb fb = {m_depthstencil_desc.Width, m_depthstencil_desc.Height};
-    for (size_t y = 0; y < fb.GetHeight(); ++y)
-    {
-        for (size_t x = 0; x < fb.GetWidth(); ++x)
-        {
-            // Remember to use `Pitch` from `D3DLOCKED_RECT`, as rects are usually rounded up to a power of 2
-            uint32_t* input = (uint32_t*)((uint8_t*)rect.pBits + x * 4 + y * rect.Pitch);
-            size_t offset = y * fb.GetWidth() + x;
-            uint8_t* output = fb.GetData() + offset * 3;
-
-            double scaled = (double)(input[0] & 0xFFFFFF) / 0xFFFFFF;
-            scaled = std::pow(scaled, (double)m_depthpow);
-            scaled *= 255;
-            if (scaled > 255)
-                scaled = 255;
-            output[0] = scaled;
-            output[1] = scaled;
-            output[2] = scaled;
-        }
-    }
-    depth->UnlockRect();
-
-    std::fstream file {m_dump_filename.data(), std::ios::out | std::ios::binary};
-    if (file)
-        ImageWriter::WritePNG(fb, file);
-}
-
-IDirect3DSurface9* DevModule::CreateTextureGetSurface(
-        UINT Width,UINT Height,DWORD Usage,D3DFORMAT Format,D3DPOOL Pool
-) {
-    IDirect3DTexture9* texture;
-    IDirect3DSurface9* surface;
-    if (PRINT_DXRESULT(g_hk_overlay.Device()->CreateTexture(Width, Height, 1,
-        Usage, Format,
-        Pool, &texture, NULL))
-    ) {
-        if (PRINT_DXRESULT(texture->GetSurfaceLevel(0, &surface)))
-            return surface;
-        else
-            texture->Release();
-    }
-    return nullptr;
 }
 
 void DevModule::DisplaySurfaceInfo(const D3DSURFACE_DESC& desc, const char* label)
