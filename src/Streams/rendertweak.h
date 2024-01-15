@@ -7,6 +7,7 @@
 #include <Helper/json.h>
 
 namespace Helper { class ParsedCommand; }
+namespace Shader { class PixelShader; }
 class CBaseEntity;
 class ClientClass;
 enum class FilterChoice : int { ALL, WHITELIST, BLACKLIST, _COUNT };
@@ -150,6 +151,7 @@ public:
     bool fov_override = false;
     bool hide_fade = false;
     HudChoice hud = HudChoice::HUD_DEFAULT;
+    std::shared_ptr<Shader::PixelShader> pixel_shader = nullptr;
 
 protected:
     nlohmann::json SubclassToJson() const override;
