@@ -23,6 +23,7 @@
 #include <nlohmann/json.hpp>
 #include "rendertweak.h"
 #include "materials.h"
+#include <Shaders/shaders.h>
 #include <Modules/fx/ActiveStream.h>
 #include <Hooks/fx/ModelRenderHook.h>
 #include <SDK/texture_group_names.h>
@@ -622,6 +623,25 @@ void CameraTweak::OnMenu()
         }
         ImGui::EndCombo();
     }
+
+    if (ImGui::BeginCombo("Pixel shader", pixel_shader ? pixel_shader->GetDisplayName() : "None"))
+    {
+        if (ImGui::Selectable("None", false))
+            pixel_shader = nullptr;
+        for (Shader::PixelShader::ConstPtr shader : *Shader::PixelShader::GetLoadedShaders())
+        {
+            if (ImGui::Selectable(shader->GetDisplayName(), false))
+                pixel_shader = shader->NewInstance();
+        }
+        ImGui::EndCombo();
+    }
+
+    if (pixel_shader)
+    {
+        ImGui::PushID("pixel_shader");
+        pixel_shader->OnMenu();
+        ImGui::PopID();
+    }
 }
 
 nlohmann::json CameraTweak::SubclassToJson() const
@@ -631,6 +651,7 @@ nlohmann::json CameraTweak::SubclassToJson() const
         {"fov_override", fov_override},
         {"hide_fade", hide_fade},
         {"hud", Helper::tolower(HUD_CHOICE_NAME[hud])},
+        {"pixel_shader", pixel_shader ? pixel_shader->ToJson() : nullptr},
     };
 }
 void CameraTweak::SubclassFromJson(const nlohmann::json* json)
@@ -641,6 +662,7 @@ void CameraTweak::SubclassFromJson(const nlohmann::json* json)
     Helper::FromJson(json, "fov_override", fov_override);
     Helper::FromJson(json, "hide_fade", hide_fade);
     Helper::FromJson(json, "hud", hud_choice_name);
+    pixel_shader = Shader::PixelShader::CreateFromJson(Helper::FromJson(json, "pixel_shader"));
 
     if (!hud_choice_name.empty())
         StringToEnum(HUD_CHOICE_NAME, hud_choice_name, &hud);
