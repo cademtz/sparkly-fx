@@ -8,6 +8,7 @@
 #include <mutex>
 #include <cstdint>
 #include <utility>
+#include <d3d9.h>
 
 class IMaterial;
 enum OverrideType_t;
@@ -55,6 +56,13 @@ public:
     /// @brief Acquire a lock for reading the active stream
     std::shared_lock<std::shared_mutex> ReadLock() { return std::shared_lock{m_mtx};}
 
+    /// @brief True if we have a readable depth surface
+    bool IsDepthAvailable() const { return m_color_replacement && m_depth_replacement_surface; }
+    /// @brief Draw the depth buffer (if enabled). This calls @ref ReadLock.
+    /// @details This also re-draws ImGui. Otherwise, the menu will disappear.
+    /// @return `true` if anything was drawn.
+    bool DrawDepth();
+
 protected:
     int OnDrawStaticProp();
     int PreDrawModelExecute();
@@ -62,6 +70,8 @@ protected:
     int OnFrameStageNotify();
     int OnOverrideView();
     int OnViewDrawFade();
+    int OnReset();
+    int OnPresent();
 
 private:
     struct LastDrawParams
@@ -77,6 +87,9 @@ private:
         std::array<float, 4> color;
     };
 
+    /// @brief Plz run in game thread
+    void UpdateViewMatricies();
+    void UpdateRenderTarget();
     void UpdateHud();
     void UpdateFog();
     void UpdateConVars();
@@ -87,7 +100,18 @@ private:
     /// @brief Override the material's color
     void SetMaterialColor(IMaterial* mat, const std::array<float, 4>& col);
     IMaterial* CreateMatteMaterial();
+    void InitializeDxStuff();
     
+    /// @brief Assigned `true` during Reset and `false` during Present
+    bool m_dx_reset = true;
+    IDirect3DSurface9* m_depth = nullptr;
+    IDirect3DSurface9* m_color = nullptr;
+    IDirect3DSurface9* m_depth_replacement_surface = nullptr;
+    IDirect3DTexture9* m_depth_replacement_texture = nullptr;
+    IDirect3DSurface9* m_color_replacement = nullptr;
+    /// @brief Plz lock @ref m_matrices_mutex
+    D3DMATRIX m_projection_matrix;
+    std::mutex m_matrices_mutex;
     /// @brief Was the last DrawModelExecute call affected?
     bool m_is_dme_affected = false;
     /// @brief Should we iterate all materials and update them?
