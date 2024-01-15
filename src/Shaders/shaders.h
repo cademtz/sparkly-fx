@@ -9,6 +9,8 @@
  * @file
  * @brief Descriptions and implementations of every pixel shader.
  * 
+ * To safely get a loaded shader by class, call @ref Shader::PixelShader::GetLoadedShader with the desired class.
+ * 
  * To implement a new shader:
  * - Create an HLSL file and add to the CMakeLists.txt
  * - Create a subclass of @ref PixelShader
@@ -47,8 +49,17 @@ public:
     /// @brief The DirectX shader. May be `nullptr` if the shader was not loaded.
     IDirect3DPixelShader9* GetDxPtr() const { return m_ptr; };
 
-    /// @brief The list of all loaded shaders. This will load all shaders for the first time.
+    /// @brief Loads all shaders if possible and if not successful before.
+    /// @details This succeeds when the d3d device is non-null.
+    /// @return `true` for all calls after the first success.
+    static bool LoadAllShaders();
+    /// @brief The list of all loaded shaders. This calls @ref LoadAllShaders.
     static Helper::LockedRef<const std::vector<ConstPtr>> GetLoadedShaders();
+    /// @brief Get a loaded shader by class. This calls @ref LoadAllShaders.
+    /// @tparam T A PixelShader subclass
+    /// @return `nullptr` if the shader is not loaded.
+    template <class T>
+    static Ptr GetLoadedShader();
     /**
      * @brief Create a new instance from JSON.
      * @details This function will load all shaders if necessary and possible.
@@ -73,7 +84,7 @@ protected:
 private:
     /// @brief The list of all shader types
     static const std::vector<std::shared_ptr<PixelShader>> all_types;
-    /// @brief Load the shader. Only call once.
+    /// @brief Load the shader if not already loaded
     bool Load(IDirect3DDevice9* device);
 
     const char* const m_filename;
@@ -177,5 +188,17 @@ inline const std::vector<std::shared_ptr<PixelShader>> PixelShader::all_types = 
     std::make_unique<DepthToRgb>(),
     std::make_unique<NormalToRgb>(),
 };
+
+template <class T>
+PixelShader::Ptr PixelShader::GetLoadedShader()
+{
+    auto loaded = GetLoadedShaders();
+    for (ConstPtr shader : *loaded)
+    {
+        if (std::dynamic_pointer_cast<const T>(shader))
+            return shader->NewInstance();
+    }
+    return nullptr;
+}
 
 }
