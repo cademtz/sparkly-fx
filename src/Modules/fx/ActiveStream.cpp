@@ -1,7 +1,12 @@
 #include "ActiveStream.h"
+#include <imgui/backends/imgui_impl_dx9.h>
+#include <Shaders/shaders.h>
 #include <Streams/materials.h>
 #include <Helper/engine.h>
 #include <Helper/str.h>
+#include <Helper/d3d9.h>
+#include <Helper/defer.h>
+#include <Hooks/OverlayHook.h>
 #include <Hooks/fx/StudioRenderHook.h>
 #include <Hooks/fx/ModelRenderHook.h>
 #include <Hooks/fx/RenderViewHook.h>
@@ -24,6 +29,8 @@ void ActiveStream::StartListening()
     Listen(EVENT_FRAMESTAGENOTIFY, [this] { return OnFrameStageNotify(); });
     Listen(EVENT_OVERRIDEVIEW, [this] { return OnOverrideView(); });
     Listen(EVENT_VIEW_DRAW_FADE, [this] { return OnViewDrawFade(); });
+    Listen(EVENT_DX9PRESENT, [this] { return OnPresent(); });
+    Listen(EVENT_DX9RESET, [this] { return OnReset(); });
 }
 
 Stream::Ptr ActiveStream::Get()
@@ -40,6 +47,7 @@ void ActiveStream::Set(Stream::Ptr stream)
     UpdateFog();
     UpdateConVars();
     UpdateHud();
+    UpdateRenderTarget();
 }
 
 void ActiveStream::SignalUpdate(Stream::Ptr stream, uint32_t flags)
@@ -56,6 +64,75 @@ void ActiveStream::SignalUpdate(Stream::Ptr stream, uint32_t flags)
         if (flags & UPDATE_CONVARS)
             UpdateConVars();
     }
+}
+
+bool ActiveStream::DrawDepth()
+{
+    IDirect3DDevice9* device = g_hk_overlay.Device();
+    
+    // Find a pixel shader to use
+    Shader::PixelShader::Ptr pixel_shader = nullptr;
+    if (IsDepthAvailable())
+    {
+        auto lock = ReadLock();
+        if (m_stream)
+        {
+            for (auto it = m_stream->begin<CameraTweak>(); it != m_stream->end<CameraTweak>(); ++it)
+            {
+                if (it->pixel_shader)
+                {
+                    pixel_shader = it->pixel_shader;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (!pixel_shader)
+        return false;
+
+    D3DSURFACE_DESC surface_desc;
+    m_color->GetDesc(&surface_desc);
+
+    // Setup DirectX state to draw a rectangle covering the screen.
+    // The pixel shader will affect all pixels covered by the rectangle.
+    // The DirectX state is restored at the end-of-scope.
+    {
+        IDirect3DStateBlock9* prev_state;
+        device->CreateStateBlock(D3DSBT_ALL, &prev_state);
+        defer {
+            prev_state->Apply();
+            prev_state->Release();
+        };
+
+        // Calculate the inverse projection matrix
+        D3DMATRIX inverse_projection;
+        {
+            std::scoped_lock lock{m_matrices_mutex};
+            Helper::Invert4x4Matrix(&m_projection_matrix.m[0][0], &inverse_projection.m[0][0]);
+        }
+
+        device->SetPixelShader(pixel_shader->GetDxPtr());
+        device->SetDepthStencilSurface(nullptr);
+        pixel_shader->ApplyConstants(&inverse_projection.m[0][0], m_depth_replacement_texture);
+
+        Helper::DrawTexturedRect(device, {0, 0, (float)surface_desc.Width, (float)surface_desc.Height});
+    }
+
+    // Re-render ImGui because we probably drew over the menu...
+    // We wouldn't have to re-render if this always ran before the ImGui code.
+    ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+
+    if (m_color_replacement != m_color)
+    {
+        device->StretchRect(
+            m_color_replacement, nullptr,
+            m_color, nullptr,
+            D3DTEXF_NONE
+        );
+    }
+
+    return true;
 }
 
 void ActiveStream::UpdateMaterials()
@@ -247,7 +324,11 @@ int ActiveStream::OnFrameStageNotify()
     if (stage != FRAME_RENDER_START)
         return 0;
         
+    UpdateViewMatricies();
+
+    // Everything from this point needs to read the active stream. Acquire the reading lock.
     auto lock = ReadLock();
+    UpdateRenderTarget();
     if (m_should_update_materials)
         UpdateMaterials();
 
@@ -255,6 +336,57 @@ int ActiveStream::OnFrameStageNotify()
     UpdateHud();
 
     return 0;
+}
+
+void ActiveStream::UpdateViewMatricies()
+{
+    CViewSetup view;
+    Interfaces::hlclient->GetPlayerView(view);
+
+    VMatrix world_view;
+    VMatrix world_projection;
+    VMatrix world_to_pixels;
+    
+    std::scoped_lock lock{m_matrices_mutex};
+    Interfaces::render_view->GetMatricesForView(view, &world_view, (VMatrix*)&m_projection_matrix, &world_projection, &world_to_pixels);
+}
+
+void ActiveStream::UpdateRenderTarget()
+{
+    if (!m_color || !m_depth)
+        return;
+    
+    IDirect3DSurface9* new_color = m_color;
+    IDirect3DSurface9* new_depth = m_depth;
+
+    if (IsDepthAvailable() && m_stream)
+    {
+        for (auto it = m_stream->begin<CameraTweak>(); it != m_stream->end<CameraTweak>(); ++it)
+        {
+            if (it->pixel_shader)
+            {
+                new_color = m_color_replacement;
+                new_depth = m_depth_replacement_surface;
+                break;
+            }
+        }
+    }
+
+    if (new_color == m_color)
+        g_hk_overlay.RestoreRenderTarget(m_color);
+    else
+    {
+        g_hk_overlay.ReplaceRenderTarget(m_color, new_color);
+        g_hk_overlay.SetRenderTarget(0, new_color);
+    }
+
+    if (new_depth == m_depth)
+        g_hk_overlay.RestoreDepthStencil(m_depth);
+    else
+    {
+        g_hk_overlay.ReplaceDepthStencil(m_depth, new_depth);
+        g_hk_overlay.SetDepthStencilSurface(new_depth);
+    }
 }
 
 void ActiveStream::UpdateHud()
@@ -312,6 +444,35 @@ int ActiveStream::OnViewDrawFade()
     return 0;
 }
 
+int ActiveStream::OnPresent()
+{
+    if (m_dx_reset)
+    {
+        InitializeDxStuff();
+        m_dx_reset = false;
+    }
+    
+    DrawDepth();
+    return 0;
+}
+
+int ActiveStream::OnReset()
+{
+    // Remove our color and depth ptrs from the replacement map
+    if (m_color)
+        g_hk_overlay.RestoreRenderTarget(m_color);
+    if (m_depth)
+        g_hk_overlay.RestoreDepthStencil(m_depth);
+    
+    m_color = nullptr;
+    m_depth = nullptr;
+    m_color_replacement = nullptr;
+    m_depth_replacement_surface = nullptr;
+    m_depth_replacement_texture = nullptr;
+    m_dx_reset = true;
+    return 0;
+}
+
 void ActiveStream::StoreMaterialParams(IMaterial* mat)
 {
     auto it = m_affected_materials.find(mat);
@@ -351,4 +512,56 @@ void ActiveStream::SetMaterialColor(IMaterial* mat, const std::array<float, 4>& 
     StoreMaterialParams(mat);
     mat->ColorModulate(col[0], col[1], col[2]);
     mat->AlphaModulate(col[3]);
+}
+
+void ActiveStream::InitializeDxStuff()
+{
+    IDirect3DDevice9* device = g_hk_overlay.Device();
+
+    // Get the render target and depth buffer descriptions
+
+    D3DSURFACE_DESC color_desc, depth_desc;
+    
+    if (FAILED(device->GetRenderTarget(0, &m_color))
+        || FAILED(m_color->GetDesc(&color_desc))
+    ) {
+        printf("ActiveStream failed to get render target\n");
+        return;
+    }
+    if (FAILED(device->GetDepthStencilSurface(&m_depth))
+        || FAILED(m_depth->GetDesc(&depth_desc))
+    ) {
+        printf("ActiveStream failed to get depth stencil\n");
+        return;
+    }
+    
+    // Create the replacement render target depth buffer
+    
+    if (FAILED(device->CreateTexture(
+        depth_desc.Width, depth_desc.Height, 1,
+        D3DUSAGE_DEPTHSTENCIL, Helper::FOURCC_INTZ, D3DPOOL_DEFAULT,
+        &m_depth_replacement_texture, nullptr
+    ))) {
+        printf("ActiveStream failed to create depth texture\n");
+        return;
+    }
+
+    if (FAILED(m_depth_replacement_texture->GetSurfaceLevel(0, &m_depth_replacement_surface)))
+    {
+        printf("ActiveStream failed to get new depth surface\n");
+        return;
+    }
+
+    if (color_desc.MultiSampleType == D3DMULTISAMPLE_NONE)
+        m_color_replacement = m_color;
+    else
+    {
+        if (FAILED(device->CreateRenderTarget(
+            color_desc.Width, color_desc.Height,
+            color_desc.Format, D3DMULTISAMPLE_NONE, 0, TRUE,
+            &m_color_replacement, nullptr
+        ))) {
+            printf("ActiveStream failed to create render target\n");
+        }
+    }
 }

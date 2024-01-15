@@ -51,6 +51,8 @@ private:
     ///@brief Stop the movie, wait for writing to finish, and clean up.
     ///@details Only call this from the game thread.
     void CleanupMovie();
+    /// @brief Waits for all rendering to finish
+    void WaitForRenderQueue();
     void CopyCurrentFrameToSurface(class IDirect3DSurface9* dst);
 
     /// @brief If `false`, this will prevent the engine from reading pixels during recording.

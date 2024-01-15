@@ -369,13 +369,18 @@ void CRecorder::CleanupMovie()
     m_movie = std::nullopt;
 }
 
-void CRecorder::CopyCurrentFrameToSurface(IDirect3DSurface9* dst)
+void CRecorder::WaitForRenderQueue()
 {
     // This is a very indirect way to properly wait for rendering to finish.
     // ReadPixels has beeen hooked to do the waiting for us without reading the pixels.
     // The IShaderAPI's `ReadPixels` impl also calls `FlushBufferedPrimitives`, so we call that too.
     Interfaces::mat_system->GetRenderContext()->ReadPixels(0, 0, 0, 0, nullptr, IMAGE_FORMAT_BGRX8888);
     g_hk_shaderapi.ShaderApi()->FlushBufferedPrimitives();
+}
+
+void CRecorder::CopyCurrentFrameToSurface(IDirect3DSurface9* dst)
+{
+    WaitForRenderQueue();
 
     IDirect3DSurface9* render_target;
     g_hk_overlay.Device()->GetRenderTarget(0, &render_target);
@@ -457,6 +462,8 @@ int CRecorder::OnFrameStageNotify()
         g_active_stream.UpdateMaterials();
         view_setup.fov = fov;
         Interfaces::hlclient->RenderView(view_setup, VIEW_CLEAR_COLOR, RENDERVIEW_DRAWVIEWMODEL | RENDERVIEW_DRAWHUD);
+        WaitForRenderQueue();
+        g_active_stream.DrawDepth();
 
         auto frame = m_movie->GetFramePool().PopEmptyFrame();
         if (frame == nullptr)
