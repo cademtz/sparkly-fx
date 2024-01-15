@@ -129,7 +129,7 @@ bool ActiveStream::DrawDepth()
         device->StretchRect(
             m_color_replacement, nullptr,
             m_color, nullptr,
-            D3DTEXF_NONE
+            D3DTEXF_POINT
         );
     }
 
