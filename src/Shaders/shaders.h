@@ -124,7 +124,7 @@ public:
     DepthLogarithm() : PixelShader(
         "depth_logarithm.cso",
         "Depth (logarithmic)",
-        "Converts depth logarithmically grayscale"
+        "Converts depth logarithmically to grayscale"
     ) {}
     std::shared_ptr<PixelShader> NewInstance() const override {
         return std::make_shared<DepthLogarithm>(*this);
