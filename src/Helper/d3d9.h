@@ -1,3 +1,4 @@
+#pragma once
 #include "dxerr.h"
 #include <array>
 #include <cstdint>
