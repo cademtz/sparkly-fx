@@ -11,6 +11,7 @@
 #include <Hooks/fx/ModelRenderHook.h>
 #include <Hooks/fx/RenderViewHook.h>
 #include <Hooks/ClientHook.h>
+#include <Modules/fx/recorder.h>
 #include <Base/Interfaces.h>
 #include <Base/Entity.h>
 #include <SDK/ivrenderview.h>
@@ -451,8 +452,9 @@ int ActiveStream::OnPresent()
         InitializeDxStuff();
         m_dx_reset = false;
     }
-    
-    DrawDepth();
+
+    if (!g_recorder.IsRecordingMovie()) // If we're recording, then DrawDepth was already called.
+        DrawDepth();
     return 0;
 }
 
