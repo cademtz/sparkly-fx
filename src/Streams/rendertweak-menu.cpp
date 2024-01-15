@@ -632,6 +632,8 @@ void CameraTweak::OnMenu()
         {
             if (ImGui::Selectable(shader->GetDisplayName(), false))
                 pixel_shader = shader->NewInstance();
+            if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone))
+                ImGui::SetTooltip("%s", shader->GetDesc());
         }
         ImGui::EndCombo();
     }
