@@ -22,21 +22,28 @@ static Helper::LockedRef<std::vector<PixelShader::Ptr>> GetLoadedShadersPrivate(
     return Helper::LockedRef(g_pixel_shaders, g_pixel_shaders_mutex);
 }
 
+bool PixelShader::LoadAllShaders()
+{
+    static bool is_loaded = false;
+    auto loaded = GetLoadedShadersPrivate();
+    IDirect3DDevice9* device = g_hk_overlay.Device();
+
+    if (is_loaded || !device)
+        return is_loaded;
+    
+    for (std::shared_ptr<PixelShader> shader : all_types)
+    {
+        if (shader->Load(device))
+            loaded->emplace_back(std::move(shader));
+    }
+
+    is_loaded = true;
+    return true;
+}
+
 Helper::LockedRef<const std::vector<PixelShader::ConstPtr>> PixelShader::GetLoadedShaders()
 {
-    IDirect3DDevice9* device = g_hk_overlay.Device();
-    if (device)
-    {
-        auto loaded = GetLoadedShadersPrivate();
-        if (loaded->empty())
-        {
-            for (std::shared_ptr<PixelShader> shader : all_types)
-            {
-                if (shader->Load(device))
-                    loaded->emplace_back(std::move(shader));
-            }
-        }
-    }
+    LoadAllShaders();
 
     // Cast PixelShader::Ptr to PixelShader::ConstPtr :)
     return Helper::LockedRef(reinterpret_cast<const std::vector<PixelShader::ConstPtr>&>(g_pixel_shaders), g_pixel_shaders_mutex);
@@ -65,10 +72,7 @@ std::shared_ptr<PixelShader> PixelShader::CreateFromJson(const nlohmann::json* j
 bool PixelShader::Load(IDirect3DDevice9* device)
 {
     if (m_ptr)
-    {
-        assert(0 && "Load was called more than once");
         return true;
-    }
 
     std::filesystem::path path = Base::GetModuleDir() / "shaders" / m_filename;
     std::fstream file {path, std::ios::in | std::ios::binary};
