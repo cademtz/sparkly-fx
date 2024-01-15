@@ -52,6 +52,14 @@ int StreamEditor::OnMenu()
         
         if (is_recording)
             ImGui::EndDisabled();
+
+        if (!g_active_stream.IsDepthAvailable())
+        {
+            ImGui::TextColored(
+                ImVec4(1,1,0,0),
+                "Depth buffer is unavailable. Your graphics driver probably lacks support for the 'INTZ' depth format."
+            );
+        }
     }
 
     return 0;
