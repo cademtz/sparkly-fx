@@ -6,3 +6,4 @@ add_subdirectory(SDK)
 
 add_subdirectory(Streams)
 add_subdirectory(Helper)
+add_subdirectory(Shaders)
