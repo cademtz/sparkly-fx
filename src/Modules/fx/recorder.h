@@ -52,6 +52,9 @@ private:
     ///@details Only call this from the game thread.
     void CleanupMovie();
     void CopyCurrentFrameToSurface(class IDirect3DSurface9* dst);
+
+    /// @brief If `false`, this will prevent the engine from reading pixels during recording.
+    /// @details This remains false to preserve performance. The engine's ReadPixels function is slow and used unecessarily.
     bool m_read_pixels = false;
 
     // === Menu options === //
