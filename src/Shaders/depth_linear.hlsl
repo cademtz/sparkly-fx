@@ -15,7 +15,7 @@ float4 main(float2 uv : TEXCOORD0) : COLOR {
     depth = lerp(pos.z, length(pos), spherical_correction);
     
     depth -= depth_near;
-    depth /= depth_far;
+    depth /= depth_far - depth_near;
     depth = clamp(depth, 0, 1);
 
     return float4(depth, depth, depth, 1.0);
