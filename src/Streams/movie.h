@@ -12,12 +12,12 @@ class EncoderConfig;
 class Stream;
 
 /**
- * @brief Movie structure and encoder.
+ * @brief Creates and holds the buffers, encoders, and directory structures for writing a movie.
  * 
+ * After construction, check the result of @ref Failed once and discard the movie if true.
  * Use @ref GetFramePool to fill and dispatch frame buffers for writing.
  * Use @ref NextFrameIndex get and increment the current frame index.
  * 
- * @ref LogError must be called when an error occurs. The movie will not stop otherwise.
  * @see FramePool
  */
 class Movie
@@ -30,7 +30,7 @@ public:
     };
 
     /***
-     * @brief Set up all directories and structures.
+     * @brief Set up all directories and initialize movie data.
      * @details Check @ref Failed afterwards.
      * @param root_path The directory to containt all movie files.
      * This directory is created automatically.
