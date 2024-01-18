@@ -84,7 +84,7 @@ public:
 };
 
 /**
- * @brief An interface for @ref FramePool to write frames to a video file or image sequence.
+ * @brief Implements a video encoder for @ref FramePool to write frames (as video or image sequence).
  * 
  * Each instance corresponds to one video file or one image sequence.
  */
