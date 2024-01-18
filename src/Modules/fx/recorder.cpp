@@ -329,7 +329,7 @@ bool CRecorder::SetupMovie()
     return true;
 }
 
-static void AttemptToMovieTempAudioFile(std::filesystem::path&& old_path, std::filesystem::path&& new_path)
+static void AttemptToMoveTempAudioFile(std::filesystem::path old_path, std::filesystem::path new_path)
 {
     const int WAIT_MS = 200;
     const int TIMEOUT_MS = 10'000;
@@ -365,7 +365,7 @@ void CRecorder::CleanupMovie()
 
     std::filesystem::path new_audio_path = m_movie->GetRootPath() / "audio.wav";
     std::filesystem::path old_audio_path = game_dir / m_movie->GetTempAudioName();
-    std::thread(AttemptToMovieTempAudioFile, std::move(old_audio_path), std::move(new_audio_path)).detach();
+    std::thread(AttemptToMoveTempAudioFile, std::move(old_audio_path), std::move(new_audio_path)).detach();
     m_movie = std::nullopt;
 }
 
