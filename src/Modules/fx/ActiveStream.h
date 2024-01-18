@@ -14,7 +14,7 @@ class IMaterial;
 enum OverrideType_t;
 
 /**
- * @brief Store and apply the active stream.
+ * @brief Apply the active stream's settings during rendering.
  * 
  * Some tweaks and properties (like @ref MaterialTweak) are applied once, when necessary.
  * If such special tweaks/values are modified, call @ref ActiveStream::SignalUpdate to make it re-apply them.
