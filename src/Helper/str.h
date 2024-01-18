@@ -71,6 +71,21 @@ namespace Helper
         return nullptr;
     }
 
+    template<class T = char>
+    int CaseInsensitivePathCompare(const T* lhs, const T* rhs)
+    {
+        while (*lhs || *rhs)
+        {
+			char lhs_char = *lhs == '\\' ? '/' : std::tolower(*lhs);
+			char rhs_char = *rhs == '\\' ? '/' : std::tolower(*rhs);
+			if (lhs_char != rhs_char)
+				return lhs_char - rhs_char;
+			++lhs;
+			++rhs;
+		}
+		return *lhs - *rhs;
+	}
+
     struct ParsedCommand
     {
         std::string_view name;
