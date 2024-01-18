@@ -77,6 +77,9 @@ public:
     }
     void OnMenu() override;
     
+    /// @brief `true` if the tweak has any entity filters
+    bool HasEntityFilters() const;
+
     /// @return `true` if an entity should be rendered differently than normal
     bool IsEntityAffected(CBaseEntity* entity) const;
     bool IsModelAffected(const std::string& path) const;

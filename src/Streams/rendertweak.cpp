@@ -65,13 +65,23 @@ bool ModelTweak::IsEntityAffected(CBaseEntity* entity) const
     return filter_choice == FilterChoice::WHITELIST ? is_specified : !is_specified;
 }
 
+bool ModelTweak::HasEntityFilters() const
+{
+    return !classes.empty();
+}
+
 bool ModelTweak::IsModelAffected(const std::string& path) const
 {
     if (filter_choice == FilterChoice::ALL)
         return true;
-    // TODO: The path must become lowercase with forward slashes before calling find
-    bool exists = model_paths.find(path) != model_paths.end();
-    return filter_choice == FilterChoice::WHITELIST ? exists : !exists;
+
+    for (auto& model_path : model_paths)
+    {
+		if (Helper::CaseInsensitivePathCompare(path.c_str(), model_path.c_str()) == 0)
+			return filter_choice == FilterChoice::WHITELIST;
+	}
+
+    return filter_choice == FilterChoice::BLACKLIST;
 }
 
 bool ModelTweak::IsEffectInvisible() const {
