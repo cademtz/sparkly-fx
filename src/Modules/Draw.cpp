@@ -93,8 +93,6 @@ bool CDraw::DrawBox3D(const Vector& CornerA, const Vector& CornerB, const ImColo
 
 int CDraw::OnPresent()
 {
-	m_mtx.lock();
-
 	if (!ImGui::GetCurrentContext())
 	{
 		auto ctx = ImGui::CreateContext();
@@ -105,6 +103,7 @@ int CDraw::OnPresent()
 		ImGui_ImplDX9_Init(g_hk_overlay.Device());
 		ImGui_ImplWin32_Init(Base::hWnd);
 
+		std::scoped_lock lock{m_mtx};
 		m_list = new ImDrawList(ImGui::GetDrawListSharedData());
 		data.DisplayPos = ImVec2(0, 0);
 		data.CmdLists.push_back(m_list);
@@ -115,29 +114,54 @@ int CDraw::OnPresent()
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
-	m_mtx.unlock();
+	IDirect3DDevice9* device = g_hk_overlay.Device();
 
-	m_mtx.lock();
-	ImGui_ImplDX9_RenderDrawData(&data);
-	m_frames = 0;
-	m_mtx.unlock();
+	IDirect3DStateBlock9* prev_state = nullptr;
+	device->CreateStateBlock(D3DSBT_ALL, &prev_state);
+
+	device->SetRenderState(D3DRS_SRGBWRITEENABLE, FALSE);
+    device->SetRenderState(D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_ALPHA | D3DCOLORWRITEENABLE_BLUE | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_RED);
+    device->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, FALSE);
+    device->SetVertexShader(NULL);
+    device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+    device->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
+    device->SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS); // redundant due to ZENABLE
+    device->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
+    device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+    device->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+    device->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, FALSE);
+    device->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+    device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    device->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    device->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+    device->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+    device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+    device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
+    device->SetSamplerState(0, D3DSAMP_SRGBTEXTURE, FALSE);
+    device->SetDepthStencilSurface(nullptr);
+
+	{
+		std::scoped_lock lock{m_mtx};
+		ImGui_ImplDX9_RenderDrawData(&data);
+		m_frames = 0;
+	}
 
 	PushEvent(EVENT_IMGUI);
 	ImGui::Render();
 	ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+
+	prev_state->Apply();
+	prev_state->Release();
 
 	return 0;
 }
 
 int CDraw::OnPaint()
 {
-	m_mtx.lock();
+	std::scoped_lock lock{m_mtx};
 
 	if (!m_list || m_frames > 0)
-	{
-		m_mtx.unlock();
 		return 0;
-	}
 
 	m_list->_ResetForNewFrame();
 	m_list->PushTextureID(ImGui::GetIO().Fonts[0].TexID);
@@ -149,6 +173,5 @@ int CDraw::OnPaint()
 	PushEvent(EVENT_DRAW);
 	m_frames++;
 
-	m_mtx.unlock();
 	return 0;
 }
