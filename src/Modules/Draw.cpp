@@ -116,29 +116,31 @@ int CDraw::OnPresent()
 
 	IDirect3DDevice9* device = g_hk_overlay.Device();
 
+	IDirect3DSurface9* prev_depth_buffer = nullptr;
 	IDirect3DStateBlock9* prev_state = nullptr;
 	device->CreateStateBlock(D3DSBT_ALL, &prev_state);
+	device->GetDepthStencilSurface(&prev_depth_buffer);
 
 	device->SetRenderState(D3DRS_SRGBWRITEENABLE, FALSE);
-    device->SetRenderState(D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_ALPHA | D3DCOLORWRITEENABLE_BLUE | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_RED);
-    device->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, FALSE);
-    device->SetVertexShader(NULL);
-    device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
-    device->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
-    device->SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS); // redundant due to ZENABLE
-    device->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
-    device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-    device->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-    device->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, FALSE);
-    device->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
-    device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
-    device->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-    device->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
-    device->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
-    device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
-    device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
-    device->SetSamplerState(0, D3DSAMP_SRGBTEXTURE, FALSE);
-    device->SetDepthStencilSurface(nullptr);
+	device->SetRenderState(D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_ALPHA | D3DCOLORWRITEENABLE_BLUE | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_RED);
+	device->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, FALSE);
+	device->SetVertexShader(NULL);
+	device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+	device->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
+	device->SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS); // redundant due to ZENABLE
+	device->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
+	device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+	device->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+	device->SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, FALSE);
+	device->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+	device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+	device->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+	device->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+	device->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+	device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+	device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
+	device->SetSamplerState(0, D3DSAMP_SRGBTEXTURE, FALSE);
+	device->SetDepthStencilSurface(nullptr);
 
 	{
 		std::scoped_lock lock{m_mtx};
@@ -152,6 +154,7 @@ int CDraw::OnPresent()
 
 	prev_state->Apply();
 	prev_state->Release();
+	device->SetDepthStencilSurface(prev_depth_buffer);
 
 	return 0;
 }
