@@ -55,10 +55,11 @@ int StreamEditor::OnMenu()
 
         if (!g_active_stream.IsDepthAvailable())
         {
-            ImGui::TextColored(
-                ImVec4(1,1,0,0),
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
+            ImGui::TextWrapped(
                 "Depth buffer is unavailable. Your graphics driver probably lacks support for the 'INTZ' depth format."
             );
+            ImGui::PopStyleColor();
         }
     }
 
