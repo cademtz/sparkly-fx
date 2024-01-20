@@ -485,7 +485,7 @@ void ModelTweak::SubclassFromJson(const nlohmann::json* json)
     if (!material_name.empty())
     {
         auto it = std::find_if(CustomMaterial::GetAll().begin(), CustomMaterial::GetAll().end(),
-            [&](auto& mat){ return !Helper::stricmp(render_effect_name, mat->GetName()); }
+            [&](auto& mat){ return Helper::stricmp(material_name, mat->GetName()) == 0; }
         );
         if (it != CustomMaterial::GetAll().end())
             custom_material = *it;
