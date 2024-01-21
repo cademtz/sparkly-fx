@@ -40,6 +40,7 @@ private:
     bool m_spectating = false;
     float m_spec_cam_dist = 150;
     float m_spec_cam_angle_off[3] = {0,0,0};
+    float m_spec_cam_origin_off[3] = {0,0,0};
     int m_spectate_target = 0;
     int m_min_airshot_height = 200;
     int m_min_airshot_damage = 30;

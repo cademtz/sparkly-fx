@@ -36,7 +36,8 @@ int SpectateModule::OnMenu()
     if (ImGui::Checkbox("Spectate", &m_spectating) && m_spectating)
         m_was_reset = true;
     ImGui::SliderFloat("Cam distance", &m_spec_cam_dist, 0, 300);
-    ImGui::SliderFloat2("Cam pitch/yaw", m_spec_cam_angle_off, -180, 180);
+    ImGui::SliderFloat3("Cam angle", m_spec_cam_angle_off, -180, 180);
+    ImGui::SliderFloat3("Cam offset", m_spec_cam_origin_off, -150, 150);
     //ImGui::InputInt("Spectate mode", &m_observer_mode);
 
     constexpr size_t NUM_COLUMNS = 3;
@@ -213,13 +214,25 @@ int SpectateModule::OnOverrideView()
     
     IClientRenderable* renderable = (IClientRenderable*)base_entity->Renderable();
     CViewSetup* view_setup = g_hk_client.Context()->pSetup;
-    QAngle angle = renderable->GetRenderAngles() + *(QAngle*)&m_spec_cam_angle_off[0];
     Vector cam_pos = renderable->GetRenderOrigin() + Vector(0,0,75);
-    Vector direction;
+    QAngle angle = renderable->GetRenderAngles();
+    QAngle view_angle = renderable->GetRenderAngles() + *(QAngle*)&m_spec_cam_angle_off[0];
+    QAngle forward_angle = QAngle(0, angle.y, 0);
+    QAngle side_angle = QAngle(0, angle.y - 90, 0);
 
-    AngleVectors(angle, &direction);
-    cam_pos -= direction * m_spec_cam_dist;
-    view_setup->angles = angle;
+    Vector view_dir;
+    Vector transform_forward;
+    Vector transform_side;
+
+    AngleVectors(view_angle, &view_dir);
+    AngleVectors(forward_angle, &transform_forward);
+    AngleVectors(side_angle, &transform_side);
+
+    cam_pos -= view_dir * m_spec_cam_dist;
+    cam_pos += transform_side * m_spec_cam_origin_off[0];
+    cam_pos += transform_forward * m_spec_cam_origin_off[1];
+    cam_pos.z += m_spec_cam_origin_off[2];
+    view_setup->angles = view_angle;
     view_setup->origin = cam_pos;
 
     return Return_NoOriginal;
