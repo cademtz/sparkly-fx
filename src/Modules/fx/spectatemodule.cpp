@@ -181,8 +181,11 @@ int SpectateModule::OnFrameStageNotify()
             player_state.health = health;
             player_state.is_alive = is_alive;
 
-            if (took_damage && !ent->IsDormant())
-                OnPlayerDamage(player, player_state, damage);            
+            if (m_scan_airshots)
+            {
+                if (took_damage && !ent->IsDormant())
+                    OnPlayerDamage(player, player_state, damage);
+            }
         }
     }
 
