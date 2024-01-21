@@ -12,6 +12,13 @@
 #include <SDK/view_shared.h>
 #include <sstream>
 
+#undef min
+#undef max
+
+constexpr int TEAM_SPEC = 1;
+constexpr int TEAM_RED = 2;
+constexpr int TEAM_BLU = 3;
+
 void SpectateModule::StartListening()
 {
     Listen(EVENT_MENU, [this]() { return OnMenu(); });
@@ -26,20 +33,65 @@ int SpectateModule::OnMenu()
     
     ImGui::PushID("SpectateModule");
 
-    ImGui::Checkbox("Spectate", &m_spectating);
+    if (ImGui::Checkbox("Spectate", &m_spectating) && m_spectating)
+        m_was_reset = true;
+    ImGui::SliderFloat("Cam distance", &m_spec_cam_dist, 0, 300);
+    ImGui::SliderFloat2("Cam pitch/yaw", m_spec_cam_angle_off, -180, 180);
     //ImGui::InputInt("Spectate mode", &m_observer_mode);
 
-    if (ImGui::BeginListBox("Players", Helper::CalcListBoxSize(m_playerstates.size())))
+    constexpr size_t NUM_COLUMNS = 3;
+    if (ImGui::BeginTable("Players", NUM_COLUMNS, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable))
     {
+        static const char* const column_names[NUM_COLUMNS] = {"RED", "BLU", "OTHER"};
+        static std::vector<const PlayerState*> column_players[NUM_COLUMNS];
+        constexpr size_t RED_COLUMN = 0, BLU_COLUMN = 1, OTHER_COLUMN = 2;
+
+        for (size_t i = 0; i < NUM_COLUMNS; ++i)
+            column_players[i].clear();
+
         std::scoped_lock lock(m_playerstates_mutex);
+
+        // Sort players by team
         for (auto& pair : m_playerstates)
         {
-            ImGui::PushID(pair.first);
-            if (ImGui::Selectable(pair.second.player_info.name, pair.first == m_spectate_target))
-                m_spectate_target = pair.first;
-            ImGui::PopID();
+            switch (pair.second.team)
+            {
+            case TEAM_RED: column_players[RED_COLUMN].push_back(&pair.second); break;
+            case TEAM_BLU: column_players[BLU_COLUMN].push_back(&pair.second); break;
+            default: column_players[OTHER_COLUMN].push_back(&pair.second); break;
+            }
         }
-        ImGui::EndListBox();
+
+        // Draw table headers and get the # of rows needed for all columns.
+        size_t max_rows = 0;
+        for (size_t i = 0; i < NUM_COLUMNS; ++i)
+        {
+            ImGui::TableSetupColumn(column_names[i]);
+            max_rows = std::max(max_rows, column_players[i].size());
+        }
+        ImGui::TableHeadersRow();
+
+        // Now fill the table.
+        // Elements must advance horizontally, otherwise this would be written more intuitively.
+        for (size_t row = 0; row < max_rows; ++row)
+        {
+            ImGui::TableNextRow();
+            for (size_t col = 0; col < NUM_COLUMNS; ++col)
+            {
+                if (row >= column_players[col].size())
+                    continue;
+
+                const PlayerState* player = column_players[col][row];
+                
+                ImGui::TableSetColumnIndex(col);
+                ImGui::PushID(player);
+                if (ImGui::Selectable(player->player_info.name, player->player_info.userID == m_spectate_target))
+                   m_spectate_target = player->player_info.userID;
+                ImGui::PopID();
+            }
+        }
+
+        ImGui::EndTable();
     }
 
     ImGui::Checkbox("Scan for air-shots", &m_scan_airshots); ImGui::SameLine();
@@ -111,6 +163,7 @@ int SpectateModule::OnFrameStageNotify()
             bool is_alive = player->LifeState() == LIFE_ALIVE;
             int health = player->Health();
 
+            player_state.team = player->Team();
             if (insertion.second) // Value didn't exist before. Initialize it.
             {
                 memset(&player_state, 0, sizeof(player_state));
@@ -148,14 +201,16 @@ int SpectateModule::OnOverrideView()
     if (!base_entity)
         return 0;
     
+    CBasePlayer* player = base_entity->ToPlayer();
+    
     IClientRenderable* renderable = (IClientRenderable*)base_entity->Renderable();
     CViewSetup* view_setup = g_hk_client.Context()->pSetup;
-    QAngle angle = renderable->GetRenderAngles();
+    QAngle angle = renderable->GetRenderAngles() + *(QAngle*)&m_spec_cam_angle_off[0];
     Vector cam_pos = renderable->GetRenderOrigin() + Vector(0,0,75);
     Vector direction;
 
     AngleVectors(angle, &direction);
-    cam_pos -= direction * 150;
+    cam_pos -= direction * m_spec_cam_dist;
     view_setup->angles = angle;
     view_setup->origin = cam_pos;
 
