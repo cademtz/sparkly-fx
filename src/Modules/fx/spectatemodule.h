@@ -30,7 +30,7 @@ private:
         m_log += text;
     }
     /// @brief Whether the demo should be actively scanned
-    bool ShouldScan() const { return m_scan_airshots || m_spectating || m_was_reset; }
+    bool ShouldScan() const { return m_scan_airshots || m_spectating; }
     /// @brief Handle a player that received damage or healing.
     /// @param damage Use negative value for healing. Use INT_MAX for death.
     void OnPlayerDamage(class CBasePlayer* player, const PlayerState& state, int damage);

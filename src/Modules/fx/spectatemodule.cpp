@@ -137,15 +137,18 @@ int SpectateModule::OnFrameStageNotify()
         if (!Interfaces::engine->IsInGame())
         {
             std::scoped_lock lock(m_playerstates_mutex);
+            m_was_reset = true;
             m_playerstates.clear();
         }
     }
-    else if (stage == FRAME_NET_UPDATE_END)
+
+    if (Interfaces::engine->IsInGame() && ShouldScan()
+        && (stage == FRAME_NET_UPDATE_END || (stage == FRAME_START && m_was_reset))
+    )
     {
-        if (!Interfaces::engine->IsInGame() || !ShouldScan())
-            return 0;
-        
         std::scoped_lock lock(m_playerstates_mutex);
+        m_was_reset = false;
+
         for (int i = 1; i <= Interfaces::engine->GetMaxClients(); i++)
         {
             CBaseEntity* ent = Interfaces::entlist->GetClientEntity(i);
@@ -163,7 +166,6 @@ int SpectateModule::OnFrameStageNotify()
             bool is_alive = player->LifeState() == LIFE_ALIVE;
             int health = player->Health();
 
-            player_state.team = player->Team();
             if (insertion.second) // Value didn't exist before. Initialize it.
             {
                 memset(&player_state, 0, sizeof(player_state));
@@ -172,14 +174,17 @@ int SpectateModule::OnFrameStageNotify()
                 player_state.health = health;
             }
 
+            // Check for changes in player info here
             bool took_damage = health != player_state.health || (!is_alive && player_state.is_alive);
             int damage = player_state.health - health;
 
             if (!is_alive)
                 damage = INT_MAX;
 
+            // Update player info here
             player_state.health = health;
             player_state.is_alive = is_alive;
+            player_state.team = player->Team();
 
             if (m_scan_airshots)
             {
