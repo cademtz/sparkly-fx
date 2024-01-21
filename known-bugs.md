@@ -3,9 +3,6 @@
 **Note: Some bugs in the preview are "fake". They don't exist while recording.**
 
 "Fake" or unrelated bugs (preview artifacts or TF2 bugs):
-- The "Fog depth" preset makes the skybox look glitchy.
-    - Cause: The skybox was turned off.
-    - Fix: Already fixed. The skybox is filled with black while recording.
 - After starting a new game/demo, some materials aren't being affected.
     - Cause: The game reloaded some materials, and sparkly-fx did not update them appropriately.
     - Hack: Toggle the preview on/off.
@@ -19,6 +16,14 @@ Real bugs *(should get fixed)*:
     - Cause: Screen is sometimes not cleared before next frame, or indicator draws too early.
     - Hack: Disable this in the "Recording" settings.
     - Fix: Unknown. Perhaps draw during `EVENT_IMGUI`, which always runs just before Present(). But if parts of the screen go un-cleared, it will still appear.
+- The GUI is invisible when previewing streams with a pixel shader
+    - Cause: Possibly the depth stencil is still enabled when drawing the menu,
+    - Fix: Unknown,
+- Saving a config does not automatically append ".json" to the chosen name
+- Flickering can appear when rendering with multiple streams
+    - Cause: The HDR feature changes its exposure based on every frame that is rendered, even for mid-frame rendering.
+    - Hack: Disable HDR with `mat_hdr_level 0`.
+    - Fix: Unknown.
 
 Limitations *(may be fixed)*:
 - The "Fog depth" preset renders some materials without the depth effect (like water).
