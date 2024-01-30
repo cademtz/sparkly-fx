@@ -5,12 +5,6 @@
 
 #define OFF_PAINTTRAVERSE 41
 
-CPaintHook::CPaintHook() : BASEHOOK(CPaintHook)
-{
-	RegisterEvent(EVENT_PAINTTRAVERSE);
-	RegisterEvent(EVENT_PAINT);
-}
-
 void CPaintHook::Hook()
 {
 	m_vguihook.Hook(Interfaces::vgui->Inst());
@@ -37,11 +31,8 @@ void CPaintHook::Paint(PaintMode_t mode)
 
 void __stdcall CPaintHook::Hooked_PaintTraverse(UNCRAP vgui::VPANEL vguiPanel, bool forceRepaint, bool allowForce)
 {
-	auto ctx = g_hk_panel.Context();
-	ctx->panel = vguiPanel, ctx->forceRepaint = forceRepaint, ctx->allowForce = allowForce;
-
-	int flags = g_hk_panel.PushEvent(EVENT_PAINTTRAVERSE);
-	if (flags & Return_NoOriginal)
+	const auto& res = OnPaintTraverse.DispatchEvent(vguiPanel, forceRepaint, allowForce);
+	if (res.Flags & EventReturnFlags::NoOriginal)
 		return;
 
 	g_hk_panel.PaintTraverse(vguiPanel, forceRepaint, allowForce);
@@ -49,7 +40,6 @@ void __stdcall CPaintHook::Hooked_PaintTraverse(UNCRAP vgui::VPANEL vguiPanel, b
 
 void __stdcall CPaintHook::Hooked_Paint(UNCRAP PaintMode_t mode)
 {
-	g_hk_panel.Context()->mode = mode;
 	g_hk_panel.Paint(mode);
-	g_hk_panel.PushEvent(EVENT_PAINT);
+	OnPaint.DispatchEvent(mode);
 }

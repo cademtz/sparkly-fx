@@ -1,24 +1,28 @@
 #pragma once
+#include <Base/Base.h>
+#include <Modules/Draw.h>
+#include <Hooks/WindowHook.h>
+
 #include "BaseModule.h"
-#include <imgui.h>
 
-DECL_EVENT(EVENT_MENU);
-/// @brief This runs after IMGUI reads input. It can also hide input from the game.
-DECL_EVENT(EVENT_POST_IMGUI_INPUT);
-
-class CMenu : public CModule, CEventManager
+class CMenu : public CModule
 {
 public:
 	CMenu();
 	void StartListening() override;
 	void SetOpen(bool Val);
-	bool IsOpen();
+	bool IsOpen() const;
 
+	using MenuEvent = EventSource<void()>;
+	using PostImguiInputEvent = EventSource<bool()>;
+
+	static inline MenuEvent OnMenu;
+	static inline PostImguiInputEvent OnPostImguiInput;
 private:
 	bool AcceptMsg(HWND hWnd, UINT uMsg, LPARAM lParam, WPARAM wParam);
 
-	int OnImGui();
-	int OnWindowProc();
+	void OnImGui() const;
+	void OnWindowProc(CWindowHook::WndProcEvent::Param& p, HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	bool m_open = false;
 };

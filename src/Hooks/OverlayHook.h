@@ -3,21 +3,23 @@
 #include <d3d9.h>
 #include <string>
 
-DECL_EVENT(EVENT_DX9PRESENT);
-DECL_EVENT(EVENT_DX9RESET);
-
 class COverlayHook : public CBaseHook
 {
 public:
-	COverlayHook();
+	COverlayHook() : BASEHOOK(COverlayHook), m_dev{nullptr} {}
 
 	void Hook() override;
 	void Unhook() override;
 
-	inline IDirect3DDevice9* Device() { return m_dev; }
+	IDirect3DDevice9* Device() const { return m_dev; }
 	HRESULT Reset(D3DPRESENT_PARAMETERS* Params);
 	HRESULT Present(const RECT* Src, const RECT* Dest, HWND Window, const RGNDATA* DirtyRegion);
 
+	using ResetEvent = EventSource<void(IDirect3DDevice9*, D3DPRESENT_PARAMETERS*)>;
+	using PresentEvent = EventSource<void(IDirect3DDevice9*, const RECT*, const RECT*, HWND, const RGNDATA*)>;
+
+	static inline ResetEvent OnReset;
+	static inline PresentEvent OnPresent;
 private:
 	IDirect3DDevice9* m_dev;
 	CJumpHook m_jmp_reset;

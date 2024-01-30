@@ -119,7 +119,7 @@ public:
 	}*/
 
 	// Allow command, but negate gameplay-affecting values
-	void MakeInert(void)
+	void MakeInert()
 	{
 		viewangles() = vec3_angle;
 		forwardmove() = 0.f;
@@ -180,9 +180,7 @@ private:
 
 	common_vals_struct* GetCommonValues()
 	{
-		sizeof(game_other);
-		sizeof(game_csgo);
-		if (Interfaces::engine->GetAppID() == AppId_CSGO)
+		if (Interfaces::engine->GetAppID() == EAppID::CSGO)
 			return &game_csgo.values;
 		return &game_other.values;
 	}

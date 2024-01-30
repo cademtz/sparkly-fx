@@ -3,7 +3,6 @@ target_sources(xsdk-base PRIVATE
     AsmTools.cpp
     Base.cpp
     Entity.cpp
-    Event.cpp
     imgui_impl_win32.cpp
     imgui.cpp
     Interfaces.cpp

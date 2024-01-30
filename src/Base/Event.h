@@ -1,83 +1,100 @@
 #pragma once
-#include "Base.h"
-#include "fnv1a.h"
 #include <unordered_map>
 #include <functional>
+#include <optional>
+#include <atomic>
 
-#define DECL_EVENT(name) constexpr EventHandle name = { #name##_hash }
+namespace EventReturnFlags
+{
+    /// @brief No effect - calls the rest of the listeners
+    static constexpr int Normal = 0;
+    /// @brief Skip calling other modules/listeners after the current function returns
+    static constexpr int Skip = (1 << 0);
+    /// @brief For hooks. Prevents calling the original function
+    static constexpr int NoOriginal = (1 << 1);
+}
 
-class CEventCallback;
-typedef std::function<int()> CallbackFunc_t;
+template <typename>
+struct EventSource;
 
-struct EventHandle {
-	const uint32_t hash;
+template <typename R>
+struct EventReturn
+{
+    int Flags = EventReturnFlags::Normal;
+    std::conditional_t<!std::is_same_v<R, void>, std::optional<R>, std::nullopt_t> ReturnValue = std::nullopt;
 };
 
-enum EEventReturnFlags
+template <typename R, typename... Args>
+struct EventSource<R(Args...)>
 {
-	Return_Normal = 0,
-	Return_Skip = (1 << 0), // - Skip calling other modules/listeners after the current function returns
-	Return_NoOriginal = (1 << 1), // - For hooks. Prevents calling the original function
-};
+    using Proto = R(Args...);
+    using Param = EventReturn<R>;
+    using CallbackType = std::function<void(Param&, Args...)>;
 
-class CBaseEvent
-{
-public:
-	CBaseEvent(const EventHandle Event) : m_hash(Event.hash) { m_events[m_hash] = this; }
-	~CBaseEvent() { m_events.erase(m_hash); }
+    void Listen(const CallbackType& callback)
+    {
+        m_Callbacks.push_back(callback);
+    }
 
-	CEventCallback* AddCallback(const CallbackFunc_t& Func);
-	inline const uint32_t hash() const { return m_hash; }
-	int Push();
+    void Listen(auto callback)
+    {
+        m_Callbacks.push_back([callback](Param& p, Args&&... args)
+        {
+            callback(p, std::forward<Args>(args)...);
+        });
+    }
 
-	static CBaseEvent* GetEvent(const EventHandle Event) { return m_events[Event.hash]; }
-	/// @brief Permanently stop all (currently-registered) events.
-	/// Part of a hack to help "eject" the cheat.
-	static void ShutdownAll() {
-		for (auto entry : m_events)
-			entry.second->m_is_closed = true;
-	}
+    void Listen(auto callback, auto instance)
+    {
+        m_Callbacks.push_back([callback, instance](Param& p, Args&&... args)
+        {
+            (instance->*callback)(p, std::forward<Args>(args)...);
+        });
+    }
 
-protected:
-	friend CEventCallback;
-	inline void RemoveCallback(CEventCallback* Callback) { m_listeners.remove(Callback); }
+    void ListenNoArgs(auto callback)
+    {
+        m_Callbacks.push_back([callback](const Param& p, Args&&... args)
+        {
+            (void)p;
+            (void)std::tuple<Args...>(args...);
+            callback();
+        });
+    }
+
+    void ListenNoArgs(auto callback, auto instance)
+    {
+        m_Callbacks.push_back([callback, instance](const Param& p, Args&&... args)
+        {
+            (void)p;
+            (void)std::tuple<Args...>(args...);
+            (instance->*callback)();
+        });
+    }
+
+    template <typename... TArgs>
+    Param DispatchEvent(TArgs&&... args) const
+    {
+        if (m_ShutDown)
+            return {};
+
+        Param out;
+        for (auto& callback : m_Callbacks)
+        {
+            callback(out, std::forward<TArgs>(args)...);
+            if (out.Flags & EventReturnFlags::Skip)
+                break;
+        }
+
+        return out;
+    }
+
+    static void Shutdown()
+    {
+        m_ShutDown = true;
+    }
 
 private:
-	CBaseEvent(CBaseEvent&&);
-
-	uint32_t m_hash;
-	bool m_is_closed = false;
-	std::list<CEventCallback*> m_listeners;
-	inline static std::unordered_map<uint32_t, CBaseEvent*> m_events;
-};
-
-class CEventManager
-{
-public:
-	~CEventManager();
-
-	inline void RegisterEvent(const EventHandle Event) { m_events.push_back(new CBaseEvent(Event)); }
-
-	inline int PushEvent(const EventHandle Event) { return CBaseEvent::GetEvent(Event)->Push(); }
-
-private:
-	unsigned m_evenstate = 0;
-	std::list<CBaseEvent*> m_events;
-};
-
-class CEventCallback
-{
-public:
-	~CEventCallback() { m_event->RemoveCallback(this); }
-
-	const CallbackFunc_t& Func() const { return m_func; }
-
-protected:
-	friend CBaseEvent;
-	CEventCallback(CBaseEvent* Event, const CallbackFunc_t& Function)
-		: m_event(Event), m_func(Function) { }
-
-private:
-	CBaseEvent* m_event;
-	CallbackFunc_t m_func;
+    static inline std::atomic_bool m_ShutDown{false};
+    std::vector<CallbackType> m_Callbacks;
 };

@@ -13,16 +13,10 @@
 
 ImDrawData data;
 
-CDraw::CDraw()
-{
-	RegisterEvent(EVENT_IMGUI);
-	RegisterEvent(EVENT_DRAW);
-}
-
 void CDraw::StartListening()
 {
-	Listen(EVENT_DX9PRESENT, [this] { return OnPresent(); });
-	Listen(EVENT_PAINT, [this] { return OnPaint(); });
+	COverlayHook::OnPresent.ListenNoArgs(&CDraw::OnPresent, this);
+	CPaintHook::OnPaint.ListenNoArgs(&CDraw::OnPaint, this);
 }
 
 bool CDraw::WorldToScreen(const Vector& World, ImVec2& Screen)
@@ -148,7 +142,7 @@ int CDraw::OnPresent()
 		m_frames = 0;
 	}
 
-	PushEvent(EVENT_IMGUI);
+	(void) OnImGui.DispatchEvent();
 	ImGui::Render();
 	ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
 
@@ -173,7 +167,7 @@ int CDraw::OnPaint()
 	data.TotalIdxCount = m_list->IdxBuffer.Size;
 	data.DisplaySize = ImVec2(m_list->_Data->ClipRectFullscreen.z, m_list->_Data->ClipRectFullscreen.w);
 
-	PushEvent(EVENT_DRAW);
+	(void) OnDraw.DispatchEvent();
 	m_frames++;
 
 	return 0;

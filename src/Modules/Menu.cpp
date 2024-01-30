@@ -9,20 +9,19 @@
 
 CMenu::CMenu()
 {
-	RegisterEvent(EVENT_MENU);
-	RegisterEvent(EVENT_POST_IMGUI_INPUT);
 }
 
 void CMenu::StartListening()
 {
-	Listen(EVENT_WINDOWPROC, [this] { return OnWindowProc(); });
-	Listen(EVENT_IMGUI, [this]() { return OnImGui(); });
+	CDraw::OnImGui.ListenNoArgs(&CMenu::OnImGui, this);
+	CWindowHook::OnWndProc.Listen(&CMenu::OnWindowProc, this);
 }
 
 DWORD WINAPI UnhookThread(LPVOID)
 {
 	printf("Unhooking...\n");
-	CBaseEvent::ShutdownAll();
+	//todo
+	EventSource<void()>::Shutdown();
 	CBaseHook::UnHookAll();
 
 	printf("Waiting for any hooked calls to end...\n");
@@ -36,9 +35,8 @@ DWORD WINAPI UnhookThread(LPVOID)
 
 bool CMenu::AcceptMsg(HWND hWnd, UINT uMsg, LPARAM lParam, WPARAM wParam)
 {
-	switch (uMsg)
+	if (uMsg == WM_KEYDOWN)
 	{
-	case WM_KEYDOWN:
 		switch (wParam)
 		{
 		case VK_INSERT:
@@ -46,18 +44,19 @@ bool CMenu::AcceptMsg(HWND hWnd, UINT uMsg, LPARAM lParam, WPARAM wParam)
 			SetOpen(!IsOpen());
 			g_hk_window.SetInputEnabled(IsOpen());
 			return true;
+		default: break;
 		}
 	}
 
 	ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
-	bool hide_input = PushEvent(EVENT_POST_IMGUI_INPUT) & Return_NoOriginal;
-	return hide_input;
+	const auto& res = OnPostImguiInput.DispatchEvent();
+	return res.Flags & EventReturnFlags::NoOriginal;
 }
 
-int CMenu::OnImGui()
+void CMenu::OnImGui() const
 {
 	if (!IsOpen())
-		return 0;
+		return;
 
 	ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_Once);
 	if (ImGui::Begin("Window"))
@@ -65,28 +64,24 @@ int CMenu::OnImGui()
 		if (ImGui::Button("Eject"))
 			CreateThread(0, 0, &UnhookThread, 0, 0, 0);
 
-		PushEvent(EVENT_MENU);
+		(void) OnMenu.DispatchEvent();
 	}
 	ImGui::End();
-
-	return 0;
 }
 
-int CMenu::OnWindowProc()
+void CMenu::OnWindowProc(CWindowHook::WndProcEvent::Param& p, HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	WndProcArgs* ctx = g_hk_window.Context();
-	if (AcceptMsg(ctx->hwnd, ctx->msg, ctx->lparam, ctx->wparam))
+	if (AcceptMsg(hWnd, uMsg, lParam, wParam))
 	{
-		ctx->result = TRUE;
-		return Return_NoOriginal | Return_Skip;
+		p.ReturnValue = TRUE;
+		p.Flags |= (EventReturnFlags::NoOriginal | EventReturnFlags::Skip);
 	}
-	return 0;
 }
 
-bool CMenu::IsOpen() {
+bool CMenu::IsOpen() const {
 	return m_open;
 }
 
-void CMenu::SetOpen(bool Val) {
+void CMenu::SetOpen(const bool Val) {
 	m_open = Val;
 }

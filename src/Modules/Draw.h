@@ -3,20 +3,18 @@
 #include <SDK/vector.h>
 #include <imgui.h>
 #include <mutex>
-
-DECL_EVENT(EVENT_IMGUI);
-DECL_EVENT(EVENT_DRAW);
+#include <Hooks/PaintHook.h>
 
 class Vector;
 
-class CDraw : public CModule, CEventManager
+class CDraw : public CModule
 {
 public:
-	CDraw();
+	CDraw() = default;
 
 	void StartListening() override;
 
-	inline ImDrawList* List() { return m_list; }
+	ImDrawList* List() const { return m_list; }
 	bool WorldToScreen(const Vector& World, ImVec2& Screen);
 
 	void DrawText_Outline(const ImVec2& Pos, ImU32 Col, ImU32 Outline_Col, const char* Text_Begin, const char* Text_End = 0);
@@ -28,6 +26,11 @@ public:
 		return DrawBox3D(Point - Vector(Radius), Point + Vector(Radius), Color, Thickness);
 	}
 
+	using ImGuiEvent = EventSource<void()>;
+	using DrawEvent = EventSource<void()>;
+
+	static inline ImGuiEvent OnImGui;
+	static inline DrawEvent OnDraw;
 private:
 	int OnPresent();
 	int OnPaint();
