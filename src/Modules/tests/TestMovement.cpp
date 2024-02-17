@@ -19,13 +19,9 @@ static CTraceFilterWorldOnly worldTraceFilter;
 void TestMovement::StartListening()
 {
 	CMenu::OnMenu.ListenNoArgs(&TestMovement::OnMenu, this);
-	//Listen(EVENT_MENU, [this] { return OnMenu(); });
 	CDraw::OnDraw.ListenNoArgs(&TestMovement::OnDraw, this);
-	//Listen(EVENT_DRAW, [this] { return OnDraw(); });
 	CClientHook::OnCreateMove.Listen(&TestMovement::OnCreateMove, this);
-	//Listen(EVENT_CREATEMOVE, [this] { return OnCreateMove(); });
 	CClientHook::OnOverrideView.Listen(&TestMovement::OnOverrideView, this);
-	//Listen(EVENT_OVERRIDEVIEW, [this] { return OnOverrideView(); });
 }
 
 int TestMovement::OnMenu()
