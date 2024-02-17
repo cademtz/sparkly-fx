@@ -21,7 +21,7 @@ public:
 
 	using HLCreateMoveEvent = EventSource<void(int, float, bool, bool* bSendPacket)>;
 	using FrameStageNotifyEvent = EventSource<void(ClientFrameStage_t)>;
-	using CreateMoveEvent = EventSource<bool(float, CUserCmd*)>;
+	using CreateMoveEvent = EventSource<bool(bool& result, float, CUserCmd*)>;
 	using OverrideViewEvent = EventSource<void(CViewSetup*)>;
 
 	static inline HLCreateMoveEvent OnHLCreateMove;

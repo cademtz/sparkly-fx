@@ -8,7 +8,7 @@ class TestCrash : public CModule
 public:
 	TestCrash() { }
 	void StartListening() override {
-        Listen(EVENT_MENU, [this] { return OnMenu(); });
+        CMenu::OnMenu.Listen(&TestCrash::OnMenu, this);
     }
 
 private:

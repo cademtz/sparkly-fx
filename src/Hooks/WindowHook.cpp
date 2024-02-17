@@ -84,9 +84,11 @@ void CWindowHook::SetInputEnabled(bool Enabled)
 
 LRESULT WINAPI CWindowHook::Hooked_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	const auto& res = OnWndProc.DispatchEvent(hWnd, uMsg, wParam, lParam);
-	if (res.Flags & EventReturnFlags::NoOriginal)
-		return res.ReturnValue.value_or(true);
+	LRESULT result = TRUE;
+	int flags = OnWndProc.DispatchEvent(result, hWnd, uMsg, wParam, lParam);
+	if (flags & EventReturnFlags::NoOriginal)
+		return result;
+	
 	if (g_hk_window.GetInputEnabled())
 	{
 		switch (uMsg)

@@ -22,8 +22,9 @@ public:
 	void SetInputEnabled(bool Enabled);
 	bool GetInputEnabled() const { return !m_passInput; }
 
-	using WndProcEvent = EventSource<LRESULT(HWND, UINT, WPARAM, LPARAM)>;
+	using WndProcEvent = EventSource<LRESULT(LRESULT& result, HWND, UINT, WPARAM, LPARAM)>;
 	static inline WndProcEvent OnWndProc;
+	
 private:
 	CJumpHook m_hkcurpos, m_hkshowcur, m_hksetcur, m_hkgetcurpos, m_hk_getcurinfo;
 

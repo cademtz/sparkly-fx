@@ -29,8 +29,8 @@ public:
 private:
 	int OnMenu();
 	int OnDraw();
-	int OnCreateMove();
-	int OnOverrideView();
+	int OnCreateMove(bool& result, float, class CUserCmd* cmd);
+	int OnOverrideView(class CViewSetup* pViewSetup);
 
 	bool IsInFreecam() { return m_freecam; }
 	bool ShouldDrawPaths();

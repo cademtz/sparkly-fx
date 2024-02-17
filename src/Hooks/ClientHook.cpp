@@ -59,9 +59,9 @@ void __stdcall CClientHook::Hooked_HLCreateMove(UNCRAP int sequence_number, floa
 	else if (Interfaces::engine->GetAppID() != static_cast<int>(EAppID::CSGO))
 		bSendPacket = *(*reinterpret_cast<bool**>(baseptr) - 1);
 
-	const auto& res = OnHLCreateMove.DispatchEvent(sequence_number, input_sample_frametime, active, &bSendPacket);
+	int flags = OnHLCreateMove.DispatchEvent(sequence_number, input_sample_frametime, active, &bSendPacket);
 
-	if (!(res.Flags & EventReturnFlags::NoOriginal))
+	if (!(flags & EventReturnFlags::NoOriginal))
 		g_hk_client.HLCreateMove(sequence_number, input_sample_frametime, active);
 
 	if constexpr (Base::Win64)
@@ -72,8 +72,8 @@ void __stdcall CClientHook::Hooked_HLCreateMove(UNCRAP int sequence_number, floa
 
 void __stdcall CClientHook::Hooked_FrameStageNotify(UNCRAP ClientFrameStage_t curStage)
 {
-	const auto& res = OnFrameStageNotify.DispatchEvent(curStage);
-	if (res.Flags & EventReturnFlags::NoOriginal)
+	int flags = OnFrameStageNotify.DispatchEvent(curStage);
+	if (flags & EventReturnFlags::NoOriginal)
 		return;
 
 	g_hk_client.FrameStageNotify(curStage);
@@ -87,23 +87,23 @@ bool __stdcall CClientHook::Hooked_CreateMove(UNCRAP float flInputSampleTime, CU
 		eventcmd = reinterpret_cast<CUserCmd*>(reinterpret_cast<void**>(cmd) - 1); // Offset missing VMT
 	}
 
-	const auto& res = OnCreateMove.DispatchEvent(flInputSampleTime, eventcmd);
-	const bool custom_return_value = res.ReturnValue.value_or(true);
+	bool result = true;
+	int flags = OnCreateMove.DispatchEvent(result, flInputSampleTime, eventcmd);
 
-	if (res.Flags & EventReturnFlags::NoOriginal)
-		return custom_return_value;
+	if (flags & EventReturnFlags::NoOriginal)
+		return result;
 
     const bool original_return_value = g_hk_client.CreateMove(flInputSampleTime, cmd);
-	if (res.ReturnValue.has_value())
-		return custom_return_value;
+	if (result)
+		return result;
 
 	return original_return_value;
 }
 
 void __stdcall CClientHook::Hooked_OverrideView(UNCRAP CViewSetup* pSetup)
 {
-	const auto& res = OnOverrideView.DispatchEvent(pSetup);
-	if (res.Flags & EventReturnFlags::NoOriginal)
+	int flags = OnOverrideView.DispatchEvent(pSetup);
+	if (flags & EventReturnFlags::NoOriginal)
 		return;
 	g_hk_client.OverrideView(pSetup);
 }

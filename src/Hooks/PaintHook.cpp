@@ -31,8 +31,8 @@ void CPaintHook::Paint(PaintMode_t mode)
 
 void __stdcall CPaintHook::Hooked_PaintTraverse(UNCRAP vgui::VPANEL vguiPanel, bool forceRepaint, bool allowForce)
 {
-	const auto& res = OnPaintTraverse.DispatchEvent(vguiPanel, forceRepaint, allowForce);
-	if (res.Flags & EventReturnFlags::NoOriginal)
+	int flags = OnPaintTraverse.DispatchEvent(vguiPanel, forceRepaint, allowForce);
+	if (flags & EventReturnFlags::NoOriginal)
 		return;
 
 	g_hk_panel.PaintTraverse(vguiPanel, forceRepaint, allowForce);

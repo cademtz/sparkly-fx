@@ -21,8 +21,8 @@ public:
 private:
 	bool AcceptMsg(HWND hWnd, UINT uMsg, LPARAM lParam, WPARAM wParam);
 
-	void OnImGui() const;
-	void OnWindowProc(CWindowHook::WndProcEvent::Param& p, HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	int OnImGui() const;
+	int OnWindowProc(LRESULT& result, HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	bool m_open = false;
 };

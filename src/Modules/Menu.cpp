@@ -49,14 +49,14 @@ bool CMenu::AcceptMsg(HWND hWnd, UINT uMsg, LPARAM lParam, WPARAM wParam)
 	}
 
 	ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
-	const auto& res = OnPostImguiInput.DispatchEvent();
-	return res.Flags & EventReturnFlags::NoOriginal;
+	int flags = OnPostImguiInput.DispatchEvent();
+	return flags & EventReturnFlags::NoOriginal;
 }
 
-void CMenu::OnImGui() const
+int CMenu::OnImGui() const
 {
 	if (!IsOpen())
-		return;
+		return 0;
 
 	ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_Once);
 	if (ImGui::Begin("Window"))
@@ -64,18 +64,20 @@ void CMenu::OnImGui() const
 		if (ImGui::Button("Eject"))
 			CreateThread(0, 0, &UnhookThread, 0, 0, 0);
 
-		(void) OnMenu.DispatchEvent();
+		OnMenu.DispatchEvent();
 	}
 	ImGui::End();
+	return 0;
 }
 
-void CMenu::OnWindowProc(CWindowHook::WndProcEvent::Param& p, HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+int CMenu::OnWindowProc(LRESULT& result, HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (AcceptMsg(hWnd, uMsg, lParam, wParam))
 	{
-		p.ReturnValue = TRUE;
-		p.Flags |= (EventReturnFlags::NoOriginal | EventReturnFlags::Skip);
+		result = TRUE;
+		return EventReturnFlags::NoOriginal | EventReturnFlags::Skip;
 	}
+	return 0;
 }
 
 bool CMenu::IsOpen() const {

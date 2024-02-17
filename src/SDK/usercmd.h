@@ -17,6 +17,7 @@
 //#include "imovehelper.h"
 #include "checksum_crc.h"
 #include <Base/Interfaces.h>
+#include <Base/Base.h>
 
 class bf_read;
 class bf_write;

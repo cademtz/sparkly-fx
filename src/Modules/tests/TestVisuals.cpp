@@ -12,8 +12,8 @@ static TestVisuals g_test_visuals;
 
 void TestVisuals::StartListening()
 {
-	Listen(EVENT_MENU, [this] { return OnMenu(); });
-	Listen(EVENT_DRAW, [this] { return OnDraw(); });
+	CMenu::OnMenu.Listen(&TestVisuals::OnMenu, this);
+	CDraw::OnDraw.Listen(&TestVisuals::OnDraw, this);
 }
 
 int TestVisuals::OnMenu()
