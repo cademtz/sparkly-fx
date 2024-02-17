@@ -11,8 +11,6 @@
 #include <Base/imgui_impl_win32.h>
 #include <SDK/vmatrix.h>
 
-ImDrawData data;
-
 void CDraw::StartListening()
 {
 	COverlayHook::OnPresent.ListenNoArgs(&CDraw::OnPresent, this);
@@ -96,23 +94,25 @@ int CDraw::OnPresent()
 
 		ImGui_ImplDX9_Init(g_hk_overlay.Device());
 		ImGui_ImplWin32_Init(Base::hWnd);
-
-		std::scoped_lock lock{m_mtx};
-		m_list = new ImDrawList(ImGui::GetDrawListSharedData());
-		data.DisplayPos = ImVec2(0, 0);
-		data.CmdLists.push_back(m_list);
-		data.CmdListsCount = 1;
 	}
 
 	ImGui_ImplDX9_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
+	if (!m_is_drawlist_ready)
+	{
+		m_imdrawlist_shared_data = *ImGui::GetDrawListSharedData();
+		m_is_drawlist_ready = true;
+	}
+
 	IDirect3DDevice9* device = g_hk_overlay.Device();
 
 	IDirect3DSurface9* prev_depth_buffer = nullptr;
 	IDirect3DStateBlock9* prev_state = nullptr;
 	device->CreateStateBlock(D3DSBT_ALL, &prev_state);
+	prev_state->Capture();
+	
 	device->GetDepthStencilSurface(&prev_depth_buffer);
 
 	device->SetRenderState(D3DRS_SRGBWRITEENABLE, FALSE);
@@ -138,7 +138,7 @@ int CDraw::OnPresent()
 
 	{
 		std::scoped_lock lock{m_mtx};
-		ImGui_ImplDX9_RenderDrawData(&data);
+		ImGui_ImplDX9_RenderDrawData(&m_imdrawdata);
 		m_frames = 0;
 	}
 
@@ -155,19 +155,24 @@ int CDraw::OnPresent()
 
 int CDraw::OnPaint()
 {
-	std::scoped_lock lock{m_mtx};
-
-	if (!m_list || m_frames > 0)
+	if (!m_is_drawlist_ready)
 		return 0;
 
-	m_list->_ResetForNewFrame();
-	m_list->PushTextureID(ImGui::GetIO().Fonts[0].TexID);
-	m_list->PushClipRectFullScreen();
-	data.TotalVtxCount = m_list->VtxBuffer.Size;
-	data.TotalIdxCount = m_list->IdxBuffer.Size;
-	data.DisplaySize = ImVec2(m_list->_Data->ClipRectFullscreen.z, m_list->_Data->ClipRectFullscreen.w);
+	std::scoped_lock lock{m_mtx};
+	if (m_frames > 0)
+		return 0;
+
+	m_imdrawlist._ResetForNewFrame();
+	m_imdrawlist.PushTextureID(ImGui::GetIO().Fonts[0].TexID);
+	m_imdrawlist.PushClipRectFullScreen();
 
 	(void) OnDraw.DispatchEvent();
+	m_imdrawdata.Clear();
+	m_imdrawdata.AddDrawList(&m_imdrawlist);
+	m_imdrawdata.Valid = true;
+	m_imdrawdata.DisplayPos = ImGui::GetMainViewport()->Pos;
+	m_imdrawdata.DisplaySize = ImGui::GetMainViewport()->Size;
+	m_imdrawdata.FramebufferScale = ImVec2(1,1);
 	m_frames++;
 
 	return 0;
