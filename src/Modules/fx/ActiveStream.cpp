@@ -117,7 +117,7 @@ bool ActiveStream::DrawDepth()
         device->SetDepthStencilSurface(nullptr);
         pixel_shader->ApplyConstants(&inverse_projection.m[0][0], m_depth_replacement_texture);
 
-        Helper::DrawTexturedRect(device, {0, 0, (float)surface_desc.Width, (float)surface_desc.Height});
+        Helper::DrawTexturedRect(device, {-1.f, -1.f, 2.f, 2.f});
     }
 
     // Re-render ImGui because we probably drew over the menu...

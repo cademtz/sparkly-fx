@@ -1,4 +1,6 @@
 #include "d3d9.h"
+#include "defer.h"
+#include <cassert>
 
 namespace Helper
 {
@@ -288,11 +290,13 @@ void DrawTexturedRect(IDirect3DDevice9* device, std::array<float, 4> screen_rect
 {
     // The following code is adapted from the Half-Life Advanced Effects project (advancedfx.org)
 
-    constexpr DWORD RECT_BUFFER_FVF = (D3DFVF_XYZRHW | D3DFVF_TEX1);
+    // NOTE(Cade): I AM GOING INSANE BECAUSE THE TEX COORDS ARE RANDOMLY FORCED TO 0.
+    //             My only solution is to use the color channel for texture coords. Awesome!
+    constexpr DWORD RECT_BUFFER_FVF = (D3DFVF_XYZ | D3DFVF_DIFFUSE);
     struct RectBufferVertex
     {
-        float x, y, z, rhw;
-        float u, v;
+        float x, y, z;
+        DWORD diffuse;
     };
 
     device->SetRenderState(D3DRS_SRGBWRITEENABLE, FALSE);
@@ -311,6 +315,7 @@ void DrawTexturedRect(IDirect3DDevice9* device, std::array<float, 4> screen_rect
     device->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
     device->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
     device->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+    device->SetTextureStageState(0, D3DTSS_TEXCOORDINDEX, 0);
     device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
     device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
     device->SetSamplerState(0, D3DSAMP_SRGBTEXTURE, FALSE);
@@ -328,13 +333,13 @@ void DrawTexturedRect(IDirect3DDevice9* device, std::array<float, 4> screen_rect
     device->SetTransform(D3DTS_PROJECTION, &proj_matrix);
 
     RectBufferVertex vertices[4] = {
-        {screen_rect[0] + screen_rect[2]*0, screen_rect[1] + screen_rect[3]*1, 0, 0, texture_rect[0] + texture_rect[2]*0, texture_rect[1] + texture_rect[3]*1},
-        {screen_rect[0] + screen_rect[2]*0, screen_rect[1] + screen_rect[3]*0, 0, 0, texture_rect[0] + texture_rect[2]*0, texture_rect[1] + texture_rect[3]*0},
-        {screen_rect[0] + screen_rect[2]*1, screen_rect[1] + screen_rect[3]*1, 0, 0, texture_rect[0] + texture_rect[2]*1, texture_rect[1] + texture_rect[3]*1},
-        {screen_rect[0] + screen_rect[2]*1, screen_rect[1] + screen_rect[3]*0, 0, 0, texture_rect[0] + texture_rect[2]*1, texture_rect[1] + texture_rect[3]*0},
+        {screen_rect[0] + screen_rect[2]*0, screen_rect[1] + screen_rect[3]*1, 0, D3DCOLOR_ARGB(0, 0, 0, 0)},
+        {screen_rect[0] + screen_rect[2]*0, screen_rect[1] + screen_rect[3]*0, 0, D3DCOLOR_ARGB(0, 0, 255, 0)},
+        {screen_rect[0] + screen_rect[2]*1, screen_rect[1] + screen_rect[3]*1, 0, D3DCOLOR_ARGB(0, 255, 0, 0)},
+        {screen_rect[0] + screen_rect[2]*1, screen_rect[1] + screen_rect[3]*0, 0, D3DCOLOR_ARGB(0, 255, 255, 0)},
     };
     device->SetFVF(RECT_BUFFER_FVF);
-    device->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, &vertices, sizeof(vertices[0]));
+    device->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, &vertices[0], sizeof(vertices[0]));
 }
 
 }
