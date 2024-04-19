@@ -14,6 +14,8 @@ void VideoModeHook::Hook()
     UINT_PTR videomode_ref = 0;
     size_t videomode_offset = 0;
 #ifdef _M_AMD64 
+    videomode_ref = Sig::FindPattern("engine.dll", "48 8B 0D ? ? ? ? 48 8D 54 24 ? 44 8B 05 ? ? ? ? ");
+    videomode_offset = 3;
 #elif defined(_M_IX86)
     videomode_ref = Sig::FindPattern("engine.dll", "8B 0D ? ? ? ? 8B 01 FF 50 20 8B 4D 0C ");
     videomode_offset = 2;
