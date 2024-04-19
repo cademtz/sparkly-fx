@@ -44,7 +44,7 @@ void __stdcall CModelRenderHook::Hooked_DrawModelExecute(UNCRAP const DrawModelS
 
     {
         std::lock_guard lock(g_hk_model_render.m_drawn_models_mutex);
-        g_hk_model_render.m_drawn_modelnames.emplace(state.m_pStudioHdr->pszName());
+        g_hk_model_render.m_drawn_modelnames.emplace(state.m_pStudioHdr->name);
     }
 
     int flags = g_hk_model_render.PushEvent(EVENT_PRE_DRAW_MODEL_EXECUTE);
