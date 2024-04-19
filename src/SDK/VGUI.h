@@ -50,7 +50,13 @@ namespace vgui
 {
 	// handle to an internal vgui panel
 	// this is the only handle to a panel that is valid across dll boundaries
+#ifndef _M_AMD64
 	typedef unsigned int VPANEL;
+#else
+	// FIXME(Cade): This is value is pointer-sized in the 64-bit TF2 update.
+	// This may screw up GMod suppport if merged into xsdk-base.
+	typedef void* VPANEL;
+#endif
 
 	// handles to vgui objects
 	// NULL values signify an invalid value
