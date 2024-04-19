@@ -21,7 +21,6 @@ You can chat with fellow TF2 video editors (including me) in the Castellum Disco
 [![Discord Shield](https://discordapp.com/api/guilds/405422047221645312/widget.png?style=shield)](https://discord.gg/f5QumD4hE4)
 
 Below are the original README contents for xsdk-base.
-When configuring CMake, the `-A Win32` flag is required for Team Fortress 2.
 
 # xsdk-base
 An SDK compatible with multiple Windows versions of Source Engine.

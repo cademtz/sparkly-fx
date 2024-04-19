@@ -12,6 +12,10 @@ Non-bugs or unrelated bugs (preview artifacts or TF2 bugs):
     - Fix: Use the HUD setting in the Camera tweak.
 
 Real bugs *(should get fixed)*:
+- Sometimes in 64-bit, the depth buffer and other shaders appear black in the final video
+    - Cause: Unknown
+    - Hack: Re-arrange the order of your streams and play with your settings. The bug is not very random.
+    - Fix: Unknown
 - The recording indicator may appear in saved movie frames.
     - Cause: Screen is sometimes not cleared before next frame, or indicator draws too early.
     - Hack: Disable this in the "Recording" settings.
