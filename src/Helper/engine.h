@@ -52,6 +52,11 @@ namespace Helper
         std::mutex m_mutex;
     };
 
+    /// @brief Register all of our own convars. Must run on game thread.
+    void RegisterAllCvars();
+    /// @brief Unregister all of our own convars. Must run on game thread.
+    void UnregisterAllCvars();
+
     /// @brief Format and execute the command immediately (not thread-safe)
     void ExecuteClientCmd(const char* fmt, ...);
     /// @brief Format and execute the command in the next frame (thread-safe)

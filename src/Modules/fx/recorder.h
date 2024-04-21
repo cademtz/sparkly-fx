@@ -8,6 +8,7 @@
 #include <vector>
 #include <unordered_map>
 #include <mutex>
+#include <atomic>
 #include <condition_variable>
 #include <Streams/movie.h>
 #include <Streams/videowriter.h>
@@ -24,10 +25,10 @@ public:
 
     bool IsRecordingMovie();
     bool ShouldRecordFrame();
-    /// @brief Signal to start the movie
-    bool StartMovie() { m_is_recording = true; }
-    /// @brief Signal to stop the movie
-    void StopMovie() { m_is_recording = false; }
+    void StartMovie() { return StartMovie(m_movie_path); }
+    void StartMovie(const std::filesystem::path& path);
+    void StopMovie();
+    void ToggleRecording(const std::filesystem::path& path);
 
 private:
     int OnPostImguiInput();
@@ -43,7 +44,6 @@ private:
     /// @brief Write the next frame for the stream
     /// @param stream If there are no streams, use `nullptr`
     void WriteFrame(std::shared_ptr<Stream> stream);
-    void ToggleRecording();
     /// @brief Attempt to setup the movie.
     /// @details Only this call from the game thread.
     /// @return True if the movie is created or already exists
@@ -62,8 +62,6 @@ private:
     // === Menu options === //
 
     Helper::KeyBind m_record_bind;
-    /// @brief This is a signal to start/stop the movie in the game thread
-    bool m_is_recording = false;
     bool m_record_indicator = false;
     /// @brief Resume the demo when recording starts
     bool m_autoresume_demo = true;
@@ -77,7 +75,26 @@ private:
     EncoderConfig m_videoconfig;
     /// @brief The root directory to contain all movie files
     std::filesystem::path m_movie_path;
-    /// @brief The current movie
+
+    // === Threaded movie state === //
+
+    /// @brief Protects all members under the "Threaded movie state" comment
+    std::mutex m_movie_mtx;
+    /// @brief Path of the next movie to record
+    std::filesystem::path m_next_movie_path;
+    /// @brief Signal to stop the current movie in the game thread
+    bool m_do_stop_recording = false;
+    /// @brief Signal to start a recording with @ref m_next_movie_path in the game thread
+    bool m_do_start_recording = false;
+    std::atomic<bool> m_is_recording_ = false;
+
+    // === Hidden movie state === //
+    
+    /**
+     * @brief The current movie. Equal to `std::nullopt` while not recording.
+     * 
+     * Must be exclusively accessed by the game thread.
+     */
     std::optional<Movie> m_movie;
 };
 

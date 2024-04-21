@@ -96,6 +96,23 @@ void RestoringConVar::StoreOldValue()
     }
 }
 
+class DummyCvarAccess : public ConCommandBase {
+public:
+    static ConCommandBase* GetCvarList() { return s_pConCommandBases; }
+};
+
+void RegisterAllCvars() {
+    ConCommandBase* cvar = DummyCvarAccess::GetCvarList();
+    while (cvar)
+        Interfaces::cvar->RegisterConCommand(cvar);
+}
+
+void UnregisterAllCvars() {
+    ConCommandBase* cvar = DummyCvarAccess::GetCvarList();
+    while (cvar)
+        Interfaces::cvar->UnregisterConCommand(cvar);
+}
+
 void ExecuteClientCmd(const char* fmt, ...)
 {
     char buffer[512];

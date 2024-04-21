@@ -217,9 +217,9 @@ public:
 	virtual ConCommand*	FindCommand( const char *name ) = 0;
 	virtual ConCommandBase*	GetCommands( void ) = 0;
 	
-	virtual int AllocateDLLIdentifier() { assert(0 && "Not implemeneted"); return 0; }
-	virtual void ProcessQueuedMaterialThreadConVarSets() { assert(0 && "Not implemented"); }
-	virtual int UnregisterConCommands(int) { assert(0 && "Not implemeneted"); return 0; }
+	virtual int AllocateDLLIdentifier() = 0;
+	virtual int ProcessQueuedMaterialThreadConVarSets() = 0;
+	virtual void UnregisterConCommands(int) = 0;
 	virtual bool IsMaterialThreadSetAllowed() { assert(0 && "Not implemented"); return false; }
 	virtual void QueueMaterialThreadSetValue(ConVar* pConVar, const char* pValue) { assert(0 && "Not implemented"); }
     virtual void QueueMaterialThreadSetValue(ConVar* pConVar, int nValue) { assert(0 && "Not implemented"); }

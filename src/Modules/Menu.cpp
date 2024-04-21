@@ -2,6 +2,7 @@
 #include <Base/Base.h>
 #include <Hooks/WindowHook.h>
 #include "Draw.h"
+#include <SDK/convar.h>
 
 #include <imgui/backends/imgui_impl_dx9.h>
 #include <imgui/imgui_internal.h>
@@ -22,6 +23,7 @@ void CMenu::StartListening()
 DWORD WINAPI UnhookThread(LPVOID)
 {
 	printf("Unhooking...\n");
+	ConVar_Unregister();
 	CBaseEvent::ShutdownAll();
 	CBaseHook::UnHookAll();
 

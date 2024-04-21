@@ -19,6 +19,7 @@
 #include <SDK/KeyValues.h>
 #include <SDK/ivrenderview.h>
 #include <SDK/view_shared.h>
+#include <SDK/convar.h>
 #include <cstdint>
 #include <varargs.h>
 #include <chrono>
@@ -30,6 +31,21 @@ static const std::string DEFAULT_STREAM_NAME = "video";
 
 static std::filesystem::path game_dir;
 static std::filesystem::path working_dir;
+static ConCommand sf_recorder_start("sf_recorder_start",
+    [](const CCommand& cmd) {
+        if (cmd.ArgC() >= 2)
+            g_recorder.StartMovie(cmd.Arg(1));
+        else // Use default path
+            g_recorder.StartMovie(cmd.Arg(1));
+    },
+    "SparklyFX: Stop the current recording and start a new one.\n"
+    "usage: sf_recorder_start [path]\n"
+    "The path, if unspecified, is read from the config or GUI.\n"
+);
+static ConCommand sf_recorder_stop("sf_recorder_stop",
+    [] { g_recorder.StopMovie(); },
+    "SparklyFX: Stop the current recording"
+);
 
 void CRecorder::StartListening()
 {
@@ -85,7 +101,7 @@ int CRecorder::OnPostImguiInput()
     if (m_record_bind.Poll() && !g_menu.IsOpen())
     {
         if (!Interfaces::engine->Con_IsVisible()) // Don't active the keybind while typing in the console
-            ToggleRecording();
+            ToggleRecording(m_movie_path);
     }
     return 0;
 }
@@ -136,7 +152,7 @@ int CRecorder::OnMenu()
         }
 
         if (ImGui::Button(IsRecordingMovie() ? "Stop" : "Start"))
-            ToggleRecording();
+            ToggleRecording(m_movie_path);
         
         m_record_bind.OnMenu("Record hotkey");
         
@@ -169,7 +185,8 @@ int CRecorder::OnMenu()
             ImGui::TreePop();
         }
 
-        if (m_is_recording)
+        bool was_recording = m_is_recording_; // Value could change. Store it here.
+        if (was_recording)
             ImGui::BeginDisabled();
 
         if (m_movie_path.empty())
@@ -205,7 +222,7 @@ int CRecorder::OnMenu()
         float framepool_ram = screen_w * screen_h * 4;
         framepool_ram = framepool_ram * m_framepool_size / (1024 * 1024);
         
-        if (m_is_recording)
+        if (was_recording)
             ImGui::EndDisabled();
         
         // Disabled text has less visual clutter
@@ -262,11 +279,34 @@ int CRecorder::OnConfigLoad()
 }
 
 bool CRecorder::IsRecordingMovie() {
-    return m_is_recording;
+    return m_is_recording_;
 }
 
 bool CRecorder::ShouldRecordFrame() {
-    return IsRecordingMovie() && !Interfaces::engine->Con_IsVisible() && m_movie;
+    return IsRecordingMovie() && !Interfaces::engine->Con_IsVisible();
+}
+
+void CRecorder::StartMovie(const std::filesystem::path& path)
+{
+    std::scoped_lock lock{m_movie_mtx};
+    m_next_movie_path = path;
+    m_do_start_recording = true;
+}
+void CRecorder::StopMovie()
+{
+    std::scoped_lock lock{m_movie_mtx};
+    m_do_stop_recording = true;
+}
+void CRecorder::ToggleRecording(const std::filesystem::path& path)
+{
+    std::scoped_lock lock{m_movie_mtx};
+    if (m_is_recording_)
+    {
+        m_next_movie_path = path;
+        m_do_start_recording = true;
+    }
+    else
+        m_do_stop_recording = true;
 }
 
 bool CRecorder::SetupMovie()
@@ -303,7 +343,7 @@ bool CRecorder::SetupMovie()
         }
 
         m_movie.emplace(
-            screen_w, screen_h, std::filesystem::path{m_movie_path}, *stream_list,
+            screen_w, screen_h, std::filesystem::path{m_next_movie_path}, *stream_list,
             m_framepool_size, m_videoconfig
         );
     }
@@ -395,16 +435,23 @@ int CRecorder::OnFrameStageNotify()
     if (stage == FRAME_START)
     {
         // Start/stop the movie
-        if (m_is_recording != m_movie.has_value())
+        ConVar_Register();
+
+        std::scoped_lock lock{m_movie_mtx};
+        if (m_do_stop_recording)
         {
-            if (m_is_recording)
-            {
-                if (!SetupMovie())
-                    StopMovie();
-            }
-            else
+            m_do_stop_recording = false;
+            CleanupMovie();
+        }
+
+        if (m_do_start_recording)
+        {
+            m_do_start_recording = false;
+            if (!SetupMovie())
                 CleanupMovie();
         }
+        
+        m_is_recording_ = m_movie.has_value();
         return 0;
     }
 
@@ -489,8 +536,4 @@ int CRecorder::OnReadPixels()
     if (IsRecordingMovie())
         return Return_NoOriginal;
     return 0;
-}
-
-void CRecorder::ToggleRecording() {
-    m_is_recording = !m_is_recording;
 }
