@@ -36,7 +36,7 @@ static ConCommand sf_recorder_start("sf_recorder_start",
         if (cmd.ArgC() >= 2)
             g_recorder.StartMovie(cmd.Arg(1));
         else // Use default path
-            g_recorder.StartMovie(cmd.Arg(1));
+            g_recorder.StartMovie();
     },
     "Usage: sf_recorder_start [path]\n"
     "Stop any current recording and start a new one.\n"
@@ -301,12 +301,11 @@ void CRecorder::ToggleRecording(const std::filesystem::path& path)
 {
     std::scoped_lock lock{m_movie_mtx};
     if (m_is_recording_)
-    {
-        m_next_movie_path = path;
-        m_do_start_recording = true;
-    }
-    else
         m_do_stop_recording = true;
+    else {
+        m_do_start_recording = true;
+        m_next_movie_path = path;
+    }
 }
 
 bool CRecorder::SetupMovie()
