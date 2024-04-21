@@ -434,8 +434,10 @@ int CRecorder::OnFrameStageNotify()
 
     if (stage == FRAME_START)
     {
-        // Start/stop the movie
+        // TODO(Cade): Move this out of here and into the base!!!
         ConVar_Register();
+
+        // Start/stop the movie
 
         std::scoped_lock lock{m_movie_mtx};
         if (m_do_stop_recording)
