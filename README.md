@@ -14,6 +14,8 @@ Usage:
   *(A console message from Sparkly FX will appear if it loaded correctly.)*
 - Alternatively, you may use [HLAE's loader](https://www.advancedfx.org/).
 
+Console commands: Read [console-commands.md](console-commands.md).
+
 Please read [known-bugs.md](known-bugs.md). This software is in early development.
 
 You can chat with fellow TF2 video editors (including me) in the Castellum Discord server:
