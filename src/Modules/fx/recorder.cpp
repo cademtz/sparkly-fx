@@ -38,13 +38,13 @@ static ConCommand sf_recorder_start("sf_recorder_start",
         else // Use default path
             g_recorder.StartMovie(cmd.Arg(1));
     },
-    "SparklyFX: Stop the current recording and start a new one.\n"
-    "usage: sf_recorder_start [path]\n"
+    "Usage: sf_recorder_start [path]\n"
+    "Stop any current recording and start a new one.\n"
     "The path, if unspecified, is read from the config or GUI.\n"
 );
 static ConCommand sf_recorder_stop("sf_recorder_stop",
     [] { g_recorder.StopMovie(); },
-    "SparklyFX: Stop the current recording"
+    "Stop the current recording"
 );
 
 void CRecorder::StartListening()
