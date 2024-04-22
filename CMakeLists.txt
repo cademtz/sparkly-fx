@@ -13,6 +13,12 @@ target_include_directories(xsdk-base PRIVATE src/ imgui/ ${CMAKE_CURRENT_SOURCE_
 target_compile_definitions(xsdk-base PRIVATE UNICODE)
 add_subdirectory(src)
 
+if(CMAKE_GENERATOR_PLATFORM STREQUAL "Win32")
+    set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "xsdk-base")
+else()
+    set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "xsdk-base64")
+endif()
+
 set(XSDK_BUILD_EXAMPLES 0 CACHE STRING "Build example modules and tests that can be used in-game.")
 
 # Dependencies
