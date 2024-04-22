@@ -138,7 +138,7 @@ int CRecorder::OnMenu()
 {   
     if (ImGui::CollapsingHeader("Recording"))
     {
-        bool has_errors = !VideoLog::GetError()->empty();
+        bool has_errors = VideoLog::HasErrors();
         if (has_errors)
         {
             ImGui::Text("Error log:"); ImGui::SameLine();
@@ -146,7 +146,7 @@ int CRecorder::OnMenu()
                 VideoLog::Clear();
             
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
-            auto locked_error_log = VideoLog::GetError();
+            auto locked_error_log = VideoLog::GetLog();
             ImGui::InputTextMultiline("##error_log",
                 locked_error_log->data(), locked_error_log->length(), ImVec2(0,0), ImGuiInputTextFlags_ReadOnly
             );

@@ -34,12 +34,13 @@ void VideoLog::Append(std::string&& text) {
 }
 
 void VideoLog::AppendError(std::string&& text) {
-    *GetError() += text;
+    *GetLog() += text;
     Append(std::move(text));
+    has_errors = true;
 }
 
 void VideoLog::Clear() {
-    GetError()->clear();
+    GetLog()->clear();
     GetConsoleQueue()->clear();
 }
 

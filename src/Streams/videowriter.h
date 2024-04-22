@@ -38,16 +38,21 @@ public:
         AppendError(Helper::sprintf(fmt, std::forward<TArgs>(args)...));
     }
     static void Clear();
-    static Helper::LockedRef<std::string> GetError() { return Helper::LockedRef<std::string>(error, mutex); }
-    /// @brief Lines are appended here to be output by the recorder in the game thread
+    static Helper::LockedRef<std::string> GetLog() { return Helper::LockedRef<std::string>(log, mutex); }
+    /// @brief Lines are appended here to be removed and printed by the recorder in the game thread
     static Helper::LockedRef<ConsoleQueue> GetConsoleQueue() {
         return Helper::LockedRef<ConsoleQueue>(console_queue, mutex);
     }
+    static bool HasErrors() {
+        std::scoped_lock lock{mutex};
+        return has_errors;
+    }
 
 private:
-    static inline std::string error;
+    static inline std::string log;
     static inline ConsoleQueue console_queue;
     static inline std::mutex mutex;
+    static inline bool has_errors = false;
 };
 
 /**
