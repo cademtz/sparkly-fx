@@ -141,7 +141,7 @@ int CRecorder::OnMenu()
         {
             ImGui::Text("Error log:"); ImGui::SameLine();
             if (ImGui::Button("Clear"))
-                VideoLog::ClearError();
+                VideoLog::Clear();
             
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
             auto locked_error_log = VideoLog::GetError();
@@ -308,14 +308,14 @@ void CRecorder::ToggleRecording(const std::filesystem::path& path)
     }
 }
 
-bool CRecorder::SetupMovie()
+bool CRecorder::SetupMovie(std::filesystem::path&& path)
 {
     if (m_movie)
         return true;
     
-    VideoLog::ClearError();
+    VideoLog::Clear();
 
-    if (m_movie_path.empty())
+    if (path.empty())
     {
         VideoLog::AppendError("No folder was given for recording\n");
         return false;
@@ -342,7 +342,7 @@ bool CRecorder::SetupMovie()
         }
 
         m_movie.emplace(
-            screen_w, screen_h, std::filesystem::path{m_next_movie_path}, *stream_list,
+            screen_w, screen_h, std::move(path), *stream_list,
             m_framepool_size, m_videoconfig
         );
     }
@@ -436,6 +436,14 @@ int CRecorder::OnFrameStageNotify()
         // TODO(Cade): Move this out of here and into the base!!!
         ConVar_Register();
 
+        // Print messages that were queued for the game thread
+        {
+            Helper::LockedRef<VideoLog::ConsoleQueue> queue = VideoLog::GetConsoleQueue();
+            for (std::string& str : *queue)
+                Helper::ClientCmd_Unrestricted("echo %s", str.c_str());
+            queue->clear();
+        }
+
         // Start/stop the movie
 
         std::scoped_lock lock{m_movie_mtx};
@@ -448,7 +456,9 @@ int CRecorder::OnFrameStageNotify()
         if (m_do_start_recording)
         {
             m_do_start_recording = false;
-            if (!SetupMovie())
+            CleanupMovie();
+            
+            if (!SetupMovie(std::move(m_next_movie_path)))
                 CleanupMovie();
         }
         

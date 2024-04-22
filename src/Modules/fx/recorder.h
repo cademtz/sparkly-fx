@@ -47,7 +47,7 @@ private:
     /// @brief Attempt to setup the movie.
     /// @details Only this call from the game thread.
     /// @return True if the movie is created or already exists
-    bool SetupMovie();
+    bool SetupMovie(std::filesystem::path&& path);
     ///@brief Stop the movie, wait for writing to finish, and clean up.
     ///@details Only call this from the game thread.
     void CleanupMovie();

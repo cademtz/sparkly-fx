@@ -5,6 +5,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <string_view>
+#include <vector>
 #include <unordered_set>
 #include <Helper/d3d9.h>
 #include <Helper/threading.h>
@@ -21,18 +22,31 @@ namespace ffmpipe { class Pipe; }
 class VideoLog
 {
 public:
+    using ConsoleQueue = std::vector<std::string>;
+
+    static void Append(std::string&& text);
+
     /// @brief Append text to the error log. Newlines should be added.
-    static void AppendError(std::string_view text) { *GetError() += text; }
+    static void AppendError(std::string&& text);
+    /// @brief Append text to the error log. Newlines should be added.
+    static void AppendError(std::string_view text) {
+        return AppendError(std::string(text));
+    }
     /// @brief Append text to the error log. Newlines should be added.
     template <class... TArgs>
     static void AppendError(const char* fmt, TArgs&&... args) {
         AppendError(Helper::sprintf(fmt, std::forward<TArgs>(args)...));
     }
-    static void ClearError() { GetError()->clear(); }
+    static void Clear();
     static Helper::LockedRef<std::string> GetError() { return Helper::LockedRef<std::string>(error, mutex); }
+    /// @brief Lines are appended here to be output by the recorder in the game thread
+    static Helper::LockedRef<ConsoleQueue> GetConsoleQueue() {
+        return Helper::LockedRef<ConsoleQueue>(console_queue, mutex);
+    }
 
 private:
     static inline std::string error;
+    static inline ConsoleQueue console_queue;
     static inline std::mutex mutex;
 };
 

@@ -27,6 +27,22 @@ const EncoderConfig::TypeDesc* EncoderConfig::TYPE_QOI = &type_descs[0];
 const EncoderConfig::TypeDesc* EncoderConfig::TYPE_PNG = &type_descs[1];
 const EncoderConfig::TypeDesc* EncoderConfig::TYPE_FFMPEG = &type_descs[2];
 
+void VideoLog::Append(std::string&& text) {
+    if (!text.empty() && text.back() == '\n')
+        text.pop_back();
+    GetConsoleQueue()->emplace_back(std::move(text));
+}
+
+void VideoLog::AppendError(std::string&& text) {
+    *GetError() += text;
+    Append(std::move(text));
+}
+
+void VideoLog::Clear() {
+    GetError()->clear();
+    GetConsoleQueue()->clear();
+}
+
 static std::vector<EncoderConfig::FFmpegPreset> MakeFFmpegPresets()
 {
     std::vector<EncoderConfig::FFmpegPreset> presets;
