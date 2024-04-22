@@ -33,8 +33,10 @@ static std::filesystem::path game_dir;
 static std::filesystem::path working_dir;
 static ConCommand sf_recorder_start("sf_recorder_start",
     [](const CCommand& cmd) {
-        if (cmd.ArgC() >= 2)
+        if (cmd.ArgC() == 2) // Path was most likely passed in quotes, without spaces
             g_recorder.StartMovie(cmd.Arg(1));
+        else if (cmd.ArgC() > 2) // Path was most likely passed without quotes
+            g_recorder.StartMovie(cmd.ArgS());
         else // Use default path
             g_recorder.StartMovie();
     },
