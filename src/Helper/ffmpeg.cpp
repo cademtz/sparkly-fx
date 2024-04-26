@@ -17,8 +17,10 @@ static std::mutex g_default_path_mutex;
 
 stdfs::path GetDefaultPath()
 {
-    std::scoped_lock lock(g_default_path_mutex);
-    return g_default_path;
+    const auto& list = GetDefaultPaths();
+    if (list.empty())
+        return {};
+    return list.front();
 }
 void SetDefaultPath(stdfs::path&& path)
 {
@@ -109,6 +111,11 @@ std::vector<std::filesystem::path> ScanForExecutables()
     }
 
     return results;
+}
+
+const std::vector<stdfs::path>& GetDefaultPaths() {
+    static std::vector<stdfs::path> paths = ScanForExecutables();
+    return paths;
 }
 
 #if defined(_WIN32)

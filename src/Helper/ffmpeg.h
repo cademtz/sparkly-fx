@@ -16,11 +16,12 @@ namespace Helper::FFmpeg
  * The result is a list sorted by most relevance, where paths associated with the game and with Sparkly FX are most relevant.
  */
 std::vector<std::filesystem::path> ScanForExecutables();
-
 /**
- * @brief Get the default/preferred FFmpeg path. Thread-safe.
- * @return A blank path if no default is set.
- * @see SetDefaultPath
+ * @brief Gets the result of @ref ScanForExecutables once and returns the resulting global
+ */
+const std::vector<std::filesystem::path>& GetDefaultPaths();
+/**
+ * @brief Returns the first result from @ref GetDefaultPaths
  */ 
 std::filesystem::path GetDefaultPath();
 /// @brief Set the default/preferred FFmpeg path. Thread-safe.

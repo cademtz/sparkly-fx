@@ -92,6 +92,10 @@ static std::vector<EncoderConfig::FFmpegPreset> MakeFFmpegPresets()
     return presets;
 }
 
+EncoderConfig::EncoderConfig() {
+    ffmpeg_path = Helper::FFmpeg::GetDefaultPath();
+}
+
 const std::vector<EncoderConfig::FFmpegPreset>& EncoderConfig::GetFFmpegPresets()
 {
     static auto presets = MakeFFmpegPresets();
@@ -135,9 +139,9 @@ void EncoderConfig::ShowImguiControls()
     else if (type == EncoderConfig::TYPE_FFMPEG)
     {
         static const std::vector<FFmpegPreset> ffmpeg_presets = MakeFFmpegPresets();
-        static auto ffmpeg_path_list = Helper::FFmpeg::ScanForExecutables();
+        const auto& ffmpeg_path_list = Helper::FFmpeg::GetDefaultPaths();
 
-        std::filesystem::path ffmpeg_path = Helper::FFmpeg::GetDefaultPath();
+        //std::filesystem::path ffmpeg_path = Helper::FFmpeg::GetDefaultPath();
         bool has_ffmpeg = !ffmpeg_path.empty();
 
         if (has_ffmpeg)
@@ -209,7 +213,7 @@ void EncoderConfig::ShowImguiControls()
             {
                 auto optional_path = Helper::OpenFileDialog(L"Select an FFmpeg executable", nullptr, COM_EXE_FILTER);
                 if (optional_path)
-                    Helper::FFmpeg::SetDefaultPath(std::move(*optional_path));
+                    ffmpeg_path = std::move(*optional_path);
             }
 
             if (ImGui::BeginListBox("Executables", Helper::CalcListBoxSize(ffmpeg_path_list.size())))
@@ -234,7 +238,11 @@ void EncoderConfig::FromJson(const nlohmann::json* j)
     Helper::FromJson(j, "framerate", framerate);
     Helper::FromJson(j, "ffmpeg_output_args", ffmpeg_output_args);
     Helper::FromJson(j, "ffmpeg_output_ext", ffmpeg_output_ext);
+    Helper::FromJson(j, "ffmpeg_path", ffmpeg_path);
     Helper::FromJson(j, "png_compression", safe_png_compression);
+
+    if (ffmpeg_path.empty())
+        ffmpeg_path = Helper::FFmpeg::GetDefaultPath();
     
     safe_png_compression = max(safe_png_compression, 0);
     safe_png_compression = min(safe_png_compression, 7);
@@ -257,6 +265,7 @@ nlohmann::json EncoderConfig::ToJson() const
         {"framerate", framerate},
         {"ffmpeg_output_args", ffmpeg_output_args},
         {"ffmpeg_output_ext", ffmpeg_output_ext},
+        {"ffmpeg_path", ffmpeg_path},
         {"png_compression", png_compression},
     };
 }

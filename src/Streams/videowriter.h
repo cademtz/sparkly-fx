@@ -74,6 +74,8 @@ public:
         FFmpegPreset(std::string name, std::string desc, std::string args, std::string file_ext)
             : name(name), desc(desc), args(args), file_ext(file_ext) {}
     };
+
+    EncoderConfig();
     
     static const TypeDesc* Types();
     static size_t NumTypes();
@@ -89,6 +91,7 @@ public:
     std::string ffmpeg_output_args = "-c:v huffyuv";
     /// @brief The output file extension to use in FFmpeg
     std::string ffmpeg_output_ext = "avi";
+    std::filesystem::path ffmpeg_path;
     /// @brief A value between 0 and 9
     int png_compression = 1;
 
