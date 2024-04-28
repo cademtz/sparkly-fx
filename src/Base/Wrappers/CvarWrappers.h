@@ -15,6 +15,9 @@ public:
     
     void* Inst() override { return m_int; }
 
+    int AllocateDLLIdentifier() override;
+    int ProcessQueuedMaterialThreadConVarSets() override;
+    void UnregisterConCommands(int) override;
     void RegisterConCommand(ConCommandBase* pCommandBase) override;
     void UnregisterConCommand(ConCommandBase* pCommandBase) override;
     ConVar* FindVar (const char *var_name) override;
@@ -31,6 +34,9 @@ public:
     
     void* Inst() override { return m_int; }
 
+    int AllocateDLLIdentifier() override;
+    int ProcessQueuedMaterialThreadConVarSets() override;
+    void UnregisterConCommands(int) override;
     void RegisterConCommand(ConCommandBase* pCommandBase) override;
     void UnregisterConCommand(ConCommandBase* pCommandBase) override;
     ConVar* FindVar (const char *var_name) override;
