@@ -221,7 +221,7 @@ static void DumpFrame(std::stringstream& str, HANDLE process, uintptr_t addr) {
 	line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
 	if (SymGetLineFromAddr(process, addr, &lineOffset, &line)) {
 		str << "  line " << line.LineNumber << " in ";// << line.FileName << std::endl;
-		for (decltype(line.FileName) ch = line.FileName; ch != 0; ++ch)
+		for (decltype(line.FileName) ch = line.FileName; *ch != 0; ++ch)
 			str << (char)ch;
 		str << std::endl;
 	}
