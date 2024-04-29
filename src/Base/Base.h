@@ -11,7 +11,7 @@ enum class EAppID
 	HL2 = 220,
 	CSS = 240,
 	HL2DM = 320,
-	Poral = 400,
+	Portal = 400,
 	TF2 = 440,
 	L4D = 500,
 	L4D2 = 550,
