@@ -586,7 +586,7 @@ void MaterialTweak::SubclassFromJson(const nlohmann::json* json)
     
     if (j_groups && j_groups->is_array())
     {
-        memset(groups.data(), sizeof(groups), 0);
+        groups.fill(false);
         for (auto& j_str : *j_groups)
         {
             size_t index;
