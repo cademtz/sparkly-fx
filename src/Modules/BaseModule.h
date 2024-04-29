@@ -5,22 +5,20 @@
 class CModule
 {
 public:
-	CModule() { m_modules.push_back(this); }
-	bool IsActive() const { return !m_failed_requirements; }
-	virtual ~CModule() { m_modules.remove(this); }
+    CModule() { GetModuleList().push_back(this); }
+    bool IsActive() const { return !m_failed_requirements; }
+    virtual ~CModule() { GetModuleList().remove(this); }
 
-	static void StartAll()
-	{
-		for (auto mod : m_modules)
-			mod->StartListening();
-	}
+    static void StartAll()
+    {
+        for (auto mod : GetModuleList())
+            mod->StartListening();
+    }
 
 protected:
-	virtual void StartListening() = 0;
-
-	void Require();
+    virtual void StartListening() = 0;
 
 private:
-	static inline std::list<CModule*> m_modules;
-	bool m_failed_requirements = false;
+    static std::list<CModule*>& GetModuleList();
+    bool m_failed_requirements = false;
 };

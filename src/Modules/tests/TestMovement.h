@@ -27,7 +27,7 @@ public:
 	const QAngle& GetCameraAng() { return m_freecamAng; }
 
 private:
-	int OnMenu();
+	int OnWindow();
 	int OnDraw();
 	int OnCreateMove(bool& result, float, class CUserCmd* cmd);
 	int OnOverrideView(class CViewSetup* pViewSetup);

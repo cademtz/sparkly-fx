@@ -4,7 +4,7 @@
 #include <SDK/gametrace.h>
 #include <SDK/IEngineTrace.h>
 #include <Modules/Draw.h>
-#include <Modules/Menu.h>
+#include "TestWindow.h"
 #include "TestMovement.h"
 #include <string>
 
@@ -12,11 +12,11 @@ static TestVisuals g_test_visuals;
 
 void TestVisuals::StartListening()
 {
-	CMenu::OnMenu.Listen(&TestVisuals::OnMenu, this);
+	TestWindow::OnWindow.Listen(&TestVisuals::OnWindow, this);
 	CDraw::OnDraw.Listen(&TestVisuals::OnDraw, this);
 }
 
-int TestVisuals::OnMenu()
+int TestVisuals::OnWindow()
 {
 	if (ImGui::CollapsingHeader("Visuals test"))
 	{

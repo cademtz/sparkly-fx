@@ -9,7 +9,7 @@
 #include <Base/Entity.h>
 #include <stdio.h>
 #include <stack>
-#include <Modules/Menu.h>
+#include "TestWindow.h"
 #include <Modules/Draw.h>
 
 #define MAX_TRACE 10000
@@ -18,13 +18,13 @@ static CTraceFilterWorldOnly worldTraceFilter;
 
 void TestMovement::StartListening()
 {
-	CMenu::OnMenu.ListenNoArgs(&TestMovement::OnMenu, this);
+	TestWindow::OnWindow.ListenNoArgs(&TestMovement::OnWindow, this);
 	CDraw::OnDraw.ListenNoArgs(&TestMovement::OnDraw, this);
 	CClientHook::OnCreateMove.Listen(&TestMovement::OnCreateMove, this);
 	CClientHook::OnOverrideView.Listen(&TestMovement::OnOverrideView, this);
 }
 
-int TestMovement::OnMenu()
+int TestMovement::OnWindow()
 {
 	if (ImGui::CollapsingHeader("Movement"))
 	{

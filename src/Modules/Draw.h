@@ -8,6 +8,9 @@
 
 class Vector;
 
+/**
+ * @brief Runs ImGui and allows separate drawing on the game thread
+ */
 class CDraw : public CModule
 {
 public:
@@ -30,6 +33,7 @@ public:
 
 	static inline ImGuiEvent OnImGui;
 	static inline DrawEvent OnDraw;
+
 private:
 	int OnPresent();
 	int OnPaint();

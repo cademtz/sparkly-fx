@@ -1,25 +1,24 @@
 #pragma once
 
-#include <Modules/Menu.h>
+#include "TestWindow.h"
 #include <imgui.h>
 
 class TestCrash : public CModule
 {
 public:
-	TestCrash() { }
-	void StartListening() override {
-        CMenu::OnMenu.Listen(&TestCrash::OnMenu, this);
+    void StartListening() override {
+        TestWindow::OnWindow.Listen(&TestCrash::OnWindow, this);
     }
 
 private:
-	int OnMenu()
+    int OnWindow()
     {
         if (ImGui::CollapsingHeader("Crash test"))
         {
             if (ImGui::Button("Crash"))
             {
-            	volatile int* evil = 0;
-            	*evil = 99;
+                volatile int* evil = 0;
+                *evil = 99;
             }
         }
         return 0;
