@@ -47,8 +47,8 @@ void DevModule::StartListening()
 {
     MainWindow::OnWindow.Listen(&DevModule::OnMenu, this);
     CDraw::OnDraw.Listen(&DevModule::OnDraw, this);
-    COverlayHook::OnReset.Listen(&DevModule::OnReset, this);
-    COverlayHook::OnPresent.Listen(&DevModule::OnPresent, this);
+    COverlayHook::OnReset.ListenNoArgs(&DevModule::OnReset, this);
+    COverlayHook::OnPresent.ListenNoArgs(&DevModule::OnPresent, this);
 }
 
 void DevModule::DisplayPropertyTree(RecvProp* prop)

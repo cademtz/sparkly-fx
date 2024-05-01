@@ -65,7 +65,7 @@ void ConfigModule::StartListening()
     CONFIG_PATH = Base::GetModuleDir() / "sparklyfx" / CURRENT_CONFIG;
 
     MainWindow::OnWindow.Listen(&ConfigModule::OnMenu, this);
-    COverlayHook::OnPresent.Listen(&ConfigModule::OnPresent, this);
+    COverlayHook::OnPresent.ListenNoArgs(&ConfigModule::OnPresent, this);
 }
 
 int ConfigModule::OnMenu()
@@ -109,7 +109,7 @@ int ConfigModule::OnMenu()
     
     if (!GetError()->empty())
     {
-        auto& err = GetError();
+        const auto& err = GetError();
         ImGui::TextUnformatted("Errors:");
         if (ImGui::Button("Clear##errors"))
             err->clear();
