@@ -10,7 +10,7 @@
 bool CBaseEntity::SetupBones(matrix3x4_t* pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime)
 {
 	size_t index = 16;
-	if (Interfaces::engine->GetAppID() == AppId_CSGO)
+	if (Interfaces::engine->GetAppID() == EAppID::CSGO)
 		index = 13;
 
 	using SetupBonesFn = bool(__thiscall*)(void*, void*, int, int, float);
@@ -19,19 +19,19 @@ bool CBaseEntity::SetupBones(matrix3x4_t* pBoneToWorldOut, int nMaxBones, int bo
 ClientClass* CBaseEntity::GetClientClass(){
 	return ((IClientEntity*)this)->GetClientClass();
 }
-bool CBaseEntity::IsDormant(void)
+bool CBaseEntity::IsDormant()
 {
 	size_t index = 8;
-	if (Interfaces::engine->GetAppID() == AppId_CSGO)
+	if (Interfaces::engine->GetAppID() == EAppID::CSGO)
 		index = 9;
 
 	using DormantFn = bool (__thiscall*)(void*);
 	return GetVFunc<DormantFn>(Networkable(), index)(Networkable());
 }
-int CBaseEntity::entindex(void) const
+int CBaseEntity::entindex() const
 {
 	size_t index = 9;
-	if (Interfaces::engine->GetAppID() == AppId_CSGO)
+	if (Interfaces::engine->GetAppID() == EAppID::CSGO)
 		index = 10;
 
 	using IndexFn = int(__thiscall*)(void*);

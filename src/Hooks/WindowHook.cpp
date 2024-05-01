@@ -1,16 +1,10 @@
 #include "WindowHook.h"
-
-WndProcArgs CWindowHook::m_ctx;
-
-CWindowHook::CWindowHook() : m_hwnd(0), BASEHOOK(CWindowHook)
-{
-	RegisterEvent(EVENT_WINDOWPROC);
-}
+#include <Base/Base.h>
 
 void CWindowHook::Hook()
 {
 	m_hwnd = Base::hWnd;
-	m_oldproc = (WNDPROC)SetWindowLongPtrA(m_hwnd, GWLP_WNDPROC, (LONG_PTR)Hooked_WndProc);
+	m_oldproc = reinterpret_cast<WNDPROC>(SetWindowLongPtrA(m_hwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(Hooked_WndProc)));
 	
 	m_hkcurpos.Hook(&::SetCursorPos, &Hooked_SetCursorPos);
 	m_hkshowcur.Hook(&::ShowCursor, &Hooked_ShowCursor);
@@ -21,7 +15,7 @@ void CWindowHook::Hook()
 
 void CWindowHook::Unhook()
 {
-	SetWindowLongPtrA(m_hwnd, GWLP_WNDPROC, (LONG_PTR)m_oldproc);
+	SetWindowLongPtrA(m_hwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(m_oldproc));
 	m_hkcurpos.Unhook();
 	m_hkshowcur.Unhook();
 	m_hksetcur.Unhook();
@@ -31,29 +25,29 @@ void CWindowHook::Unhook()
 
 BOOL CWindowHook::SetCurPos(int X, int Y)
 {
-	static auto NtUserSetCursorPos = (decltype(Hooked_SetCursorPos)*)m_hkcurpos.Original();
+	static auto NtUserSetCursorPos = static_cast<decltype(Hooked_SetCursorPos)*>(m_hkcurpos.Original());
 	return NtUserSetCursorPos(X, Y);
 }
 int CWindowHook::ShowCur(BOOL bShow) {
-	static auto NtUserShowCursor = (decltype(Hooked_ShowCursor)*)m_hkshowcur.Original();
+	static auto NtUserShowCursor = static_cast<decltype(Hooked_ShowCursor)*>(m_hkshowcur.Original());
 	return NtUserShowCursor(bShow);
 }
 
 HCURSOR CWindowHook::SetCur(HCURSOR hCursor)
 {
-	auto NtUserSetCursor = (decltype(Hooked_SetCursor)*)m_hksetcur.Original();
+	auto NtUserSetCursor = static_cast<decltype(Hooked_SetCursor)*>(m_hksetcur.Original());
 	return NtUserSetCursor(hCursor);
 }
 
 BOOL CWindowHook::GetCurPos(LPPOINT Point)
 {
-	auto getcurpos = (decltype(::GetCursorPos)*)m_hkgetcurpos.Original();
+	auto getcurpos = static_cast<decltype(::GetCursorPos)*>(m_hkgetcurpos.Original());
 	return getcurpos(Point);
 }
 
 BOOL CWindowHook::GetCurInfo(PCURSORINFO pci)
 {
-	auto getcurinfo = (decltype(::GetCursorInfo)*)m_hk_getcurinfo.Original();
+	auto getcurinfo = static_cast<decltype(::GetCursorInfo)*>(m_hk_getcurinfo.Original());
 	return getcurinfo(pci);
 }
 
@@ -90,13 +84,12 @@ void CWindowHook::SetInputEnabled(bool Enabled)
 
 LRESULT WINAPI CWindowHook::Hooked_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	auto ctx = g_hk_window.Context();
-	ctx->hwnd = hWnd, ctx->msg = uMsg, ctx->wparam = wParam, ctx->lparam = lParam, ctx->result = TRUE;
-
-	int flags = g_hk_window.PushEvent(EVENT_WINDOWPROC);
-	if (flags & Return_NoOriginal)
-		return ctx->result;
-	else if (g_hk_window.GetInputEnabled())
+	LRESULT result = TRUE;
+	int flags = OnWndProc.DispatchEvent(result, hWnd, uMsg, wParam, lParam);
+	if (flags & EventReturnFlags::NoOriginal)
+		return result;
+	
+	if (g_hk_window.GetInputEnabled())
 	{
 		switch (uMsg)
 		{
@@ -127,6 +120,7 @@ LRESULT WINAPI CWindowHook::Hooked_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, 
 			// For now, this is more safe...
 			// Some games/UIs will use mouse-/key-up events to trigger some actions. 
 			return true;
+		default: break;
 		}
 	}
 
@@ -180,7 +174,7 @@ BOOL __stdcall CWindowHook::Hooked_GetCursorPos(LPPOINT Point)
 {
 	if (g_hk_window.GetInputEnabled())
 	{
-		auto& cursor = g_hk_window.m_lastInput.cursor_info;
+		const auto& cursor = g_hk_window.m_lastInput.cursor_info;
 		*Point = cursor.ptScreenPos;
 		return true;
 	}

@@ -92,6 +92,11 @@ public:
 	virtual bool		IsPlayingDemo(void) = 0;
 	virtual bool		IsRecordingDemo(void) = 0;
 	virtual bool		IsPlayingTimeDemo(void) = 0;
+	virtual int			GetDemoRecordingTick(void) = 0;
+	virtual int			GetDemoPlaybackTick(void) = 0;
+	virtual int			GetDemoPlaybackStartTick(void) = 0;
+	virtual float		GetDemoPlaybackTimeScale(void) = 0;
+	virtual int			GetDemoPlaybackTotalTicks(void) = 0;
 	virtual bool		IsPaused(void) = 0;
 	virtual bool		IsTakingScreenshot(void) = 0;
 	virtual bool		IsHLTV(void) = 0;

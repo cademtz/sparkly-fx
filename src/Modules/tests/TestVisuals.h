@@ -11,7 +11,7 @@ public:
 	void StartListening() override;
 
 private:
-	int OnMenu();
+	int OnWindow();
 	int OnDraw();
 
 	bool ShouldDraw() { return m_draw_players; }

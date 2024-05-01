@@ -68,7 +68,7 @@ void Interfaces::CreateInterfaces()
 	
 	if (void* model_render16 = fn("VEngineModel016", 0))
 	{
-		if (engine->GetAppID() == AppID_GMod)
+		if (engine->GetAppID() == EAppID::GMOD)
 			model_render = new IVModelRenderWrapperGMod(model_render16);
 		else
 			model_render = new IVModelRenderWrapperSDK(model_render16);
@@ -76,7 +76,7 @@ void Interfaces::CreateInterfaces()
 
 	if (void* vgui1 = fn(VENGINE_VGUI_VERSION, 0))
 	{
-		if (engine->GetAppID() == AppId_CSGO)
+		if (engine->GetAppID() == EAppID::CSGO)
 			vgui = new CEngineVGUIWrapperCSGO(vgui1);
 		else
 			vgui = new CEngineVGUIWrapperSDK(vgui1);
@@ -107,7 +107,7 @@ void Interfaces::CreateInterfaces()
 
 	if (void* matsystem80 = fn(MATERIAL_SYSTEM_INTERFACE_VERSION, 0))
 	{
-		if (engine->GetAppID() == AppID_GMod)
+		if (engine->GetAppID() == EAppID::GMOD)
 			mat_system = new IMaterialSystemWrapperGMod(matsystem80);
 		else
 			mat_system = new IMaterialSystemWrapperSDK(matsystem80);
@@ -152,7 +152,7 @@ void Interfaces::CreateInterfaces()
 	void* clientmode = *pp_clientmode;
 	switch (engine->GetAppID())
 	{
-	case AppId_CSGO:
+	case static_cast<int>(EAppID::CSGO):
 		client = new IClientModeWrapperCSGO(clientmode);
 		break;
 	default:

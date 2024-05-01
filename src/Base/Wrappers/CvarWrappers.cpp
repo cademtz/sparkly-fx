@@ -9,7 +9,7 @@ int ICvarWrapperSDK::ProcessQueuedMaterialThreadConVarSets() {
     return m_int->ProcessQueuedMaterialThreadConVarSets();
 }
 void ICvarWrapperSDK::UnregisterConCommands(int i) {
-    return m_int->UnregisterConCommands(i);
+    m_int->UnregisterConCommands(i);
 }
 void ICvarWrapperSDK::RegisterConCommand(ConCommandBase* pCommandBase) {
     m_int->RegisterConCommand(pCommandBase);
@@ -34,7 +34,7 @@ int ICvarWrapper007::ProcessQueuedMaterialThreadConVarSets() {
     return m_int->ProcessQueuedMaterialThreadConVarSets();
 }
 void ICvarWrapper007::UnregisterConCommands(int i) {
-    return m_int->UnregisterConCommands(i);
+    m_int->UnregisterConCommands(i);
 }
 void ICvarWrapper007::RegisterConCommand(ConCommandBase* pCommandBase) {
     m_int->RegisterConCommand(pCommandBase);

@@ -1,6 +1,8 @@
 target_sources(xsdk-base PRIVATE
     Draw.cpp
-    Menu.cpp
+    InputModule.cpp
+    GameEjector.cpp
+    BaseModule.cpp
 )
 
 if ($CACHE{XSDK_BUILD_EXAMPLES})

@@ -11,12 +11,6 @@
 #define OFFSET_CD3DHAL 2
 #endif
 
-COverlayHook::COverlayHook() : m_dev(nullptr), BASEHOOK(COverlayHook)
-{
-	RegisterEvent(EVENT_DX9PRESENT);
-	RegisterEvent(EVENT_DX9RESET);
-}
-
 void COverlayHook::Hook()
 {
 	std::string error_create;
@@ -113,7 +107,7 @@ HRESULT COverlayHook::SetRenderTarget(DWORD RenderTargetIndex, IDirect3DSurface9
 HRESULT WINAPI COverlayHook::Hooked_Reset(IDirect3DDevice9* thisptr, D3DPRESENT_PARAMETERS* Params)
 {
 	g_hk_overlay.m_dev = thisptr;
-	g_hk_overlay.PushEvent(EVENT_DX9RESET);
+	OnReset.DispatchEvent(thisptr, Params);
 	return g_hk_overlay.Reset(Params);
 }
 
@@ -125,7 +119,7 @@ HRESULT WINAPI COverlayHook::Hooked_Present(IDirect3DDevice9* thisptr, const REC
 	thisptr->GetRenderState(D3DRS_SRGBWRITEENABLE, &oldstate);
 	thisptr->SetRenderState(D3DRS_SRGBWRITEENABLE, false);
 
-	g_hk_overlay.PushEvent(EVENT_DX9PRESENT);
+	OnPresent.DispatchEvent(thisptr, Src, Dest, Window, DirtyRegion);
 
 	thisptr->SetRenderState(D3DRS_SRGBWRITEENABLE, oldstate);
 	return g_hk_overlay.Present(Src, Dest, Window, DirtyRegion);
@@ -133,27 +127,25 @@ HRESULT WINAPI COverlayHook::Hooked_Present(IDirect3DDevice9* thisptr, const REC
 
 void** COverlayHook::GetDeviceVtable_SigScan(std::string* out_error)
 {
-	uint8_t* code = (uint8_t*)Sig::FindPattern("d3d9.dll", SIG_CD3DHAL);
+	const auto code = reinterpret_cast<uint8_t*>(Sig::FindPattern("d3d9.dll", SIG_CD3DHAL));
 	if (!code)
 	{
 		*out_error = "The signature scan could not find `CD3DHal::CD3DHal`";
 		return nullptr;
 	}
-	
-	
-	return (void**)AsmTools::Relative(code, OFFSET_CD3DHAL);
+	return reinterpret_cast<void**>(AsmTools::Relative(code, OFFSET_CD3DHAL));
 }
 
 void** COverlayHook::GetDeviceVtable_CreateDevice(std::string* out_error)
 {
-	HMODULE d3d_module = Base::GetModule("d3d9.dll");
+	const HMODULE d3d_module = Base::GetModule("d3d9.dll");
 	if (!d3d_module)
 	{
 		*out_error = "d3d9.dll is not loaded";
 		return nullptr;
 	}
-	
-	auto p_Direct3DCreate9 = (decltype(Direct3DCreate9)*)Base::GetProc(d3d_module, "Direct3DCreate9");
+
+	const auto p_Direct3DCreate9 = reinterpret_cast<decltype(Direct3DCreate9)*>(Base::GetProc(d3d_module, "Direct3DCreate9"));
 
 	IDirect3D9* d3d = p_Direct3DCreate9(D3D_SDK_VERSION);
 	if (!d3d)
@@ -187,7 +179,7 @@ void** COverlayHook::GetDeviceVtable_CreateDevice(std::string* out_error)
 		return nullptr;
 	}
 
-	HWND temp_window = CreateWindow(
+	const HWND temp_window = CreateWindow(
 		wnd_class.lpszClassName, TEXT("Dummy window"), WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, NULL, NULL, wnd_class.hInstance, NULL
 	);
 	if (!temp_window)
@@ -222,7 +214,7 @@ void** COverlayHook::GetDeviceVtable_CreateDevice(std::string* out_error)
 	void** vtable = nullptr;
 
 	if (SUCCEEDED(err))
-		vtable = *(void***)d3d_device;
+		vtable = *reinterpret_cast<void***>(d3d_device);
 	else
 	{
 		*out_error = "CreateDevice error code: " + std::to_string(err);
