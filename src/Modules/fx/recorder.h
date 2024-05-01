@@ -36,7 +36,7 @@ private:
     int OnMenu();
     int OnConfigSave();
     int OnConfigLoad();
-    int OnFrameStageNotify();
+    int OnFrameStageNotify(enum ClientFrameStage_t stage);
     /// @brief This replaces the game's vanilla recording behavior
     int OnWriteMovieFrame();
     /// @brief This replaces the game's vanilla recording behavior

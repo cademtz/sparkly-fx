@@ -4,12 +4,13 @@
 #include <mutex>
 #include <chrono>
 #include <nlohmann/json.hpp>
+#include <Base/Base.h>
 #include <Helper/json.h>
 #include <Helper/defer.h>
 #include <Helper/str.h>
 #include <Helper/imgui.h>
 #include <Helper/threading.h>
-#include <Modules/Menu.h>
+#include "mainwindow.h"
 #include <Modules/fx/recorder.h>
 #include <Hooks/OverlayHook.h>
 
@@ -59,18 +60,12 @@ static void AppendError(std::string_view text) {
     *GetError() += text;
 }
 
-ConfigModule::ConfigModule()
-{
-    RegisterEvent(EVENT_CONFIG_SAVE);
-    RegisterEvent(EVENT_CONFIG_LOAD);
-}
-
 void ConfigModule::StartListening()
 {
     CONFIG_PATH = Base::GetModuleDir() / "sparklyfx" / CURRENT_CONFIG;
 
-    Listen(EVENT_MENU, [this]() { return OnMenu(); });
-    Listen(EVENT_DX9PRESENT, [this]() { return OnPresent(); });
+    MainWindow::OnWindow.Listen(&ConfigModule::OnMenu, this);
+    COverlayHook::OnPresent.Listen(&ConfigModule::OnPresent, this);
 }
 
 int ConfigModule::OnMenu()
@@ -186,7 +181,7 @@ bool ConfigModule::Save(std::ostream& output)
         cfg_root_output->emplace("metadata", std::move(j));
     }
 
-    g_config.PushEvent(EVENT_CONFIG_SAVE);
+    OnConfigSave.DispatchEvent();
     output << cfg_root_output->dump(2);
     if (!output)
     {
@@ -278,7 +273,7 @@ bool ConfigModule::Load(std::istream& input)
         autosave_mins = min(1, safe_autosave_mins);
     }
 
-    g_config.PushEvent(EVENT_CONFIG_LOAD);
+    OnConfigLoad.DispatchEvent();
     cfg_root_input = std::nullopt;
     return true;
 }

@@ -2,8 +2,6 @@
 #include <Hooks/Hooks.h>
 #include <cstdint>
 
-DECL_EVENT(EVENT_VIEW_DRAW_FADE);
-
 class IMaterial;
 
 /**
@@ -16,6 +14,9 @@ public:
     void Hook() override;
     void Unhook() override;
     void ViewDrawFade(uint8_t* color, IMaterial* pFadeMaterial);
+
+    using ViewDrawFadeEvent_t = EventSource<void(uint8_t* color, IMaterial* pFadeMaterial)>;
+    static inline ViewDrawFadeEvent_t ViewDrawFadeEvent;
 
 private:
     CVMTHook m_hook;

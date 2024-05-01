@@ -1,12 +1,11 @@
 #include "ShaderApiHook.h"
+#include <Base/Base.h>
 #include <SDK/interface.h>
 
 #define INDEX_READ_PIXELS_0 157
 #define INDEX_READ_PIXELS_1 158
 
-ShaderApiHook::ShaderApiHook() : BASEHOOK(ShaderApiHook) {
-    RegisterEvent(EVENT_READ_PIXELS);
-}
+ShaderApiHook::ShaderApiHook() : BASEHOOK(ShaderApiHook) {}
 
 void ShaderApiHook::Hook()
 {
@@ -45,13 +44,13 @@ void ShaderApiHook::Unhook() {
 
 void __stdcall ShaderApiHook::Hooked_ReadPixels_0(UNCRAP Rect_t *pSrcRect, Rect_t *pDstRect, unsigned char *pData, ImageFormat dstFormat, int nDstStride)
 {
-    if (g_hk_shaderapi.PushEvent(EVENT_READ_PIXELS) & Return_NoOriginal)
+    if (ReadPixelsEvent.DispatchEvent() & EventReturnFlags::NoOriginal)
         return;
     g_hk_shaderapi.ReadPixels(pSrcRect, pDstRect, pData, dstFormat, nDstStride);
 }
 void __stdcall ShaderApiHook::Hooked_ReadPixels_1(UNCRAP int x, int y, int width, int height, unsigned char *pData, ImageFormat dstFormat)
 {
-    if (g_hk_shaderapi.PushEvent(EVENT_READ_PIXELS) & Return_NoOriginal)
+    if (ReadPixelsEvent.DispatchEvent() & EventReturnFlags::NoOriginal)
         return;
     g_hk_shaderapi.ReadPixels(x, y, width, height, pData, dstFormat);
 }

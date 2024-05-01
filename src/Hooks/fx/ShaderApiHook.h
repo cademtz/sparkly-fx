@@ -5,8 +5,6 @@
 #include <SDK/commonmacros.h>
 #include <SDK/ishaderapi.h>
 
-DECL_EVENT(EVENT_READ_PIXELS);
-
 class ShaderApiHook : public CBaseHook
 {
 public:
@@ -17,6 +15,8 @@ public:
 
     void ReadPixels(Rect_t *pSrcRect, Rect_t *pDstRect, unsigned char *pData, ImageFormat dstFormat, int nDstStride);
     void ReadPixels(int x, int y, int width, int height, unsigned char *pData, ImageFormat dstFormat);
+
+    static inline EventSource<void()> ReadPixelsEvent;
 
 private:
     CVMTHook m_vmt;

@@ -5,9 +5,7 @@
 
 #define WRITE_MOVIE_FRAME_INDEX 26
 
-VideoModeHook::VideoModeHook() : BASEHOOK(VideoModeHook) {
-    RegisterEvent(EVENT_WRITE_MOVIE_FRAME);
-}
+VideoModeHook::VideoModeHook() : BASEHOOK(VideoModeHook) {}
 
 void VideoModeHook::Hook()
 {
@@ -38,8 +36,8 @@ void VideoModeHook::Unhook() {
 
 void __stdcall VideoModeHook::Hooked_WriteMoveFrame(UNCRAP const void* info)
 {
-    int result = g_hk_videomode.PushEvent(EVENT_WRITE_MOVIE_FRAME);
-    if (result & Return_NoOriginal)
+    int result = WriteMoveFrameEvent.DispatchEvent();
+    if (result & EventReturnFlags::NoOriginal)
         return;
     
     typedef void (__thiscall* OriginalFn)(void*, const void*);

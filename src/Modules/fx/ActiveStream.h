@@ -67,8 +67,8 @@ protected:
     int OnDrawStaticProp();
     int PreDrawModelExecute();
     int PostDrawModelExecute();
-    int OnFrameStageNotify();
-    int OnOverrideView();
+    int OnFrameStageNotify(enum ClientFrameStage_t stage);
+    int OnOverrideView(class CViewSetup* view_setup);
     int OnViewDrawFade();
     int OnReset();
     int OnPresent();

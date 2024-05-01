@@ -7,7 +7,7 @@
 #include "StreamEditor.h"
 #include "ActiveStream.h"
 #include "recorder.h"
-#include <Modules/Menu.h>
+#include "mainwindow.h"
 #include "configmodule.h"
 #include <Streams/materials.h>
 #include <SDK/KeyValues.h>
@@ -22,9 +22,9 @@
 void StreamEditor::StartListening()
 {
     CustomMaterial::CreateDefaultMaterials();
-    Listen(EVENT_MENU, [this]{ return OnMenu(); });
-    Listen(EVENT_CONFIG_SAVE, [this]{ return OnConfigSave(); });
-    Listen(EVENT_CONFIG_LOAD, [this]{ return OnConfigLoad(); });
+    MainWindow::OnWindow.Listen(&StreamEditor::OnMenu, this);
+    ConfigModule::OnConfigLoad.Listen(&StreamEditor::OnConfigLoad, this);
+    ConfigModule::OnConfigSave.Listen(&StreamEditor::OnConfigSave, this);
 }
 
 void StreamEditor::OnEndMovie()

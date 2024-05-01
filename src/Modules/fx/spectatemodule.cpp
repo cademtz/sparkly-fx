@@ -1,5 +1,5 @@
 #include "spectatemodule.h"
-#include <Modules/Menu.h>
+#include "mainwindow.h"
 #include <Helper/imgui.h>
 #include <Hooks/ClientHook.h>
 #include <Base/Interfaces.h>
@@ -21,9 +21,9 @@ constexpr int TEAM_BLU = 3;
 
 void SpectateModule::StartListening()
 {
-    Listen(EVENT_MENU, [this]() { return OnMenu(); });
-    Listen(EVENT_FRAMESTAGENOTIFY, [this]() { return OnFrameStageNotify(); });
-    Listen(EVENT_OVERRIDEVIEW, [this]() { return OnOverrideView(); });
+    MainWindow::OnWindow.Listen(&SpectateModule::OnMenu, this);
+    CClientHook::OnFrameStageNotify.Listen(&SpectateModule::OnFrameStageNotify, this);
+    CClientHook::OnOverrideView.Listen(&SpectateModule::OnOverrideView, this);
 }
 
 int SpectateModule::OnMenu()
@@ -129,10 +129,8 @@ int SpectateModule::OnMenu()
     return 0;
 }
 
-int SpectateModule::OnFrameStageNotify()
-{
-    ClientFrameStage_t stage = g_hk_client.Context()->curStage;
-    
+int SpectateModule::OnFrameStageNotify(ClientFrameStage_t stage)
+{   
     if (stage == FRAME_START)
     {
         if (!Interfaces::engine->IsInGame())
@@ -198,7 +196,7 @@ int SpectateModule::OnFrameStageNotify()
     return 0;
 }
 
-int SpectateModule::OnOverrideView()
+int SpectateModule::OnOverrideView(CViewSetup* view_setup)
 {
     if (!m_spectating)
         return 0;
@@ -213,7 +211,6 @@ int SpectateModule::OnOverrideView()
     CBasePlayer* player = base_entity->ToPlayer();
     
     IClientRenderable* renderable = (IClientRenderable*)base_entity->Renderable();
-    CViewSetup* view_setup = g_hk_client.Context()->pSetup;
     Vector cam_pos = renderable->GetRenderOrigin() + Vector(0,0,75);
     QAngle angle = renderable->GetRenderAngles();
     QAngle view_angle = renderable->GetRenderAngles() + *(QAngle*)&m_spec_cam_angle_off[0];
@@ -235,7 +232,7 @@ int SpectateModule::OnOverrideView()
     view_setup->angles = view_angle;
     view_setup->origin = cam_pos;
 
-    return Return_NoOriginal;
+    return EventReturnFlags::NoOriginal;
 }
 
 void SpectateModule::OnPlayerDamage(class CBasePlayer* player, const PlayerState& state, int damage)

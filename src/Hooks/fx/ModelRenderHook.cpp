@@ -2,11 +2,7 @@
 #include <Base/Interfaces.h>
 #include <SDK/ivmodelrender.h>
 
-CModelRenderHook::CModelRenderHook() : BASEHOOK(CModelRenderHook)
-{
-    RegisterEvent(EVENT_PRE_DRAW_MODEL_EXECUTE);
-    RegisterEvent(EVENT_POST_DRAW_MODEL_EXECUTE);
-}
+CModelRenderHook::CModelRenderHook() : BASEHOOK(CModelRenderHook) {}
 
 void CModelRenderHook::Hook()
 {
@@ -47,8 +43,8 @@ void __stdcall CModelRenderHook::Hooked_DrawModelExecute(UNCRAP const DrawModelS
         g_hk_model_render.m_drawn_modelnames.emplace(state.m_pStudioHdr->name);
     }
 
-    int flags = g_hk_model_render.PushEvent(EVENT_PRE_DRAW_MODEL_EXECUTE);
-    if (!(flags & Return_NoOriginal))
+    int flags = PreDrawModelExecuteEvent.DispatchEvent();
+    if (!(flags & EventReturnFlags::NoOriginal))
         g_hk_model_render.DrawModelExecute(*ctx->state, *ctx->pInfo, ctx->pCustomBoneToWorld);
-    g_hk_model_render.PushEvent(EVENT_POST_DRAW_MODEL_EXECUTE);
+    PostDrawModelExecuteEvent.DispatchEvent();
 }

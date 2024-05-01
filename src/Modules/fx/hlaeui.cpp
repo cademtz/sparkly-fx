@@ -1,5 +1,6 @@
 #include "hlaeui.h"
-#include <Modules/Menu.h>
+#include "mainwindow.h"
+#include <Base/Base.h>
 #include <Hooks/ClientHook.h>
 #include <Helper/engine.h>
 #include <Helper/imgui.h>
@@ -17,10 +18,10 @@ void HlaeUi::StartListening()
 {
     AUTOSAVE_PARENT_PATH = Base::GetModuleDir() / "sparklyfx" / "autosave";
     AUTOSAVE_PATH = AUTOSAVE_PARENT_PATH / "hlae_campath.xml";
-    AUTOSAVE_PATH_UTF8 = AUTOSAVE_PATH.u8string();
+    AUTOSAVE_PATH_UTF8 = AUTOSAVE_PATH.string();
 
-    Listen(EVENT_MENU, [this]{ return OnMenu(); });
-    Listen(EVENT_FRAMESTAGENOTIFY, [this]{ return OnFrameStageNotify(); });
+    MainWindow::OnWindow.Listen(&HlaeUi::OnMenu, this);
+    CClientHook::OnFrameStageNotify.Listen(&HlaeUi::OnFrameStageNotify, this);
 }
 
 int HlaeUi::OnMenu()
@@ -90,7 +91,7 @@ int HlaeUi::OnMenu()
     return 0;
 }
 
-int HlaeUi::OnFrameStageNotify()
+int HlaeUi::OnFrameStageNotify(enum ClientFrameStage_t stage)
 {
     if (!m_is_hlae_loaded)
     {
@@ -98,7 +99,7 @@ int HlaeUi::OnFrameStageNotify()
         return 0;
     }
 
-    if (g_hk_client.Context()->curStage != FRAME_START)
+    if (stage != FRAME_START)
         return 0;
     
     static auto prev_time = std::chrono::steady_clock::now();

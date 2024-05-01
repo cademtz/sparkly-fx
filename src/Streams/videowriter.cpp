@@ -207,7 +207,8 @@ void EncoderConfig::ShowImguiControls()
                 ImGui::TextColored(ImVec4(1,.25,.25,1), "[!] Select an FFmpeg executable");
             
             ImGui::Text("FFmpeg executable:");
-            ImGui::InputText("##ffmpeg_path", &ffmpeg_path.u8string(), ImGuiInputTextFlags_ReadOnly);
+            std::string ffmpeg_path_string = ffmpeg_path.string();
+            ImGui::InputText("##ffmpeg_path", &ffmpeg_path_string, ImGuiInputTextFlags_ReadOnly);
             ImGui::SameLine();
             if (ImGui::Button("Browse"))
             {
@@ -220,7 +221,7 @@ void EncoderConfig::ShowImguiControls()
             {
                 for (const auto& path : ffmpeg_path_list)
                 {
-                    if (ImGui::Selectable(path.u8string().c_str(), false))
+                    if (ImGui::Selectable(path.string().c_str(), false))
                         Helper::FFmpeg::SetDefaultPath(path);
                 }
                 ImGui::EndListBox();

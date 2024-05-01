@@ -9,7 +9,8 @@
 #include <Hooks/fx/VideoModeHook.h>
 #include <Hooks/fx/ShaderApiHook.h>
 #include <Modules/fx/configmodule.h>
-#include <Modules/Menu.h>
+#include <Modules/InputModule.h>
+#include "mainwindow.h"
 #include <Modules/Draw.h>
 #include "ActiveStream.h"
 #include "StreamEditor.h"
@@ -88,19 +89,19 @@ void CRecorder::StartListening()
     else
         m_framepool_size += 1; // Add an extra thread to minimize idle time
 
-    Listen(EVENT_POST_IMGUI_INPUT, [this]{ return OnPostImguiInput(); });
-    Listen(EVENT_DRAW, [this]{ return OnDraw(); });
-    Listen(EVENT_MENU, [this]{ return OnMenu(); });
-    Listen(EVENT_FRAMESTAGENOTIFY, [this]{ return OnFrameStageNotify(); });
-    Listen(EVENT_WRITE_MOVIE_FRAME, [this]{ return OnWriteMovieFrame(); });
-    Listen(EVENT_READ_PIXELS, [this]{ return OnReadPixels(); });
-    Listen(EVENT_CONFIG_SAVE, [this] { return OnConfigSave(); });
-    Listen(EVENT_CONFIG_LOAD, [this] { return OnConfigLoad(); });
+    InputModule::OnPostImguiInput.Listen(&CRecorder::OnPostImguiInput, this);
+    CDraw::OnDraw.Listen(&CRecorder::OnDraw, this);
+    MainWindow::OnWindow.Listen(&CRecorder::OnMenu, this);
+    CClientHook::OnFrameStageNotify.Listen(&CRecorder::OnFrameStageNotify, this);
+    VideoModeHook::WriteMoveFrameEvent.Listen(&CRecorder::OnWriteMovieFrame, this);
+    ShaderApiHook::ReadPixelsEvent.Listen(&CRecorder::OnReadPixels, this);
+    ConfigModule::OnConfigSave.Listen(&CRecorder::OnConfigSave, this);
+    ConfigModule::OnConfigLoad.Listen(&CRecorder::OnConfigLoad, this);
 }
 
 int CRecorder::OnPostImguiInput()
 {
-    if (m_record_bind.Poll() && !g_menu.IsOpen())
+    if (m_record_bind.Poll() && !g_input.IsOverlayOpen())
     {
         if (!Interfaces::engine->Con_IsVisible()) // Don't active the keybind while typing in the console
             ToggleRecording(m_movie_path);
@@ -198,7 +199,8 @@ int CRecorder::OnMenu()
             "This folder will contain the movie files.\n"
             "The folder will be created automatically, if it doesn't exist."
         );
-        ImGui::InputText("##output_folder", &m_movie_path.u8string(), ImGuiInputTextFlags_ReadOnly); ImGui::SameLine();
+        std::string _movie_path_str = m_movie_path.string();
+        ImGui::InputText("##output_folder", &_movie_path_str, ImGuiInputTextFlags_ReadOnly); ImGui::SameLine();
         if (ImGui::Button("Browse"))
         {
             auto optional_path = Helper::OpenFolderDialog(L"Select the output folder", &m_movie_path);
@@ -365,7 +367,7 @@ bool CRecorder::SetupMovie(std::filesystem::path&& path)
     if (m_autoresume_demo)
         Interfaces::engine->ExecuteClientCmd("demo_resume");
     if (m_autoclose_menu)
-        g_menu.SetOpen(false);
+        g_input.SetOverlayOpen(false);
     
     return true;
 }
@@ -429,10 +431,8 @@ void CRecorder::CopyCurrentFrameToSurface(IDirect3DSurface9* dst)
     g_hk_overlay.Device()->StretchRect(render_target, nullptr, dst, nullptr, D3DTEXF_NONE);
 }
 
-int CRecorder::OnFrameStageNotify()
+int CRecorder::OnFrameStageNotify(ClientFrameStage_t stage)
 {
-    ClientFrameStage_t stage = g_hk_client.Context()->curStage;
-
     if (stage == FRAME_START)
     {
         // TODO(Cade): Move this out of here and into the base!!!
@@ -538,7 +538,7 @@ int CRecorder::OnFrameStageNotify()
 int CRecorder::OnWriteMovieFrame()
 {
     if (IsRecordingMovie())
-        return Return_NoOriginal;
+        return EventReturnFlags::NoOriginal;
     return 0;
 }
 
@@ -547,6 +547,6 @@ int CRecorder::OnReadPixels()
     if (m_read_pixels)
         return 0;
     if (IsRecordingMovie())
-        return Return_NoOriginal;
+        return EventReturnFlags::NoOriginal;
     return 0;
 }

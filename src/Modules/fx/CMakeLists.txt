@@ -6,4 +6,5 @@ target_sources(xsdk-base PRIVATE
     hlaeui.cpp
     spectatemodule.cpp
     configmodule.cpp
+    mainwindow.cpp
 )

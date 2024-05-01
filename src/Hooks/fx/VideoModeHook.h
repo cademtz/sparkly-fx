@@ -1,7 +1,5 @@
 #include <Hooks/Hooks.h>
 
-DECL_EVENT(EVENT_WRITE_MOVIE_FRAME);
-
 /**
  * @brief Hook the engine's private IVideoMode instance to stop unnecessary ReadPixels calls
  */
@@ -12,6 +10,8 @@ public:
 
     void Hook() override;
     void Unhook() override;
+
+    static inline EventSource<void()> WriteMoveFrameEvent;
 
 private:
     void* m_videomode = nullptr;

@@ -1,5 +1,5 @@
 #include <Modules/BaseModule.h>
-#include <Modules/Menu.h>
+#include "mainwindow.h"
 #include <Modules/Draw.h>
 #include <Hooks/OverlayHook.h>
 #include <Base/Interfaces.h>
@@ -45,10 +45,10 @@ DevModule g_devmodule;
 
 void DevModule::StartListening()
 {
-    Listen(EVENT_MENU, [this] { return OnMenu(); });
-    Listen(EVENT_DRAW, [this] { return OnDraw(); });
-    Listen(EVENT_DX9RESET, [this] { return OnReset(); });
-    Listen(EVENT_DX9PRESENT, [this] { return OnPresent(); });
+    MainWindow::OnWindow.Listen(&DevModule::OnMenu, this);
+    CDraw::OnDraw.Listen(&DevModule::OnDraw, this);
+    COverlayHook::OnReset.Listen(&DevModule::OnReset, this);
+    COverlayHook::OnPresent.Listen(&DevModule::OnPresent, this);
 }
 
 void DevModule::DisplayPropertyTree(RecvProp* prop)

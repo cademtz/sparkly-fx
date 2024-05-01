@@ -1,5 +1,5 @@
 #pragma once
-#include <nlohmann/json_fwd.hpp>
+#include <nlohmann/json.hpp>
 
 namespace Helper
 {
@@ -52,7 +52,7 @@ namespace Helper
         {
             try {
                 found->get_to(value);
-            } catch (nlohmann::json::exception e) {
+            } catch (std::exception e) {
                 return false;
             }
             return true;

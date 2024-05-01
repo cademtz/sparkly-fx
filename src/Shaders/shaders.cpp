@@ -100,7 +100,11 @@ bool PixelShader::Load(IDirect3DDevice9* device)
     HRESULT result = device->CreatePixelShader((const DWORD*)file_data.get(), &m_ptr);
     if (FAILED(result))
     {
-        std::cout << "Failed to load pixel shader (" << DXGetErrorStringW(result) << "): " << path << std::endl;
+        std::cout << "Failed to load pixel shader (";
+        const wchar_t* err_string = DXGetErrorStringW(result);
+        for (const wchar_t* ch = err_string; *ch != 0; ++ch)
+            std::cout << (char)*ch;
+        std::cout << "): " << path << std::endl;
         return false;
     }
     

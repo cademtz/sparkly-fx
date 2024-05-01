@@ -24,14 +24,14 @@
 
 void ActiveStream::StartListening()
 {
-    Listen(EVENT_DRAWMODELSTATICPROP, [this]{ return OnDrawStaticProp(); });
-    Listen(EVENT_PRE_DRAW_MODEL_EXECUTE, [this] { return PreDrawModelExecute(); });
-    Listen(EVENT_POST_DRAW_MODEL_EXECUTE, [this] { return PostDrawModelExecute(); });
-    Listen(EVENT_FRAMESTAGENOTIFY, [this] { return OnFrameStageNotify(); });
-    Listen(EVENT_OVERRIDEVIEW, [this] { return OnOverrideView(); });
-    Listen(EVENT_VIEW_DRAW_FADE, [this] { return OnViewDrawFade(); });
-    Listen(EVENT_DX9PRESENT, [this] { return OnPresent(); });
-    Listen(EVENT_DX9RESET, [this] { return OnReset(); });
+    StudioRenderHook::DrawModelStaticPropEvent.Listen(&ActiveStream::OnDrawStaticProp, this);
+    CModelRenderHook::PreDrawModelExecuteEvent.Listen(&ActiveStream::PreDrawModelExecute, this);
+    CModelRenderHook::PostDrawModelExecuteEvent.Listen(&ActiveStream::PostDrawModelExecute, this);
+    CClientHook::OnFrameStageNotify.Listen(&ActiveStream::OnFrameStageNotify, this);
+    CClientHook::OnOverrideView.Listen(&ActiveStream::OnOverrideView, this);
+    RenderViewHook::ViewDrawFadeEvent.ListenNoArgs(&ActiveStream::OnViewDrawFade, this);
+    COverlayHook::OnPresent.ListenNoArgs(&ActiveStream::OnPresent, this);
+    COverlayHook::OnReset.ListenNoArgs(&ActiveStream::OnReset, this);
 }
 
 Stream::Ptr ActiveStream::Get()
@@ -259,7 +259,7 @@ int ActiveStream::OnDrawStaticProp()
     if (!tweak->props)
         return 0;
     if (tweak->color_multiply[3] == 0)
-        return Return_NoOriginal;
+        return EventReturnFlags::NoOriginal;
     
     // We don't need to restore these values, because the callers always store and restore it.
     Interfaces::studio_render->SetColorModulation(tweak->color_multiply.data());
@@ -286,7 +286,7 @@ int ActiveStream::PreDrawModelExecute()
             continue;
         
         if (tweak->IsEffectInvisible())
-            return Return_NoOriginal;
+            return EventReturnFlags::NoOriginal;
 
         // Store original draw parameters
         m_is_dme_affected = true;
@@ -319,9 +319,8 @@ int ActiveStream::PostDrawModelExecute()
     return 0;
 }
 
-int ActiveStream::OnFrameStageNotify()
+int ActiveStream::OnFrameStageNotify(enum ClientFrameStage_t stage)
 {
-    ClientFrameStage_t stage = g_hk_client.Context()->curStage;
     if (stage != FRAME_RENDER_START)
         return 0;
         
@@ -416,13 +415,12 @@ void ActiveStream::UpdateHud()
         Interfaces::panels->SetVisible(viewport, new_visibility);
 }
 
-int ActiveStream::OnOverrideView()
+int ActiveStream::OnOverrideView(CViewSetup* view_setup)
 {
     auto lock = ReadLock();
     if (!m_stream)
         return 0;
     
-    auto view_setup = g_hk_client.Context()->pSetup;
     for (auto tweak = m_stream->begin<CameraTweak>(); tweak != m_stream->end<CameraTweak>(); ++tweak)
     {
         if (tweak->fov_override)
@@ -440,7 +438,7 @@ int ActiveStream::OnViewDrawFade()
     for (auto tweak = m_stream->begin<CameraTweak>(); tweak != m_stream->end<CameraTweak>(); ++tweak)
     {
         if (tweak->hide_fade)
-            return Return_NoOriginal;
+            return EventReturnFlags::NoOriginal;
     }
     return 0;
 }

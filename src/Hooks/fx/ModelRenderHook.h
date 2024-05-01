@@ -5,9 +5,6 @@
 #include <string>
 #include <Helper/threading.h>
 
-DECL_EVENT(EVENT_PRE_DRAW_MODEL_EXECUTE);
-DECL_EVENT(EVENT_POST_DRAW_MODEL_EXECUTE);
-
 struct ModelRenderInfo_t;
 struct DrawModelState_t;
 
@@ -30,6 +27,9 @@ public:
     LockedModelNames GetDrawnModelList();
     /// @brief Clear the list of drawn models
     void ClearDrawnModelList();
+
+    static inline EventSource<void()> PreDrawModelExecuteEvent;
+    static inline EventSource<void()> PostDrawModelExecuteEvent;
 
 private:
     static void __stdcall Hooked_DrawModelExecute(UNCRAP const DrawModelState_t& state, const ModelRenderInfo_t& pInfo, matrix3x4_t* pCustomBoneToWorld);
