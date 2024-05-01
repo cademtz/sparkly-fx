@@ -9,8 +9,8 @@ CustomMaterial::~CustomMaterial()
         m_material->DecrementReferenceCount();
 }
 
-CustomMaterial::Ptr CustomMaterial::AddCustomMaterial(std::string&& name, IMaterial* material) {
-    return custom_mats.emplace_back(std::make_shared<CustomMaterial>(std::move(name), material));
+CustomMaterial::Ptr CustomMaterial::AddCustomMaterial(const std::string& name, IMaterial* material) {
+    return custom_mats.emplace_back(std::make_shared<CustomMaterial>(name, material));
 }
 
 CustomMaterial::Ptr CustomMaterial::GetMatte()
@@ -74,7 +74,7 @@ void CustomMaterial::CreateDefaultMaterials()
     {
         IMaterial* mat = Interfaces::mat_system->CreateMaterial("sparklyfx_matte_wireframe.vmt", vmt_values);
         if (mat)
-            CustomMaterial::AddCustomMaterial("Matte wireframe", mat);
+            AddCustomMaterial("Matte wireframe", mat);
         else
             vmt_values->deleteThis();
     }
@@ -91,7 +91,7 @@ void CustomMaterial::CreateDefaultMaterials()
     {
         IMaterial* mat = Interfaces::mat_system->CreateMaterial("sparklyfx_wireframe.vmt", vmt_values);
         if (mat)
-            CustomMaterial::AddCustomMaterial("Wireframe", mat);
+            AddCustomMaterial("Wireframe", mat);
         else
             vmt_values->deleteThis();
     }

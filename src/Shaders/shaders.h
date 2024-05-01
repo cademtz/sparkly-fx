@@ -31,7 +31,7 @@ class PixelShader : public Helper::JsonConfigurable
 public:
     using Ptr = std::shared_ptr<PixelShader>;
     using ConstPtr = std::shared_ptr<const PixelShader>;
-    virtual ~PixelShader();
+    ~PixelShader() override;
     /// @brief Create a new instance of the same type
     /// @details This copies the base info (filename, displayname, desc, ptr)
     virtual std::shared_ptr<PixelShader> NewInstance() const = 0;
@@ -94,7 +94,7 @@ private:
     IDirect3DPixelShader9* m_ptr = nullptr;
 };
 
-class DepthLinear : public PixelShader
+class DepthLinear final : public PixelShader
 {
 public:
     DepthLinear() : PixelShader(
@@ -118,7 +118,7 @@ private:
     bool m_spherical_correction = false;
 };
 
-class DepthLogarithm : public PixelShader
+class DepthLogarithm final : public PixelShader
 {
 public:
     DepthLogarithm() : PixelShader(
@@ -142,7 +142,7 @@ private:
     bool m_spherical_correction = false;
 };
 
-class DepthToRgb : public PixelShader
+class DepthToRgb final : public PixelShader
 {
 public:
     DepthToRgb() : PixelShader(
@@ -162,7 +162,7 @@ private:
     nlohmann::json SubclassToJson() const override;
 };
 
-class NormalToRgb : public PixelShader
+class NormalToRgb final : public PixelShader
 {
 public:
     NormalToRgb() : PixelShader(
@@ -192,7 +192,7 @@ inline const std::vector<std::shared_ptr<PixelShader>> PixelShader::all_types = 
 template <class T>
 PixelShader::Ptr PixelShader::GetLoadedShader()
 {
-    auto loaded = GetLoadedShaders();
+    const auto loaded = GetLoadedShaders();
     for (ConstPtr shader : *loaded)
     {
         if (std::dynamic_pointer_cast<const T>(shader))

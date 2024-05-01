@@ -42,7 +42,7 @@ void CommandTweak::GetCommandList(std::vector<Helper::ParsedCommand>* output) co
     while (size_t read = Helper::ParseNextCommand(commands.c_str() + offset, &cmd))
     {
         offset += read;
-        output->emplace_back(std::move(cmd));
+        output->emplace_back(cmd);
     }
 }
 

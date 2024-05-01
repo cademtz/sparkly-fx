@@ -50,7 +50,7 @@ public:
     /// @brief Append text to the error log. Newlines should be added.
     static void AppendError(const std::string& text);
     /// @brief Append text to the error log. Newlines should be added.
-    static void AppendError(std::string_view text) {
+    static void AppendError(const std::string_view text) {
         return AppendError(std::string(text));
     }
     /// @brief Append text to the error log. Newlines should be added.
@@ -329,7 +329,7 @@ public:
     /// @brief Push a frame for a worker thread to pop and use
     /// @param index Index of the frame being written. `frame->index` will be assigned this.
     /// @param writer Method of writing the frame to video. `frame->writer` will be assigned this.
-    void PushFullFrame(FramePtr frame, size_t index, std::shared_ptr<VideoWriter> writer);
+    void PushFullFrame(const FramePtr& frame, size_t index, const std::shared_ptr<VideoWriter>& writer);
 
 private:
     /**

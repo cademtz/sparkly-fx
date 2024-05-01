@@ -207,9 +207,7 @@ int SpectateModule::OnOverrideView(CViewSetup* view_setup)
     CBaseEntity* base_entity = Interfaces::entlist->GetClientEntity(ent_index);
     if (!base_entity)
         return 0;
-    
-    CBasePlayer* player = base_entity->ToPlayer();
-    
+
     IClientRenderable* renderable = (IClientRenderable*)base_entity->Renderable();
     Vector cam_pos = renderable->GetRenderOrigin() + Vector(0,0,75);
     QAngle angle = renderable->GetRenderAngles();

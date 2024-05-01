@@ -28,7 +28,7 @@ static std::filesystem::path CONFIG_PATH;
 
 /**
  * @brief Get text position based on offset
- * @param istream The input stream. Its current position will be changed. 
+ * @param stream The input stream. Its current position will be changed.
  * @param pos Absolute text position, starting from 0
  * @param out_line Receives the line number, starting from 1
  * @param out_column Receives the column number, starting from 1
@@ -56,7 +56,7 @@ static void GetTextPos(std::istream& stream, size_t pos, size_t* out_line, size_
 static Helper::LockedRef<std::string> GetError() {
     return {cfg_errors, cfg_mutex};
 }
-static void AppendError(std::string_view text) {
+static void AppendError(const std::string_view text) {
     *GetError() += text;
 }
 
@@ -203,7 +203,7 @@ bool ConfigModule::Save(const std::filesystem::path& path)
         ));
         return false;
     }
-    std::fstream file{ path, std::ios::out };
+    std::ofstream file(path, std::ios::out);
     if (!file)
     {
         AppendError(Helper::sprintf(
@@ -229,7 +229,7 @@ bool ConfigModule::Load(std::istream& input)
     try {
         cfg_root_input = nlohmann::json::parse(input);
     }
-    catch (nlohmann::json::parse_error e)
+    catch (const nlohmann::json::parse_error& e)
     {
         size_t line, col;
         GetTextPos(input, e.byte, &line, &col);
@@ -238,7 +238,7 @@ bool ConfigModule::Load(std::istream& input)
         ));
         return false;
     }
-    catch (std::exception e)
+    catch (const std::exception& e)
     {
         AppendError(Helper::sprintf("Failed to parse JSON: '%s'\n", e.what()));
         return false;
@@ -279,7 +279,7 @@ bool ConfigModule::Load(std::istream& input)
 }
 bool ConfigModule::Load(const std::filesystem::path& path)
 {
-    std::fstream file{ path, std::ios::in };
+    std::ifstream file(path);
     if (!file)
     {
         AppendError(Helper::sprintf(

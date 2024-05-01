@@ -9,7 +9,7 @@
 #include <chrono>
 
 // Filter example: {L"C++ code files", L"*.cpp;*.h;*.rc"}
-static const COMDLG_FILTERSPEC COM_CAMPATH_FILTER[] = {{L"HLAE campath file", L"*.xml"}, {0}};
+static constexpr COMDLG_FILTERSPEC COM_CAMPATH_FILTER[] = {{L"HLAE campath file", L"*.xml"}, {0}};
 static std::filesystem::path AUTOSAVE_PARENT_PATH;
 static std::filesystem::path AUTOSAVE_PATH;
 static std::string AUTOSAVE_PATH_UTF8;
@@ -135,22 +135,22 @@ void HlaeUi::SaveCamPath(bool save_as)
 
     // u8string will convert to UTF-8
     auto u8str = m_prev_campath_save->u8string();
-    Helper::ClientCmd_Unrestricted("mirv_campath save \"%.*s\"", (int)u8str.length(), (const char*)u8str.c_str());
+    Helper::ClientCmd_Unrestricted("mirv_campath save \"%.*s\"", (int)u8str.length(), u8str.c_str());
 }
 
 void HlaeUi::LoadCamPath(const std::filesystem::path* path)
 {
-    std::optional<std::filesystem::path> selected_path;
     if (path == nullptr)
     {
-        selected_path = Helper::OpenFileDialog(L"Load cam path", nullptr, COM_CAMPATH_FILTER);
+        std::optional<std::filesystem::path> selected_path = Helper::OpenFileDialog(
+            L"Load cam path", nullptr, COM_CAMPATH_FILTER);
         if (!selected_path)
             return;
         path = &selected_path.value();
     }
 
     auto u8str = path->u8string();
-    Helper::ClientCmd_Unrestricted("mirv_campath load \"%.*s\"", (int)u8str.length(), (const char*)u8str.c_str());
+    Helper::ClientCmd_Unrestricted("mirv_campath load \"%.*s\"", (int)u8str.length(), u8str.c_str());
 }
 
 void HlaeUi::WriteNewAutosave()

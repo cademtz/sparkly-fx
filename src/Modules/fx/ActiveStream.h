@@ -35,7 +35,7 @@ public:
     Stream::Ptr Get();
     /// @brief Set the active stream. This calls @ref WriteLock.
     /// @param stream Use `nullptr` to clear the active stream
-    void Set(Stream::Ptr stream);
+    void Set(const Stream::Ptr& stream);
     /**
      * @brief Signal that a stream updated and should be re-applied. This calls @ref WriteLock.
      * 
@@ -43,7 +43,7 @@ public:
      * @param stream The stream that was updated, or `nullptr` to update with the current one.
      * @param UpdateFlags Combined values from @ref UpdateFlags. The default value sets all flags.
      */
-    void SignalUpdate(Stream::Ptr stream = nullptr, uint32_t flags = ~0);
+    void SignalUpdate(const Stream::Ptr& stream = nullptr, uint32_t flags = ~0);
     /**
      * @brief Immediately update material colors.
      * 

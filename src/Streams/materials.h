@@ -2,6 +2,7 @@
 #include <string>
 #include <list>
 #include <memory>
+#include <utility>
 
 class IMaterial;
 
@@ -13,7 +14,7 @@ class CustomMaterial
 public:
     using Ptr = std::shared_ptr<CustomMaterial>;
 
-    CustomMaterial(std::string&& name, IMaterial* material) : m_name(name), m_material(material) {}
+    CustomMaterial(std::string name, IMaterial* material) : m_name(std::move(name)), m_material(material) {}
     ~CustomMaterial();
 
     const std::string& GetName() const { return m_name; }
@@ -22,7 +23,7 @@ public:
     static const std::list<Ptr>& GetAll() { return custom_mats; }
     static Ptr GetMatte();
     static Ptr GetSolid();
-    static Ptr AddCustomMaterial(std::string&& name, IMaterial* material);
+    static Ptr AddCustomMaterial(const std::string& name, IMaterial* material);
 
 protected:
     friend class StreamEditor;

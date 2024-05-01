@@ -117,7 +117,7 @@ const EncoderConfig::TypeDesc* EncoderConfig::Types() {
     return type_descs;
 }
 size_t EncoderConfig::NumTypes() {
-    return sizeof(type_descs) / sizeof(type_descs[0]);
+    return std::size(type_descs);
 }
 
 void EncoderConfig::ShowImguiControls()
@@ -296,7 +296,7 @@ bool ImageWriter::WriteFrame(const FrameBufferDx9& buffer, size_t frame_index)
     auto suffix = std::to_wstring(frame_index) + L'.' + file_extension;
 
     std::filesystem::path path = m_base_path.wstring() + suffix;
-    std::fstream file = std::fstream(path, std::ios::out | std::ios::binary);
+    std::ofstream file(path, std::ios::binary);
     if (!file)
     {
         VideoLog::AppendError("Failed to open file for writing: '%s'\n", path.u8string().c_str());
@@ -547,7 +547,7 @@ FFmpegWriter::~FFmpegWriter()
     {
         // Ensure the termination of FFmpeg without hanging the application.
         std::thread(
-            [](std::shared_ptr<ffmpipe::Pipe> pipe) { pipe->Close(60'000, true); },
+            [](const std::shared_ptr<ffmpipe::Pipe>& pipe) { pipe->Close(60'000, true); },
             m_pipe
         ).detach();
     }
@@ -634,7 +634,7 @@ void FramePool::Close()
     m_full.clear();
 }
 
-void FramePool::PushFullFrame(FramePtr frame, size_t index, std::shared_ptr<VideoWriter> writer)
+void FramePool::PushFullFrame(const FramePtr& frame, size_t index, const std::shared_ptr<VideoWriter>& writer)
 {
     if (IsClosed())
         return;

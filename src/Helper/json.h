@@ -9,7 +9,7 @@ namespace Helper
     class JsonConfigurable
     {
     public:
-        virtual ~JsonConfigurable() {}
+        virtual ~JsonConfigurable() = default;
         /**
          * @brief Read properties from JSON
          * @param json A JSON pointer. May be `nullptr`.

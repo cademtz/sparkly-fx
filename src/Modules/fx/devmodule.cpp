@@ -150,7 +150,7 @@ int DevModule::OnMenu()
         if (ImGui::Button("Add") && name[0])
         {
             std::scoped_lock lock(m_3dmarkers_mutex);
-            m_3dmarkers.emplace_back(std::make_pair(std::string(name.data()), Vector(pos[0], pos[1], pos[2])));
+            m_3dmarkers.emplace_back(std::string(name.data()), Vector(pos[0], pos[1], pos[2]));
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();
@@ -223,7 +223,7 @@ static bool PrintDXResult(HRESULT err, const char* expr)
         return true;
     
     WCHAR err_desc[512];
-    DXGetErrorDescriptionW(err, err_desc, sizeof(err_desc) / sizeof(err_desc[0]));
+    DXGetErrorDescriptionW(err, err_desc, std::size(err_desc));
     printf("%S (%S): %s\n", DXGetErrorStringW(err), err_desc, expr);
     return false;
 }

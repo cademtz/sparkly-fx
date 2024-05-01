@@ -3,7 +3,6 @@
 #include <Base/Interfaces.h>
 #include <Hooks/OverlayHook.h>
 #include <Hooks/PaintHook.h>
-#include <Hooks/ClientHook.h>
 #include <SDK/ienginevgui.h>
 
 #include <imgui_internal.h>

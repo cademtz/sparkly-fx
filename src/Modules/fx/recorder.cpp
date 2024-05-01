@@ -312,7 +312,7 @@ void CRecorder::ToggleRecording(const std::filesystem::path& path)
     }
 }
 
-bool CRecorder::SetupMovie(std::filesystem::path&& path)
+bool CRecorder::SetupMovie(const std::filesystem::path& path)
 {
     if (m_movie)
         return true;
@@ -346,7 +346,7 @@ bool CRecorder::SetupMovie(std::filesystem::path&& path)
         }
 
         m_movie.emplace(
-            screen_w, screen_h, std::move(path), *stream_list,
+            screen_w, screen_h, path, *stream_list,
             m_framepool_size, m_videoconfig
         );
     }
@@ -372,10 +372,10 @@ bool CRecorder::SetupMovie(std::filesystem::path&& path)
     return true;
 }
 
-static void AttemptToMoveTempAudioFile(std::filesystem::path old_path, std::filesystem::path new_path)
+static void AttemptToMoveTempAudioFile(const std::filesystem::path& old_path, const std::filesystem::path& new_path)
 {
-    const int WAIT_MS = 200;
-    const int TIMEOUT_MS = 10'000;
+    constexpr int WAIT_MS = 200;
+    constexpr int TIMEOUT_MS = 10'000;
 
     std::error_code err;
     for (int attempts = 0; attempts * WAIT_MS < TIMEOUT_MS; ++attempts)
@@ -455,7 +455,7 @@ int CRecorder::OnFrameStageNotify(ClientFrameStage_t stage)
             m_do_start_recording = false;
             CleanupMovie();
             
-            if (!SetupMovie(std::move(m_next_movie_path)))
+            if (!SetupMovie(m_next_movie_path))
                 CleanupMovie();
         }
         
@@ -492,27 +492,27 @@ int CRecorder::OnFrameStageNotify(ClientFrameStage_t stage)
     // If there is only one stream and it has no rendering effects, then take this fast path.
     if (m_movie->GetStreams().size() == 1 && m_movie->GetStreams()[0].stream->GetRenderTweaks().empty())
     {
-        auto& pair = m_movie->GetStreams().front();
+        auto& [stream, writer] = m_movie->GetStreams().front();
         auto frame = m_movie->GetFramePool().PopEmptyFrame();
         if (frame == nullptr)
             return 0; // The FramePool was closed
         CopyCurrentFrameToSurface(frame->buffer.GetSurface());
-        m_movie->GetFramePool().PushFullFrame(frame, frame_index, pair.writer);
+        m_movie->GetFramePool().PushFullFrame(frame, frame_index, writer);
         return 0;
     }
     
     // Here, many streams exist with different effects, so we will re-render for each of them.
     float default_fov = view_setup.fov;
-    for (auto& pair : m_movie->GetStreams())
+    for (auto& [stream, writer] : m_movie->GetStreams())
     {
         float fov = default_fov;
-        for (auto tweak = pair.stream->begin<CameraTweak>(); tweak != pair.stream->end<CameraTweak>(); ++tweak)
+        for (auto tweak = stream->begin<CameraTweak>(); tweak != stream->end<CameraTweak>(); ++tweak)
         {
             if (tweak->fov_override)
                 fov = tweak->fov;
         }
 
-        g_active_stream.Set(pair.stream);
+        g_active_stream.Set(stream);
         g_active_stream.SignalUpdate();
         // Update the materials right now, instead of waiting for the next frame.
         g_active_stream.UpdateMaterials();
@@ -525,7 +525,7 @@ int CRecorder::OnFrameStageNotify(ClientFrameStage_t stage)
         if (frame == nullptr)
             break; // The FramePool was closed
         CopyCurrentFrameToSurface(frame->buffer.GetSurface());
-        m_movie->GetFramePool().PushFullFrame(frame, frame_index, pair.writer);
+        m_movie->GetFramePool().PushFullFrame(frame, frame_index, writer);
     }
 
     return 0;

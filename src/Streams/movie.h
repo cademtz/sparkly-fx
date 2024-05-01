@@ -3,7 +3,6 @@
 #include <memory>
 #include <string>
 #include <filesystem>
-#include <functional>
 #include <optional>
 #include "videowriter.h"
 
@@ -39,7 +38,7 @@ public:
      */
     Movie(
         uint32_t width, uint32_t height,
-        std::filesystem::path&& root_path, const std::vector<std::shared_ptr<Stream>>& streams,
+        std::filesystem::path root_path, const std::vector<std::shared_ptr<Stream>>& streams,
         size_t framepool_size, const EncoderConfig& default_videoconfig
     );
 

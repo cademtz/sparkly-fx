@@ -26,7 +26,6 @@
 #include <Shaders/shaders.h>
 #include <Modules/fx/ActiveStream.h>
 #include <Hooks/fx/ModelRenderHook.h>
-#include <SDK/texture_group_names.h>
 #include <SDK/client_class.h>
 #include <Helper/imgui.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
@@ -628,7 +627,7 @@ void CameraTweak::OnMenu()
     {
         if (ImGui::Selectable("None", false))
             pixel_shader = nullptr;
-        for (Shader::PixelShader::ConstPtr shader : *Shader::PixelShader::GetLoadedShaders())
+        for (const Shader::PixelShader::ConstPtr& shader : *Shader::PixelShader::GetLoadedShaders())
         {
             if (ImGui::Selectable(shader->GetDisplayName(), false))
                 pixel_shader = shader->NewInstance();

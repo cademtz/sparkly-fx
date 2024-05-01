@@ -40,7 +40,7 @@ Stream::Ptr ActiveStream::Get()
     return m_stream;
 }
 
-void ActiveStream::Set(Stream::Ptr stream)
+void ActiveStream::Set(const Stream::Ptr& stream)
 {
     auto lock = WriteLock();
     m_should_update_materials = m_stream != stream;
@@ -51,7 +51,7 @@ void ActiveStream::Set(Stream::Ptr stream)
     UpdateRenderTarget();
 }
 
-void ActiveStream::SignalUpdate(Stream::Ptr stream, uint32_t flags)
+void ActiveStream::SignalUpdate(const Stream::Ptr& stream, uint32_t flags)
 {
     auto lock = WriteLock();
     if (m_stream == nullptr)
@@ -227,7 +227,7 @@ void ActiveStream::UpdateFog()
     }
     fog_override->SetValue(1);
 
-    std::array<char, 16> textbuf;
+    std::array<char, 16> textbuf{};
     
     sprintf_s(textbuf.data(), textbuf.size(), "%d %d %d",
         (int)(tweak->fog_color[0] * 255), (int)(tweak->fog_color[1] * 255), (int)(tweak->fog_color[2] * 255)
