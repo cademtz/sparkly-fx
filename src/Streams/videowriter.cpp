@@ -13,6 +13,7 @@
 #define QOI_IMPLEMENTATION
 #define QOI_NO_STDIO
 #include <qoi.h>
+#include <Helper/engine.h>
 
 static const COMDLG_FILTERSPEC COM_EXE_FILTER[] = {{L"Executable", L"*.exe"}, {0}};
 
@@ -27,21 +28,30 @@ const EncoderConfig::TypeDesc* EncoderConfig::TYPE_QOI = &type_descs[0];
 const EncoderConfig::TypeDesc* EncoderConfig::TYPE_PNG = &type_descs[1];
 const EncoderConfig::TypeDesc* EncoderConfig::TYPE_FFMPEG = &type_descs[2];
 
-void VideoLog::Append(std::string&& text) {
-    if (!text.empty() && text.back() == '\n')
-        text.pop_back();
-    GetConsoleQueue()->emplace_back(std::move(text));
+void VideoLog::ConsoleQueue::ExecuteAndClear()
+{
+    std::scoped_lock lock(m_mutex);
+    for (const std::string& text : m_queue)
+        Helper::ClientCmd_Unrestricted("echo %s", text.c_str());
+    m_queue.clear();
 }
 
-void VideoLog::AppendError(std::string&& text) {
+void VideoLog::Append(const std::string& text) {
+    std::string txt = text;
+    if (!txt.empty() && txt.back() == '\n')
+        txt.pop_back();
+    GetConsoleQueue().Append(std::move(txt));
+}
+
+void VideoLog::AppendError(const std::string& text) {
     *GetLog() += text;
-    Append(std::move(text));
+    Append(text);
     has_errors = true;
 }
 
 void VideoLog::Clear() {
     GetLog()->clear();
-    GetConsoleQueue()->clear();
+    GetConsoleQueue().Clear();
 }
 
 static std::vector<EncoderConfig::FFmpegPreset> MakeFFmpegPresets()
@@ -65,7 +75,8 @@ static std::vector<EncoderConfig::FFmpegPreset> MakeFFmpegPresets()
 
     std::string h264 = "-c:v libx264";
     std::string hevc = "-c:v libx265";
-    std::string msg = "";
+
+    std::string msg;
     if (Helper::FFmpeg::nvenc_device_available())
         h264 = "-c:v h264_nvenc", hevc = "-c:v hevc_nvenc";
     else if (Helper::FFmpeg::amf_device_available())
@@ -273,7 +284,7 @@ nlohmann::json EncoderConfig::ToJson() const
 
 bool ImageWriter::WriteFrame(const FrameBufferDx9& buffer, size_t frame_index)
 {
-    const wchar_t* file_extension;
+    const wchar_t* file_extension = L"";
     switch (m_file_format)
     {
     case Format::PNG: file_extension = L"png"; break;
@@ -368,7 +379,7 @@ bool ImageWriter::WriteQOI(const FrameBufferRgb& buffer, std::ostream& output)
 
 const Helper::D3DFORMAT_info& FrameBufferRgb::GetFormatInfo() const
 {
-    static const Helper::D3DFORMAT_info info = {
+    static constexpr Helper::D3DFORMAT_info info = {
         3,          // stride
         {8,8,8},    // bitdepth
         3,          // num_channels

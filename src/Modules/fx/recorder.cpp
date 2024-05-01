@@ -439,12 +439,7 @@ int CRecorder::OnFrameStageNotify(ClientFrameStage_t stage)
         ConVar_Register();
 
         // Print messages that were queued for the game thread
-        {
-            Helper::LockedRef<VideoLog::ConsoleQueue> queue = VideoLog::GetConsoleQueue();
-            for (std::string& str : *queue)
-                Helper::ClientCmd_Unrestricted("echo %s", str.c_str());
-            queue->clear();
-        }
+        VideoLog::GetConsoleQueue().ExecuteAndClear();
 
         // Start/stop the movie
 
@@ -473,7 +468,8 @@ int CRecorder::OnFrameStageNotify(ClientFrameStage_t stage)
 
     if (!m_movie)
         return 0;
-    else if (m_movie->Failed() || m_movie->GetFramePool().IsClosed())
+
+    if (m_movie->Failed() || m_movie->GetFramePool().IsClosed())
     {
         StopMovie();
         CleanupMovie();
