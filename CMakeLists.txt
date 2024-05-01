@@ -23,12 +23,13 @@ set(XSDK_BUILD_EXAMPLES 0 CACHE STRING "Build example modules and tests that can
 
 # Dependencies
 add_subdirectory(minhook)
+add_subdirectory(json)
 
-target_link_libraries(xsdk-base PRIVATE minhook)
+target_link_libraries(xsdk-base PRIVATE minhook nlohmann_json::nlohmann_json)
 
 # ===== sparkly-fx dependencies =====
 add_subdirectory(miniz)
 target_link_libraries(xsdk-base PRIVATE miniz)
-target_include_directories(xsdk-base PRIVATE libspng/spng qoi ffmpipe/include json/include)
+target_include_directories(xsdk-base PRIVATE libspng/spng qoi ffmpipe/include)
 target_compile_definitions(xsdk-base PRIVATE SPNG_USE_MINIZ SPNG_STATIC)
 target_sources(xsdk-base PRIVATE libspng/spng/spng.c ffmpipe/src/ffmpipe.cpp)
