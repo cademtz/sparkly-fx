@@ -21,17 +21,15 @@ constexpr int TEAM_BLU = 3;
 
 void SpectateModule::StartListening()
 {
-    MainWindow::OnWindow.Listen(&SpectateModule::OnMenu, this);
+    MainWindow::OnTabBar.Listen(&SpectateModule::OnTabBar, this);
     CClientHook::OnFrameStageNotify.Listen(&SpectateModule::OnFrameStageNotify, this);
     CClientHook::OnOverrideView.Listen(&SpectateModule::OnOverrideView, this);
 }
 
-int SpectateModule::OnMenu()
+int SpectateModule::OnTabBar()
 {
-    if (!ImGui::CollapsingHeader("Spectate"))
+    if (!ImGui::BeginTabItem("Spectate"))
         return 0;
-    
-    ImGui::PushID("SpectateModule");
 
     if (ImGui::Checkbox("Spectate", &m_spectating) && m_spectating)
         m_was_reset = true;
@@ -123,9 +121,8 @@ int SpectateModule::OnMenu()
     ImGui::Text("Host time: %d:%d", time / 60, time % 60);
     time = Interfaces::engine_tool->Time();
     ImGui::Text("Time: %d:%d", time / 60, time % 60);
-
-    ImGui::PopID();
     
+    ImGui::EndTabItem();
     return 0;
 }
 

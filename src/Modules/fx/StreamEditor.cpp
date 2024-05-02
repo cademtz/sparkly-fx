@@ -22,7 +22,7 @@
 void StreamEditor::StartListening()
 {
     CustomMaterial::CreateDefaultMaterials();
-    MainWindow::OnWindow.Listen(&StreamEditor::OnMenu, this);
+    MainWindow::OnTabBar.Listen(&StreamEditor::OnTabBar, this);
     ConfigModule::OnConfigLoad.Listen(&StreamEditor::OnConfigLoad, this);
     ConfigModule::OnConfigSave.Listen(&StreamEditor::OnConfigSave, this);
 }
@@ -35,34 +35,35 @@ void StreamEditor::OnEndMovie()
     g_active_stream.Set(stream);
 }
 
-int StreamEditor::OnMenu()
+int StreamEditor::OnTabBar()
 {
+    if (!ImGui::BeginTabItem("Streams"))
+        return 0;
+
     bool is_recording = g_recorder.IsRecordingMovie();
-    if (ImGui::CollapsingHeader("Streams"))
+    if (is_recording)
     {
-        if (is_recording)
-        {
-            ImGui::BeginDisabled();
-            m_preview = false;
-        }
-        
-        ImGui::BeginGroup();
-        ShowStreamListEditor();
-        ImGui::EndGroup();
-        
-        if (is_recording)
-            ImGui::EndDisabled();
-
-        if (!g_active_stream.IsDepthAvailable())
-        {
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
-            ImGui::TextWrapped(
-                "Depth buffer is unavailable. Your graphics driver probably lacks support for the 'INTZ' depth format."
-            );
-            ImGui::PopStyleColor();
-        }
+        ImGui::BeginDisabled();
+        m_preview = false;
     }
+    
+    ImGui::BeginGroup();
+    ShowStreamListEditor();
+    ImGui::EndGroup();
+    
+    if (is_recording)
+        ImGui::EndDisabled();
 
+    if (!g_active_stream.IsDepthAvailable())
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
+        ImGui::TextWrapped(
+            "Depth buffer is unavailable. Your graphics driver probably lacks support for the 'INTZ' depth format."
+        );
+        ImGui::PopStyleColor();
+    }
+    
+    ImGui::EndTabItem();
     return 0;
 }
 

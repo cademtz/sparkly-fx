@@ -12,6 +12,7 @@
 #include <d3d9.h>
 #include <Helper/dxerr.h>
 #include <Helper/imgui.h>
+#include <Modules/GameEjector.h>
 
 #define PRINT_DXRESULT(expr) PrintDXResult(expr, #expr)
 
@@ -30,7 +31,8 @@ private:
     std::vector<std::pair<std::string, Vector>> m_3dmarkers;
     std::mutex m_3dmarkers_mutex;
 
-    int OnMenu();
+    int OnMenuBar();
+    int OnTabBar();
     int OnDraw();
     int OnReset();
     int OnPresent();
@@ -45,7 +47,8 @@ DevModule g_devmodule;
 
 void DevModule::StartListening()
 {
-    MainWindow::OnWindow.Listen(&DevModule::OnMenu, this);
+    MainWindow::OnMenuBar.Listen(&DevModule::OnMenuBar, this);
+    MainWindow::OnTabBar.Listen(&DevModule::OnTabBar, this);
     CDraw::OnDraw.Listen(&DevModule::OnDraw, this);
     COverlayHook::OnReset.ListenNoArgs(&DevModule::OnReset, this);
     COverlayHook::OnPresent.ListenNoArgs(&DevModule::OnPresent, this);
@@ -73,11 +76,23 @@ void DevModule::DisplayTataTableTree(RecvTable* table)
     }
 }
 
-int DevModule::OnMenu()
+int DevModule::OnMenuBar()
+{
+    if (!ImGui::BeginMenu("Dev tools"))
+        return 0;
+
+    if (ImGui::Selectable("Eject"))
+        GameEjector::Eject();
+    
+    ImGui::EndMenu();
+    return 0;
+}
+
+int DevModule::OnTabBar()
 {
     const char* const POPUP_3DMARKER = "##popup_3dmarker";
     
-    if (!ImGui::CollapsingHeader("Dev tools"))
+    if (!ImGui::BeginTabItem("Dev tools"))
         return 0;
     
     static std::array<char, 64> filter_text = {0};
@@ -156,6 +171,7 @@ int DevModule::OnMenu()
         ImGui::EndPopup();
     }
 
+    ImGui::EndTabItem();
     return 0;
 }
 

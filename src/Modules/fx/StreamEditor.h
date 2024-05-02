@@ -20,7 +20,7 @@ public:
     void OnEndMovie();
     
 private:
-    int OnMenu();
+    int OnTabBar();
     int OnConfigSave();
     int OnConfigLoad();
     void ShowStreamListEditor();

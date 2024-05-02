@@ -22,7 +22,7 @@ private:
         int team;
     };
 
-    int OnMenu();
+    int OnTabBar();
     int OnFrameStageNotify(ClientFrameStage_t stage);
     int OnOverrideView(CViewSetup* view_setup);
     void AppendLog(std::string_view text) {

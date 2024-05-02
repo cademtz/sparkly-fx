@@ -28,7 +28,8 @@ protected:
     void StartListening() override;
 
 private:
-    int OnMenu();
+    int OnMenuBar();
+    int OnTabBar();
     /// @brief Autosave happen in here to keep everything in the UI thread
     int OnPresent();
     static inline int autosave_mins = 1;

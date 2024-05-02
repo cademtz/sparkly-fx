@@ -20,13 +20,13 @@ void HlaeUi::StartListening()
     AUTOSAVE_PATH = AUTOSAVE_PARENT_PATH / "hlae_campath.xml";
     AUTOSAVE_PATH_UTF8 = AUTOSAVE_PATH.string();
 
-    MainWindow::OnWindow.Listen(&HlaeUi::OnMenu, this);
+    MainWindow::OnTabBar.Listen(&HlaeUi::OnTabBar, this);
     CClientHook::OnFrameStageNotify.Listen(&HlaeUi::OnFrameStageNotify, this);
 }
 
-int HlaeUi::OnMenu()
+int HlaeUi::OnTabBar()
 {
-    if (!ImGui::CollapsingHeader("HLAE (Half-Life Advanced Effects)"))
+    if (!ImGui::BeginTabItem("HLAE"))
         return 0;
 
     // Shadow the member variable so we don't make any mistakes due to threading
@@ -88,6 +88,8 @@ int HlaeUi::OnMenu()
 
     if (!m_is_hlae_loaded)
         ImGui::EndDisabled();
+
+    ImGui::EndTabItem();
     return 0;
 }
 

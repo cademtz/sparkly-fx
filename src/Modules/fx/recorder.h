@@ -33,7 +33,8 @@ public:
 private:
     int OnPostImguiInput();
     int OnDraw();
-    int OnMenu();
+    int OnTabBar();
+    int OnWindow();
     int OnConfigSave();
     int OnConfigLoad();
     int OnFrameStageNotify(enum ClientFrameStage_t stage);

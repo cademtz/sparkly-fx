@@ -64,15 +64,28 @@ void ConfigModule::StartListening()
 {
     CONFIG_PATH = Base::GetModuleDir() / "sparklyfx" / CURRENT_CONFIG;
 
-    MainWindow::OnWindow.Listen(&ConfigModule::OnMenu, this);
+    MainWindow::OnMenuBar.Listen(&ConfigModule::OnMenuBar, this);
+    MainWindow::OnTabBar.Listen(&ConfigModule::OnTabBar, this);
     COverlayHook::OnPresent.ListenNoArgs(&ConfigModule::OnPresent, this);
 }
 
-int ConfigModule::OnMenu()
-{
-    if (!ImGui::CollapsingHeader("Config"))
+int ConfigModule::OnMenuBar() {
+    if (!ImGui::BeginMenu("Config"))
         return 0;
-    ImGui::PushID("Config");
+    
+    if (ImGui::Selectable("Save"))
+        ConfigModule::Save(CONFIG_PATH);
+    if (ImGui::Selectable("Reload"))
+        ConfigModule::Load(CONFIG_PATH);
+    
+    ImGui::EndMenu();
+    return 0;
+}
+
+int ConfigModule::OnTabBar()
+{
+    if (!ImGui::BeginTabItem("Config"))
+        return 0;
     
     if (ImGui::Button("Reload")) {
         ConfigModule::Load(CONFIG_PATH);
@@ -118,7 +131,7 @@ int ConfigModule::OnMenu()
         ImGui::PopStyleColor();
     }
 
-    ImGui::PopID();
+    ImGui::EndTabItem();
     return 0;
 }
 

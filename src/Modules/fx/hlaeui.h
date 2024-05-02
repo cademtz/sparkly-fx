@@ -20,7 +20,7 @@ private:
     int m_autosave_mins = 1;
     std::optional<std::filesystem::path> m_prev_campath_save;
 
-    int OnMenu();
+    int OnTabBar();
     int OnFrameStageNotify(enum ClientFrameStage_t stage);
     /// @brief Find HLAE's commands
     void FindCommands();

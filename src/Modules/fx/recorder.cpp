@@ -91,7 +91,8 @@ void CRecorder::StartListening()
 
     InputModule::OnPostImguiInput.Listen(&CRecorder::OnPostImguiInput, this);
     CDraw::OnDraw.Listen(&CRecorder::OnDraw, this);
-    MainWindow::OnWindow.Listen(&CRecorder::OnMenu, this);
+    MainWindow::OnTabBar.Listen(&CRecorder::OnTabBar, this);
+    MainWindow::OnWindow.Listen(&CRecorder::OnWindow, this);
     CClientHook::OnFrameStageNotify.Listen(&CRecorder::OnFrameStageNotify, this);
     VideoModeHook::OnWriteMoveFrame.Listen(&CRecorder::OnWriteMovieFrame, this);
     ShaderApiHook::OnReadPixels.Listen(&CRecorder::OnReadPixels, this);
@@ -135,109 +136,115 @@ int CRecorder::OnDraw()
     return 0;
 }
 
-int CRecorder::OnMenu()
+int CRecorder::OnTabBar()
 {   
-    if (ImGui::CollapsingHeader("Recording"))
+    if (!ImGui::BeginTabItem("Recorder"))
+        return 0;
+        
+    bool has_errors = VideoLog::HasErrors();
+    if (has_errors)
     {
-        bool has_errors = VideoLog::HasErrors();
-        if (has_errors)
-        {
-            ImGui::Text("Error log:"); ImGui::SameLine();
-            if (ImGui::Button("Clear"))
-                VideoLog::Clear();
-            
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
-            auto locked_error_log = VideoLog::GetLog();
-            ImGui::InputTextMultiline("##error_log",
-                locked_error_log->data(), locked_error_log->length(), ImVec2(0,0), ImGuiInputTextFlags_ReadOnly
-            );
-            ImGui::PopStyleColor();
-        }
-
-        if (ImGui::Button(IsRecordingMovie() ? "Stop" : "Start"))
-            ToggleRecording(m_movie_path);
+        ImGui::Text("Error log:"); ImGui::SameLine();
+        if (ImGui::Button("Clear"))
+            VideoLog::Clear();
         
-        m_record_bind.OnMenu("Record hotkey");
-        
-        if (ImGui::TreeNode("Recording behavior"))
-        {
-            ImGui::BeginGroup();
-
-            ImGui::Checkbox("Recording indicator", &m_record_indicator); ImGui::SameLine();
-            Helper::ImGuiHelpMarker(
-                "Displays an indicator on screen while recording\n"
-                "(Currently, this decreases the recording performance by re-rendering the frame)"
-            );
-            ImGui::Checkbox("Auto-resume demo", &m_autoresume_demo); ImGui::SameLine();
-            Helper::ImGuiHelpMarker("Resumes the demo when the recording starts");
-            ImGui::Checkbox("Auto-pause demo", &m_autopause_demo); ImGui::SameLine();
-            Helper::ImGuiHelpMarker("Pauses the demo when the recording stops");
-
-            ImGui::EndGroup();
-            ImGui::SameLine();
-            ImGui::BeginGroup();
-
-            if (ImGui::Checkbox("Auto-close menu", &m_autoclose_menu))
-                m_autostop_recording &= m_autoclose_menu; // Do not auto-stop if auto-close is off.
-            ImGui::SameLine(); Helper::ImGuiHelpMarker("Closes the menu when the recording starts");
-            if (ImGui::Checkbox("Auto-stop recording", &m_autostop_recording))
-                m_autoclose_menu |= m_autostop_recording; // Always auto-close if auto-stop is enabled.
-            ImGui::SameLine(); Helper::ImGuiHelpMarker("Stops the recording when the menu is opened");
-
-            ImGui::EndGroup();
-            ImGui::TreePop();
-        }
-
-        bool was_recording = m_is_recording_; // Value could change. Store it here.
-        if (was_recording)
-            ImGui::BeginDisabled();
-
-        if (m_movie_path.empty())
-            ImGui::TextColored(ImVec4(1,1,0,1), "[!] Choose an output folder below");
-        ImGui::Text("Output folder:"); ImGui::SameLine();
-        Helper::ImGuiHelpMarker(
-            "This folder will contain the movie files.\n"
-            "The folder will be created automatically, if it doesn't exist."
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
+        auto locked_error_log = VideoLog::GetLog();
+        ImGui::InputTextMultiline("##error_log",
+            locked_error_log->data(), locked_error_log->length(), ImVec2(0,0), ImGuiInputTextFlags_ReadOnly
         );
-        std::string _movie_path_str = m_movie_path.string();
-        ImGui::InputText("##output_folder", &_movie_path_str, ImGuiInputTextFlags_ReadOnly); ImGui::SameLine();
-        if (ImGui::Button("Browse"))
-        {
-            auto optional_path = Helper::OpenFolderDialog(L"Select the output folder", &m_movie_path);
-            if (optional_path)
-                m_movie_path = std::move(*optional_path);
-        }
-        
-        ImGui::PushID("##videoconfig");
-        m_videoconfig.ShowImguiControls();
-        ImGui::PopID();
-
-        ImGui::SliderInt("Frame pool size", &m_framepool_size, 1, 128, "%d", ImGuiSliderFlags_AlwaysClamp);
-        ImGui::SameLine();
-        Helper::ImGuiHelpMarker(
-            "The maximum number of frames that can be encoded at once.\n"
-            "If your CPU has 8 cores, you may want a pool with 9 or 12 frames.\n"
-            "Setting this value too high or too low can make it slower.\n"
-        );
-
-        int screen_w, screen_h;
-        Interfaces::engine->GetScreenSize(screen_w, screen_h);
-        // Approximate framepool RAM, assuming a 32-bit XRGB framebuffer
-        float framepool_ram = screen_w * screen_h * 4;
-        framepool_ram = framepool_ram * m_framepool_size / (1024 * 1024);
-        
-        if (was_recording)
-            ImGui::EndDisabled();
-        
-        // Disabled text has less visual clutter
-        ImGui::BeginDisabled();
-        ImGui::Text("Framepool RAM: %f MB", framepool_ram);
-        ImGui::Text("Framepool threads: %u", std::thread::hardware_concurrency());
-        ImGui::TextWrapped("Game directory: %s", game_dir.u8string().c_str());
-        ImGui::TextWrapped("Working directory: %s", working_dir.u8string().c_str());
-        ImGui::EndDisabled();
+        ImGui::PopStyleColor();
     }
 
+    if (ImGui::Button(IsRecordingMovie() ? "Stop" : "Start"))
+        ToggleRecording(m_movie_path);
+    
+    m_record_bind.OnMenu("Record hotkey");
+    
+    if (ImGui::TreeNode("Recording behavior"))
+    {
+        ImGui::BeginGroup();
+
+        ImGui::Checkbox("Recording indicator", &m_record_indicator); ImGui::SameLine();
+        Helper::ImGuiHelpMarker(
+            "Displays an indicator on screen while recording\n"
+            "(Currently, this decreases the recording performance by re-rendering the frame)"
+        );
+        ImGui::Checkbox("Auto-resume demo", &m_autoresume_demo); ImGui::SameLine();
+        Helper::ImGuiHelpMarker("Resumes the demo when the recording starts");
+        ImGui::Checkbox("Auto-pause demo", &m_autopause_demo); ImGui::SameLine();
+        Helper::ImGuiHelpMarker("Pauses the demo when the recording stops");
+
+        ImGui::EndGroup();
+        ImGui::SameLine();
+        ImGui::BeginGroup();
+
+        if (ImGui::Checkbox("Auto-close menu", &m_autoclose_menu))
+            m_autostop_recording &= m_autoclose_menu; // Do not auto-stop if auto-close is off.
+        ImGui::SameLine(); Helper::ImGuiHelpMarker("Closes the menu when the recording starts");
+        if (ImGui::Checkbox("Auto-stop recording", &m_autostop_recording))
+            m_autoclose_menu |= m_autostop_recording; // Always auto-close if auto-stop is enabled.
+        ImGui::SameLine(); Helper::ImGuiHelpMarker("Stops the recording when the menu is opened");
+
+        ImGui::EndGroup();
+        ImGui::TreePop();
+    }
+
+    bool was_recording = m_is_recording_; // Value could change. Store it here.
+    if (was_recording)
+        ImGui::BeginDisabled();
+
+    if (m_movie_path.empty())
+        ImGui::TextColored(ImVec4(1,1,0,1), "[!] Choose an output folder below");
+    ImGui::Text("Output folder:"); ImGui::SameLine();
+    Helper::ImGuiHelpMarker(
+        "This folder will contain the movie files.\n"
+        "The folder will be created automatically, if it doesn't exist."
+    );
+    std::string _movie_path_str = m_movie_path.string();
+    ImGui::InputText("##output_folder", &_movie_path_str, ImGuiInputTextFlags_ReadOnly); ImGui::SameLine();
+    if (ImGui::Button("Browse"))
+    {
+        auto optional_path = Helper::OpenFolderDialog(L"Select the output folder", &m_movie_path);
+        if (optional_path)
+            m_movie_path = std::move(*optional_path);
+    }
+    
+    ImGui::PushID("##videoconfig");
+    m_videoconfig.ShowImguiControls();
+    ImGui::PopID();
+
+    ImGui::SliderInt("Frame pool size", &m_framepool_size, 1, 128, "%d", ImGuiSliderFlags_AlwaysClamp);
+    ImGui::SameLine();
+    Helper::ImGuiHelpMarker(
+        "The maximum number of frames that can be encoded at once.\n"
+        "If your CPU has 8 cores, you may want a pool with 9 or 12 frames.\n"
+        "Setting this value too high or too low can make it slower.\n"
+    );
+
+    int screen_w, screen_h;
+    Interfaces::engine->GetScreenSize(screen_w, screen_h);
+    // Approximate framepool RAM, assuming a 32-bit XRGB framebuffer
+    float framepool_ram = screen_w * screen_h * 4;
+    framepool_ram = framepool_ram * m_framepool_size / (1024 * 1024);
+    
+    if (was_recording)
+        ImGui::EndDisabled();
+    
+    // Disabled text has less visual clutter
+    ImGui::BeginDisabled();
+    ImGui::Text("Framepool RAM: %f MB", framepool_ram);
+    ImGui::Text("Framepool threads: %u", std::thread::hardware_concurrency());
+    ImGui::TextWrapped("Game directory: %s", game_dir.u8string().c_str());
+    ImGui::TextWrapped("Working directory: %s", working_dir.u8string().c_str());
+    ImGui::EndDisabled();
+
+    ImGui::EndTabItem();
+    return 0;
+}
+
+int CRecorder::OnWindow()
+{
     if (IsRecordingMovie() && m_autostop_recording)
         StopMovie();
     return 0;
