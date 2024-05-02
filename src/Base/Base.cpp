@@ -22,7 +22,7 @@
 #define CRASHLOG_NAME "xsdk-crashlog.txt"
 
 LONG NTAPI MyVectoredHandler(struct _EXCEPTION_POINTERS *ExceptionInfo);
-//static PVOID my_vectored_handler = nullptr;
+static PVOID my_vectored_handler = nullptr;
 //
 
 static std::filesystem::path module_dir;
@@ -40,7 +40,7 @@ void Base::OnDetach()
 	SymCleanup(GetCurrentProcess());
 	// TODO: Make interfaces and other memory use smart pointers, which will self-destruct automatically.
 	Interfaces::DestroyInterfaces();
-	//RemoveVectoredExceptionHandler(my_vectored_handler);
+	RemoveVectoredExceptionHandler(my_vectored_handler);
 }
 
 DWORD WINAPI Base::HookThread(LPVOID Args)
@@ -79,7 +79,7 @@ DWORD WINAPI Base::HookThread(LPVOID Args)
 	//SetUnhandledExceptionFilter(UnhandledFilter);
 	
 	// This works, because we add a new "first" handler after all others have been set up.
-	//my_vectored_handler = AddVectoredExceptionHandler(TRUE, MyVectoredHandler);
+	my_vectored_handler = AddVectoredExceptionHandler(TRUE, MyVectoredHandler);
 
 	Netvars::GetNetvars();
 	CBaseHook::HookAll();
