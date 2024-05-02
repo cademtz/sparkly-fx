@@ -141,7 +141,7 @@ static int GetFrames(CONTEXT* ctx, uintptr_t* addrs, int max)
 	frame.AddrFrame.Mode = AddrModeFlat;
 	frame.AddrStack.Mode = AddrModeFlat;
 
-#if defined _M_IX86
+#if 0 // NOTE(Cade): This ALSO crashes 32-bit TF2. Fall back to RtlCaptureStackBackTrace.
 	type = IMAGE_FILE_MACHINE_I386;
 	frame.AddrPC.Offset    = ctx->Eip;
 	frame.AddrFrame.Offset = ctx->Ebp;
