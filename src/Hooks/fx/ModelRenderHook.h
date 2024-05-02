@@ -28,8 +28,8 @@ public:
     /// @brief Clear the list of drawn models
     void ClearDrawnModelList();
 
-    static inline EventSource<void()> PreDrawModelExecuteEvent;
-    static inline EventSource<void()> PostDrawModelExecuteEvent;
+    static inline EventSource<void()> OnPreDrawModelExecute;
+    static inline EventSource<void()> OnPostDrawModelExecute;
 
 private:
     static void __stdcall Hooked_DrawModelExecute(UNCRAP const DrawModelState_t& state, const ModelRenderInfo_t& pInfo, matrix3x4_t* pCustomBoneToWorld);

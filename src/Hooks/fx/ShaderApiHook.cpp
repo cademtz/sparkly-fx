@@ -44,13 +44,13 @@ void ShaderApiHook::Unhook() {
 
 void __stdcall ShaderApiHook::Hooked_ReadPixels_0(UNCRAP Rect_t *pSrcRect, Rect_t *pDstRect, unsigned char *pData, ImageFormat dstFormat, int nDstStride)
 {
-    if (ReadPixelsEvent.DispatchEvent() & EventReturnFlags::NoOriginal)
+    if (OnReadPixels.DispatchEvent() & EventReturnFlags::NoOriginal)
         return;
     g_hk_shaderapi.ReadPixels(pSrcRect, pDstRect, pData, dstFormat, nDstStride);
 }
 void __stdcall ShaderApiHook::Hooked_ReadPixels_1(UNCRAP int x, int y, int width, int height, unsigned char *pData, ImageFormat dstFormat)
 {
-    if (ReadPixelsEvent.DispatchEvent() & EventReturnFlags::NoOriginal)
+    if (OnReadPixels.DispatchEvent() & EventReturnFlags::NoOriginal)
         return;
     g_hk_shaderapi.ReadPixels(x, y, width, height, pData, dstFormat);
 }

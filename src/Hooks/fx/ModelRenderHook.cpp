@@ -43,8 +43,8 @@ void __stdcall CModelRenderHook::Hooked_DrawModelExecute(UNCRAP const DrawModelS
         g_hk_model_render.m_drawn_modelnames.emplace(state.m_pStudioHdr->name);
     }
 
-    int flags = PreDrawModelExecuteEvent.DispatchEvent();
+    int flags = OnPreDrawModelExecute.DispatchEvent();
     if (!(flags & EventReturnFlags::NoOriginal))
         g_hk_model_render.DrawModelExecute(*ctx->state, *ctx->pInfo, ctx->pCustomBoneToWorld);
-    PostDrawModelExecuteEvent.DispatchEvent();
+    OnPostDrawModelExecute.DispatchEvent();
 }

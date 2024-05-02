@@ -93,8 +93,8 @@ void CRecorder::StartListening()
     CDraw::OnDraw.Listen(&CRecorder::OnDraw, this);
     MainWindow::OnWindow.Listen(&CRecorder::OnMenu, this);
     CClientHook::OnFrameStageNotify.Listen(&CRecorder::OnFrameStageNotify, this);
-    VideoModeHook::WriteMoveFrameEvent.Listen(&CRecorder::OnWriteMovieFrame, this);
-    ShaderApiHook::ReadPixelsEvent.Listen(&CRecorder::OnReadPixels, this);
+    VideoModeHook::OnWriteMoveFrame.Listen(&CRecorder::OnWriteMovieFrame, this);
+    ShaderApiHook::OnReadPixels.Listen(&CRecorder::OnReadPixels, this);
     ConfigModule::OnConfigSave.Listen(&CRecorder::OnConfigSave, this);
     ConfigModule::OnConfigLoad.Listen(&CRecorder::OnConfigLoad, this);
 }

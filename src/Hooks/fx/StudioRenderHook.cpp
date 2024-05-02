@@ -25,7 +25,7 @@ void StudioRenderHook::DrawModelStaticProp(const DrawModelInfo_t& drawInfo, cons
 
 void __stdcall StudioRenderHook::Hooked_DrawModelStaticProp(UNCRAP const DrawModelInfo_t& drawInfo, const matrix3x4_t& modelToWorld, int flags)
 {
-    int event_flags = DrawModelStaticPropEvent.DispatchEvent();
+    int event_flags = OnDrawModelStaticProp.DispatchEvent();
     if (event_flags & EventReturnFlags::NoOriginal)
         return;
     g_hk_studiorender.DrawModelStaticProp(drawInfo, modelToWorld, flags);

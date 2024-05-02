@@ -16,7 +16,7 @@ public:
     void ReadPixels(Rect_t *pSrcRect, Rect_t *pDstRect, unsigned char *pData, ImageFormat dstFormat, int nDstStride);
     void ReadPixels(int x, int y, int width, int height, unsigned char *pData, ImageFormat dstFormat);
 
-    static inline EventSource<void()> ReadPixelsEvent;
+    static inline EventSource<void()> OnReadPixels;
 
 private:
     CVMTHook m_vmt;

@@ -11,7 +11,7 @@ public:
     void Hook() override;
     void Unhook() override;
 
-    static inline EventSource<void()> WriteMoveFrameEvent;
+    static inline EventSource<void()> OnWriteMoveFrame;
 
 private:
     void* m_videomode = nullptr;

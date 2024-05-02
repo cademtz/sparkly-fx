@@ -36,7 +36,7 @@ void VideoModeHook::Unhook() {
 
 void __stdcall VideoModeHook::Hooked_WriteMoveFrame(UNCRAP const void* info)
 {
-    int result = WriteMoveFrameEvent.DispatchEvent();
+    int result = OnWriteMoveFrame.DispatchEvent();
     if (result & EventReturnFlags::NoOriginal)
         return;
     

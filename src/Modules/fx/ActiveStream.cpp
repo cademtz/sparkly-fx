@@ -24,12 +24,12 @@
 
 void ActiveStream::StartListening()
 {
-    StudioRenderHook::DrawModelStaticPropEvent.Listen(&ActiveStream::OnDrawStaticProp, this);
-    CModelRenderHook::PreDrawModelExecuteEvent.Listen(&ActiveStream::PreDrawModelExecute, this);
-    CModelRenderHook::PostDrawModelExecuteEvent.Listen(&ActiveStream::PostDrawModelExecute, this);
+    StudioRenderHook::OnDrawModelStaticProp.Listen(&ActiveStream::OnDrawStaticProp, this);
+    CModelRenderHook::OnPreDrawModelExecute.Listen(&ActiveStream::PreDrawModelExecute, this);
+    CModelRenderHook::OnPostDrawModelExecute.Listen(&ActiveStream::PostDrawModelExecute, this);
     CClientHook::OnFrameStageNotify.Listen(&ActiveStream::OnFrameStageNotify, this);
     CClientHook::OnOverrideView.Listen(&ActiveStream::OnOverrideView, this);
-    RenderViewHook::ViewDrawFadeEvent.ListenNoArgs(&ActiveStream::OnViewDrawFade, this);
+    RenderViewHook::OnViewDrawFade.ListenNoArgs(&ActiveStream::OnViewDrawFade, this);
     COverlayHook::OnPresent.ListenNoArgs(&ActiveStream::OnPresent, this);
     COverlayHook::OnReset.ListenNoArgs(&ActiveStream::OnReset, this);
 }

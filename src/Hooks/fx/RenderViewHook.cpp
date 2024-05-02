@@ -24,7 +24,7 @@ void RenderViewHook::ViewDrawFade(uint8_t* color, IMaterial* pFadeMaterial)
 
 void __stdcall RenderViewHook::Hooked_ViewDrawFade(UNCRAP uint8_t* color, IMaterial* pFadeMaterial)
 {
-    int event_flags = ViewDrawFadeEvent.DispatchEvent(color, pFadeMaterial);
+    int event_flags = OnViewDrawFade.DispatchEvent(color, pFadeMaterial);
     if (event_flags & EventReturnFlags::NoOriginal)
         return;
     g_hk_renderview.ViewDrawFade(color, pFadeMaterial);

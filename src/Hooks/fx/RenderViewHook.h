@@ -16,7 +16,7 @@ public:
     void ViewDrawFade(uint8_t* color, IMaterial* pFadeMaterial);
 
     using ViewDrawFadeEvent_t = EventSource<void(uint8_t* color, IMaterial* pFadeMaterial)>;
-    static inline ViewDrawFadeEvent_t ViewDrawFadeEvent;
+    static inline ViewDrawFadeEvent_t OnViewDrawFade;
 
 private:
     CVMTHook m_hook;

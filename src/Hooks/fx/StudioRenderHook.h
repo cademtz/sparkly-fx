@@ -12,7 +12,7 @@ public:
     void Unhook() override;
     void DrawModelStaticProp(const DrawModelInfo_t& drawInfo, const matrix3x4_t& modelToWorld, int flags);
 
-    static inline EventSource<void()> DrawModelStaticPropEvent;
+    static inline EventSource<void()> OnDrawModelStaticProp;
 
 private:
     CVMTHook m_hook;
