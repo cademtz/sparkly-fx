@@ -1,25 +1,29 @@
 #pragma once
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include <filesystem>
 #undef DrawText // Thanks Windows.h
 
 #define FATAL(...) Base::Fatal("Fatal error in " __FUNCTION__, __VA_ARGS__)
 
-namespace std::filesystem { class path; }
-
-enum EAppID
+enum class EAppID
 {
-	AppId_HL2 = 220,
-	AppId_CSS = 240,
-	AppID_HL2DM = 320,
-	AppId_Portal = 400,
-	AppId_TF2 = 440,
-	AppId_L4D = 500,
-	AppId_L4D2 = 550,
-	AppId_Portal2 = 620,
-	AppId_CSGO = 730,
-	AppID_GMod = 4000,
+	HL2 = 220,
+	CSS = 240,
+	HL2DM = 320,
+	Portal = 400,
+	TF2 = 440,
+	L4D = 500,
+	L4D2 = 550,
+	Portal2 = 620,
+	CSGO = 730,
+	GMOD = 4000,
 };
+
+inline bool operator==(const int Value, EAppID AppID)
+{
+	return static_cast<int>(AppID) == Value;
+}
 
 namespace Base
 {

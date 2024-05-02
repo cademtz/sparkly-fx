@@ -7,7 +7,7 @@
 #include "StreamEditor.h"
 #include "ActiveStream.h"
 #include "recorder.h"
-#include <Modules/Menu.h>
+#include "mainwindow.h"
 #include "configmodule.h"
 #include <Streams/materials.h>
 #include <SDK/KeyValues.h>
@@ -22,9 +22,9 @@
 void StreamEditor::StartListening()
 {
     CustomMaterial::CreateDefaultMaterials();
-    Listen(EVENT_MENU, [this]{ return OnMenu(); });
-    Listen(EVENT_CONFIG_SAVE, [this]{ return OnConfigSave(); });
-    Listen(EVENT_CONFIG_LOAD, [this]{ return OnConfigLoad(); });
+    MainWindow::OnTabBar.Listen(&StreamEditor::OnTabBar, this);
+    ConfigModule::OnConfigLoad.Listen(&StreamEditor::OnConfigLoad, this);
+    ConfigModule::OnConfigSave.Listen(&StreamEditor::OnConfigSave, this);
 }
 
 void StreamEditor::OnEndMovie()
@@ -35,34 +35,35 @@ void StreamEditor::OnEndMovie()
     g_active_stream.Set(stream);
 }
 
-int StreamEditor::OnMenu()
+int StreamEditor::OnTabBar()
 {
+    if (!ImGui::BeginTabItem("Streams"))
+        return 0;
+
     bool is_recording = g_recorder.IsRecordingMovie();
-    if (ImGui::CollapsingHeader("Streams"))
+    if (is_recording)
     {
-        if (is_recording)
-        {
-            ImGui::BeginDisabled();
-            m_preview = false;
-        }
-        
-        ImGui::BeginGroup();
-        ShowStreamListEditor();
-        ImGui::EndGroup();
-        
-        if (is_recording)
-            ImGui::EndDisabled();
-
-        if (!g_active_stream.IsDepthAvailable())
-        {
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
-            ImGui::TextWrapped(
-                "Depth buffer is unavailable. Your graphics driver probably lacks support for the 'INTZ' depth format."
-            );
-            ImGui::PopStyleColor();
-        }
+        ImGui::BeginDisabled();
+        m_preview = false;
     }
+    
+    ImGui::BeginGroup();
+    ShowStreamListEditor();
+    ImGui::EndGroup();
+    
+    if (is_recording)
+        ImGui::EndDisabled();
 
+    if (!g_active_stream.IsDepthAvailable())
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
+        ImGui::TextWrapped(
+            "Depth buffer is unavailable. Your graphics driver probably lacks support for the 'INTZ' depth format."
+        );
+        ImGui::PopStyleColor();
+    }
+    
+    ImGui::EndTabItem();
     return 0;
 }
 
@@ -258,7 +259,7 @@ void StreamEditor::PopupStreamPresets()
 
     if (ImGui::BeginListBox("Presets"))
     {
-        for (Stream::ConstPtr preset : Stream::GetPresets())
+        for (const Stream::ConstPtr& preset : Stream::GetPresets())
         {
             if (ImGui::Selectable(preset->GetName().c_str()))
                 selection = preset;
@@ -276,7 +277,7 @@ void StreamEditor::PopupStreamPresets()
     ImGui::EndPopup();
 }
 
-void StreamEditor::ShowStreamEditor(Stream::Ptr stream)
+void StreamEditor::ShowStreamEditor(const Stream::Ptr& stream)
 {
     auto tweaks_list = &stream->GetRenderTweaks();
     
@@ -324,7 +325,7 @@ void StreamEditor::ShowStreamEditor(Stream::Ptr stream)
     }
 }
 
-void StreamEditor::PopupTweakCreator(Stream::Ptr stream)
+void StreamEditor::PopupTweakCreator(const Stream::Ptr& stream)
 {
     static auto default_tweaks_getter = [](void* data, int index, const char** out_text)
     {
@@ -358,7 +359,7 @@ void StreamEditor::PopupTweakCreator(Stream::Ptr stream)
     }
 }
 
-void StreamEditor::ShowTweakEditor(RenderTweak::Ptr render_tweak) {
+void StreamEditor::ShowTweakEditor(const RenderTweak::Ptr& render_tweak) {
     render_tweak->OnMenu();
 }
 
@@ -370,7 +371,7 @@ bool StreamEditor::IsDuplicateName(std::string_view name) const
     return existing != m_streams.end();
 }
 
-std::string StreamEditor::MakeUniqueName(std::string_view base_name) const
+std::string StreamEditor::MakeUniqueName(const std::string_view base_name) const
 {
     std::string new_name = std::string(base_name);
     if (!IsDuplicateName(new_name))

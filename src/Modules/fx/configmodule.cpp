@@ -4,12 +4,13 @@
 #include <mutex>
 #include <chrono>
 #include <nlohmann/json.hpp>
+#include <Base/Base.h>
 #include <Helper/json.h>
 #include <Helper/defer.h>
 #include <Helper/str.h>
 #include <Helper/imgui.h>
 #include <Helper/threading.h>
-#include <Modules/Menu.h>
+#include "mainwindow.h"
 #include <Modules/fx/recorder.h>
 #include <Hooks/OverlayHook.h>
 
@@ -27,7 +28,7 @@ static std::filesystem::path CONFIG_PATH;
 
 /**
  * @brief Get text position based on offset
- * @param istream The input stream. Its current position will be changed. 
+ * @param stream The input stream. Its current position will be changed.
  * @param pos Absolute text position, starting from 0
  * @param out_line Receives the line number, starting from 1
  * @param out_column Receives the column number, starting from 1
@@ -55,29 +56,36 @@ static void GetTextPos(std::istream& stream, size_t pos, size_t* out_line, size_
 static Helper::LockedRef<std::string> GetError() {
     return {cfg_errors, cfg_mutex};
 }
-static void AppendError(std::string_view text) {
+static void AppendError(const std::string_view text) {
     *GetError() += text;
-}
-
-ConfigModule::ConfigModule()
-{
-    RegisterEvent(EVENT_CONFIG_SAVE);
-    RegisterEvent(EVENT_CONFIG_LOAD);
 }
 
 void ConfigModule::StartListening()
 {
     CONFIG_PATH = Base::GetModuleDir() / "sparklyfx" / CURRENT_CONFIG;
 
-    Listen(EVENT_MENU, [this]() { return OnMenu(); });
-    Listen(EVENT_DX9PRESENT, [this]() { return OnPresent(); });
+    MainWindow::OnMenuBar.Listen(&ConfigModule::OnMenuBar, this);
+    MainWindow::OnTabBar.Listen(&ConfigModule::OnTabBar, this);
+    COverlayHook::OnPresent.ListenNoArgs(&ConfigModule::OnPresent, this);
 }
 
-int ConfigModule::OnMenu()
-{
-    if (!ImGui::CollapsingHeader("Config"))
+int ConfigModule::OnMenuBar() {
+    if (!ImGui::BeginMenu("Config"))
         return 0;
-    ImGui::PushID("Config");
+    
+    if (ImGui::Selectable("Save"))
+        ConfigModule::Save(CONFIG_PATH);
+    if (ImGui::Selectable("Reload"))
+        ConfigModule::Load(CONFIG_PATH);
+    
+    ImGui::EndMenu();
+    return 0;
+}
+
+int ConfigModule::OnTabBar()
+{
+    if (!ImGui::BeginTabItem("Config"))
+        return 0;
     
     if (ImGui::Button("Reload")) {
         ConfigModule::Load(CONFIG_PATH);
@@ -114,7 +122,7 @@ int ConfigModule::OnMenu()
     
     if (!GetError()->empty())
     {
-        auto& err = GetError();
+        const auto& err = GetError();
         ImGui::TextUnformatted("Errors:");
         if (ImGui::Button("Clear##errors"))
             err->clear();
@@ -123,7 +131,7 @@ int ConfigModule::OnMenu()
         ImGui::PopStyleColor();
     }
 
-    ImGui::PopID();
+    ImGui::EndTabItem();
     return 0;
 }
 
@@ -186,7 +194,7 @@ bool ConfigModule::Save(std::ostream& output)
         cfg_root_output->emplace("metadata", std::move(j));
     }
 
-    g_config.PushEvent(EVENT_CONFIG_SAVE);
+    OnConfigSave.DispatchEvent();
     output << cfg_root_output->dump(2);
     if (!output)
     {
@@ -208,7 +216,7 @@ bool ConfigModule::Save(const std::filesystem::path& path)
         ));
         return false;
     }
-    std::fstream file{ path, std::ios::out };
+    std::ofstream file(path, std::ios::out);
     if (!file)
     {
         AppendError(Helper::sprintf(
@@ -234,7 +242,7 @@ bool ConfigModule::Load(std::istream& input)
     try {
         cfg_root_input = nlohmann::json::parse(input);
     }
-    catch (nlohmann::json::parse_error e)
+    catch (const nlohmann::json::parse_error& e)
     {
         size_t line, col;
         GetTextPos(input, e.byte, &line, &col);
@@ -243,7 +251,7 @@ bool ConfigModule::Load(std::istream& input)
         ));
         return false;
     }
-    catch (std::exception e)
+    catch (const std::exception& e)
     {
         AppendError(Helper::sprintf("Failed to parse JSON: '%s'\n", e.what()));
         return false;
@@ -278,13 +286,13 @@ bool ConfigModule::Load(std::istream& input)
         autosave_mins = min(1, safe_autosave_mins);
     }
 
-    g_config.PushEvent(EVENT_CONFIG_LOAD);
+    OnConfigLoad.DispatchEvent();
     cfg_root_input = std::nullopt;
     return true;
 }
 bool ConfigModule::Load(const std::filesystem::path& path)
 {
-    std::fstream file{ path, std::ios::in };
+    std::ifstream file(path);
     if (!file)
     {
         AppendError(Helper::sprintf(

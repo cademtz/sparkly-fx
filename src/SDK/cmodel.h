@@ -86,7 +86,7 @@ public:
 
 	bool* IsRay()
 	{
-		if (Interfaces::engine->GetAppID() == AppId_CSGO)
+		if (Interfaces::engine->GetAppID() == EAppID::CSGO)
 			return &game_csgo.m_IsRay;
 		return &game_other.m_IsRay;
 	}

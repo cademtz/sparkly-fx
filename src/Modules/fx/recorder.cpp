@@ -9,7 +9,8 @@
 #include <Hooks/fx/VideoModeHook.h>
 #include <Hooks/fx/ShaderApiHook.h>
 #include <Modules/fx/configmodule.h>
-#include <Modules/Menu.h>
+#include <Modules/InputModule.h>
+#include "mainwindow.h"
 #include <Modules/Draw.h>
 #include "ActiveStream.h"
 #include "StreamEditor.h"
@@ -88,19 +89,20 @@ void CRecorder::StartListening()
     else
         m_framepool_size += 1; // Add an extra thread to minimize idle time
 
-    Listen(EVENT_POST_IMGUI_INPUT, [this]{ return OnPostImguiInput(); });
-    Listen(EVENT_DRAW, [this]{ return OnDraw(); });
-    Listen(EVENT_MENU, [this]{ return OnMenu(); });
-    Listen(EVENT_FRAMESTAGENOTIFY, [this]{ return OnFrameStageNotify(); });
-    Listen(EVENT_WRITE_MOVIE_FRAME, [this]{ return OnWriteMovieFrame(); });
-    Listen(EVENT_READ_PIXELS, [this]{ return OnReadPixels(); });
-    Listen(EVENT_CONFIG_SAVE, [this] { return OnConfigSave(); });
-    Listen(EVENT_CONFIG_LOAD, [this] { return OnConfigLoad(); });
+    InputModule::OnPostImguiInput.Listen(&CRecorder::OnPostImguiInput, this);
+    CDraw::OnDraw.Listen(&CRecorder::OnDraw, this);
+    MainWindow::OnTabBar.Listen(&CRecorder::OnTabBar, this);
+    MainWindow::OnWindow.Listen(&CRecorder::OnWindow, this);
+    CClientHook::OnFrameStageNotify.Listen(&CRecorder::OnFrameStageNotify, this);
+    VideoModeHook::OnWriteMoveFrame.Listen(&CRecorder::OnWriteMovieFrame, this);
+    ShaderApiHook::OnReadPixels.Listen(&CRecorder::OnReadPixels, this);
+    ConfigModule::OnConfigSave.Listen(&CRecorder::OnConfigSave, this);
+    ConfigModule::OnConfigLoad.Listen(&CRecorder::OnConfigLoad, this);
 }
 
 int CRecorder::OnPostImguiInput()
 {
-    if (m_record_bind.Poll() && !g_menu.IsOpen())
+    if (m_record_bind.Poll() && !g_input.IsOverlayOpen())
     {
         if (!Interfaces::engine->Con_IsVisible()) // Don't active the keybind while typing in the console
             ToggleRecording(m_movie_path);
@@ -134,108 +136,115 @@ int CRecorder::OnDraw()
     return 0;
 }
 
-int CRecorder::OnMenu()
+int CRecorder::OnTabBar()
 {   
-    if (ImGui::CollapsingHeader("Recording"))
+    if (!ImGui::BeginTabItem("Recorder"))
+        return 0;
+        
+    bool has_errors = VideoLog::HasErrors();
+    if (has_errors)
     {
-        bool has_errors = VideoLog::HasErrors();
-        if (has_errors)
-        {
-            ImGui::Text("Error log:"); ImGui::SameLine();
-            if (ImGui::Button("Clear"))
-                VideoLog::Clear();
-            
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
-            auto locked_error_log = VideoLog::GetLog();
-            ImGui::InputTextMultiline("##error_log",
-                locked_error_log->data(), locked_error_log->length(), ImVec2(0,0), ImGuiInputTextFlags_ReadOnly
-            );
-            ImGui::PopStyleColor();
-        }
-
-        if (ImGui::Button(IsRecordingMovie() ? "Stop" : "Start"))
-            ToggleRecording(m_movie_path);
+        ImGui::Text("Error log:"); ImGui::SameLine();
+        if (ImGui::Button("Clear"))
+            VideoLog::Clear();
         
-        m_record_bind.OnMenu("Record hotkey");
-        
-        if (ImGui::TreeNode("Recording behavior"))
-        {
-            ImGui::BeginGroup();
-
-            ImGui::Checkbox("Recording indicator", &m_record_indicator); ImGui::SameLine();
-            Helper::ImGuiHelpMarker(
-                "Displays an indicator on screen while recording\n"
-                "(Currently, this decreases the recording performance by re-rendering the frame)"
-            );
-            ImGui::Checkbox("Auto-resume demo", &m_autoresume_demo); ImGui::SameLine();
-            Helper::ImGuiHelpMarker("Resumes the demo when the recording starts");
-            ImGui::Checkbox("Auto-pause demo", &m_autopause_demo); ImGui::SameLine();
-            Helper::ImGuiHelpMarker("Pauses the demo when the recording stops");
-
-            ImGui::EndGroup();
-            ImGui::SameLine();
-            ImGui::BeginGroup();
-
-            if (ImGui::Checkbox("Auto-close menu", &m_autoclose_menu))
-                m_autostop_recording &= m_autoclose_menu; // Do not auto-stop if auto-close is off.
-            ImGui::SameLine(); Helper::ImGuiHelpMarker("Closes the menu when the recording starts");
-            if (ImGui::Checkbox("Auto-stop recording", &m_autostop_recording))
-                m_autoclose_menu |= m_autostop_recording; // Always auto-close if auto-stop is enabled.
-            ImGui::SameLine(); Helper::ImGuiHelpMarker("Stops the recording when the menu is opened");
-
-            ImGui::EndGroup();
-            ImGui::TreePop();
-        }
-
-        bool was_recording = m_is_recording_; // Value could change. Store it here.
-        if (was_recording)
-            ImGui::BeginDisabled();
-
-        if (m_movie_path.empty())
-            ImGui::TextColored(ImVec4(1,1,0,1), "[!] Choose an output folder below");
-        ImGui::Text("Output folder:"); ImGui::SameLine();
-        Helper::ImGuiHelpMarker(
-            "This folder will contain the movie files.\n"
-            "The folder will be created automatically, if it doesn't exist."
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
+        auto locked_error_log = VideoLog::GetLog();
+        ImGui::InputTextMultiline("##error_log",
+            locked_error_log->data(), locked_error_log->length(), ImVec2(0,0), ImGuiInputTextFlags_ReadOnly
         );
-        ImGui::InputText("##output_folder", &m_movie_path.u8string(), ImGuiInputTextFlags_ReadOnly); ImGui::SameLine();
-        if (ImGui::Button("Browse"))
-        {
-            auto optional_path = Helper::OpenFolderDialog(L"Select the output folder", &m_movie_path);
-            if (optional_path)
-                m_movie_path = std::move(*optional_path);
-        }
-        
-        ImGui::PushID("##videoconfig");
-        m_videoconfig.ShowImguiControls();
-        ImGui::PopID();
-
-        ImGui::SliderInt("Frame pool size", &m_framepool_size, 1, 128, "%d", ImGuiSliderFlags_AlwaysClamp);
-        ImGui::SameLine();
-        Helper::ImGuiHelpMarker(
-            "The maximum number of frames that can be encoded at once.\n"
-            "If your CPU has 8 cores, you may want a pool with 9 or 12 frames.\n"
-            "Setting this value too high or too low can make it slower.\n"
-        );
-
-        int screen_w, screen_h;
-        Interfaces::engine->GetScreenSize(screen_w, screen_h);
-        // Approximate framepool RAM, assuming a 32-bit XRGB framebuffer
-        float framepool_ram = screen_w * screen_h * 4;
-        framepool_ram = framepool_ram * m_framepool_size / (1024 * 1024);
-        
-        if (was_recording)
-            ImGui::EndDisabled();
-        
-        // Disabled text has less visual clutter
-        ImGui::BeginDisabled();
-        ImGui::Text("Framepool RAM: %f MB", framepool_ram);
-        ImGui::Text("Framepool threads: %u", std::thread::hardware_concurrency());
-        ImGui::TextWrapped("Game directory: %s", game_dir.u8string().c_str());
-        ImGui::TextWrapped("Working directory: %s", working_dir.u8string().c_str());
-        ImGui::EndDisabled();
+        ImGui::PopStyleColor();
     }
 
+    if (ImGui::Button(IsRecordingMovie() ? "Stop" : "Start"))
+        ToggleRecording(m_movie_path);
+    
+    m_record_bind.OnMenu("Record hotkey");
+    
+    if (ImGui::TreeNode("Recording behavior"))
+    {
+        ImGui::BeginGroup();
+
+        ImGui::Checkbox("Recording indicator", &m_record_indicator); ImGui::SameLine();
+        Helper::ImGuiHelpMarker(
+            "Displays an indicator on screen while recording\n"
+            "(Currently, this decreases the recording performance by re-rendering the frame)"
+        );
+        ImGui::Checkbox("Auto-resume demo", &m_autoresume_demo); ImGui::SameLine();
+        Helper::ImGuiHelpMarker("Resumes the demo when the recording starts");
+        ImGui::Checkbox("Auto-pause demo", &m_autopause_demo); ImGui::SameLine();
+        Helper::ImGuiHelpMarker("Pauses the demo when the recording stops");
+
+        ImGui::EndGroup();
+        ImGui::SameLine();
+        ImGui::BeginGroup();
+
+        if (ImGui::Checkbox("Auto-close menu", &m_autoclose_menu))
+            m_autostop_recording &= m_autoclose_menu; // Do not auto-stop if auto-close is off.
+        ImGui::SameLine(); Helper::ImGuiHelpMarker("Closes the menu when the recording starts");
+        if (ImGui::Checkbox("Auto-stop recording", &m_autostop_recording))
+            m_autoclose_menu |= m_autostop_recording; // Always auto-close if auto-stop is enabled.
+        ImGui::SameLine(); Helper::ImGuiHelpMarker("Stops the recording when the menu is opened");
+
+        ImGui::EndGroup();
+        ImGui::TreePop();
+    }
+
+    bool was_recording = m_is_recording_; // Value could change. Store it here.
+    if (was_recording)
+        ImGui::BeginDisabled();
+
+    if (m_movie_path.empty())
+        ImGui::TextColored(ImVec4(1,1,0,1), "[!] Choose an output folder below");
+    ImGui::Text("Output folder:"); ImGui::SameLine();
+    Helper::ImGuiHelpMarker(
+        "This folder will contain the movie files.\n"
+        "The folder will be created automatically, if it doesn't exist."
+    );
+    std::string _movie_path_str = m_movie_path.string();
+    ImGui::InputText("##output_folder", &_movie_path_str, ImGuiInputTextFlags_ReadOnly); ImGui::SameLine();
+    if (ImGui::Button("Browse"))
+    {
+        auto optional_path = Helper::OpenFolderDialog(L"Select the output folder", &m_movie_path);
+        if (optional_path)
+            m_movie_path = std::move(*optional_path);
+    }
+    
+    ImGui::PushID("##videoconfig");
+    m_videoconfig.ShowImguiControls();
+    ImGui::PopID();
+
+    ImGui::SliderInt("Frame pool size", &m_framepool_size, 1, 128, "%d", ImGuiSliderFlags_AlwaysClamp);
+    ImGui::SameLine();
+    Helper::ImGuiHelpMarker(
+        "The maximum number of frames that can be encoded at once.\n"
+        "If your CPU has 8 cores, you may want a pool with 9 or 12 frames.\n"
+        "Setting this value too high or too low can make it slower.\n"
+    );
+
+    int screen_w, screen_h;
+    Interfaces::engine->GetScreenSize(screen_w, screen_h);
+    // Approximate framepool RAM, assuming a 32-bit XRGB framebuffer
+    float framepool_ram = screen_w * screen_h * 4;
+    framepool_ram = framepool_ram * m_framepool_size / (1024 * 1024);
+    
+    if (was_recording)
+        ImGui::EndDisabled();
+    
+    // Disabled text has less visual clutter
+    ImGui::BeginDisabled();
+    ImGui::Text("Framepool RAM: %f MB", framepool_ram);
+    ImGui::Text("Framepool threads: %u", std::thread::hardware_concurrency());
+    ImGui::TextWrapped("Game directory: %s", game_dir.u8string().c_str());
+    ImGui::TextWrapped("Working directory: %s", working_dir.u8string().c_str());
+    ImGui::EndDisabled();
+
+    ImGui::EndTabItem();
+    return 0;
+}
+
+int CRecorder::OnWindow()
+{
     if (IsRecordingMovie() && m_autostop_recording)
         StopMovie();
     return 0;
@@ -310,7 +319,7 @@ void CRecorder::ToggleRecording(const std::filesystem::path& path)
     }
 }
 
-bool CRecorder::SetupMovie(std::filesystem::path&& path)
+bool CRecorder::SetupMovie(const std::filesystem::path& path)
 {
     if (m_movie)
         return true;
@@ -344,7 +353,7 @@ bool CRecorder::SetupMovie(std::filesystem::path&& path)
         }
 
         m_movie.emplace(
-            screen_w, screen_h, std::move(path), *stream_list,
+            screen_w, screen_h, path, *stream_list,
             m_framepool_size, m_videoconfig
         );
     }
@@ -365,15 +374,15 @@ bool CRecorder::SetupMovie(std::filesystem::path&& path)
     if (m_autoresume_demo)
         Interfaces::engine->ExecuteClientCmd("demo_resume");
     if (m_autoclose_menu)
-        g_menu.SetOpen(false);
+        g_input.SetOverlayOpen(false);
     
     return true;
 }
 
-static void AttemptToMoveTempAudioFile(std::filesystem::path old_path, std::filesystem::path new_path)
+static void AttemptToMoveTempAudioFile(const std::filesystem::path& old_path, const std::filesystem::path& new_path)
 {
-    const int WAIT_MS = 200;
-    const int TIMEOUT_MS = 10'000;
+    constexpr int WAIT_MS = 200;
+    constexpr int TIMEOUT_MS = 10'000;
 
     std::error_code err;
     for (int attempts = 0; attempts * WAIT_MS < TIMEOUT_MS; ++attempts)
@@ -429,22 +438,15 @@ void CRecorder::CopyCurrentFrameToSurface(IDirect3DSurface9* dst)
     g_hk_overlay.Device()->StretchRect(render_target, nullptr, dst, nullptr, D3DTEXF_NONE);
 }
 
-int CRecorder::OnFrameStageNotify()
+int CRecorder::OnFrameStageNotify(ClientFrameStage_t stage)
 {
-    ClientFrameStage_t stage = g_hk_client.Context()->curStage;
-
     if (stage == FRAME_START)
     {
         // TODO(Cade): Move this out of here and into the base!!!
         ConVar_Register();
 
         // Print messages that were queued for the game thread
-        {
-            Helper::LockedRef<VideoLog::ConsoleQueue> queue = VideoLog::GetConsoleQueue();
-            for (std::string& str : *queue)
-                Helper::ClientCmd_Unrestricted("echo %s", str.c_str());
-            queue->clear();
-        }
+        VideoLog::GetConsoleQueue().ExecuteAndClear();
 
         // Start/stop the movie
 
@@ -460,7 +462,7 @@ int CRecorder::OnFrameStageNotify()
             m_do_start_recording = false;
             CleanupMovie();
             
-            if (!SetupMovie(std::move(m_next_movie_path)))
+            if (!SetupMovie(m_next_movie_path))
                 CleanupMovie();
         }
         
@@ -473,7 +475,8 @@ int CRecorder::OnFrameStageNotify()
 
     if (!m_movie)
         return 0;
-    else if (m_movie->Failed() || m_movie->GetFramePool().IsClosed())
+
+    if (m_movie->Failed() || m_movie->GetFramePool().IsClosed())
     {
         StopMovie();
         CleanupMovie();
@@ -496,27 +499,27 @@ int CRecorder::OnFrameStageNotify()
     // If there is only one stream and it has no rendering effects, then take this fast path.
     if (m_movie->GetStreams().size() == 1 && m_movie->GetStreams()[0].stream->GetRenderTweaks().empty())
     {
-        auto& pair = m_movie->GetStreams().front();
+        auto& [stream, writer] = m_movie->GetStreams().front();
         auto frame = m_movie->GetFramePool().PopEmptyFrame();
         if (frame == nullptr)
             return 0; // The FramePool was closed
         CopyCurrentFrameToSurface(frame->buffer.GetSurface());
-        m_movie->GetFramePool().PushFullFrame(frame, frame_index, pair.writer);
+        m_movie->GetFramePool().PushFullFrame(frame, frame_index, writer);
         return 0;
     }
     
     // Here, many streams exist with different effects, so we will re-render for each of them.
     float default_fov = view_setup.fov;
-    for (auto& pair : m_movie->GetStreams())
+    for (auto& [stream, writer] : m_movie->GetStreams())
     {
         float fov = default_fov;
-        for (auto tweak = pair.stream->begin<CameraTweak>(); tweak != pair.stream->end<CameraTweak>(); ++tweak)
+        for (auto tweak = stream->begin<CameraTweak>(); tweak != stream->end<CameraTweak>(); ++tweak)
         {
             if (tweak->fov_override)
                 fov = tweak->fov;
         }
 
-        g_active_stream.Set(pair.stream);
+        g_active_stream.Set(stream);
         g_active_stream.SignalUpdate();
         // Update the materials right now, instead of waiting for the next frame.
         g_active_stream.UpdateMaterials();
@@ -529,7 +532,7 @@ int CRecorder::OnFrameStageNotify()
         if (frame == nullptr)
             break; // The FramePool was closed
         CopyCurrentFrameToSurface(frame->buffer.GetSurface());
-        m_movie->GetFramePool().PushFullFrame(frame, frame_index, pair.writer);
+        m_movie->GetFramePool().PushFullFrame(frame, frame_index, writer);
     }
 
     return 0;
@@ -538,7 +541,7 @@ int CRecorder::OnFrameStageNotify()
 int CRecorder::OnWriteMovieFrame()
 {
     if (IsRecordingMovie())
-        return Return_NoOriginal;
+        return EventReturnFlags::NoOriginal;
     return 0;
 }
 
@@ -547,6 +550,6 @@ int CRecorder::OnReadPixels()
     if (m_read_pixels)
         return 0;
     if (IsRecordingMovie())
-        return Return_NoOriginal;
+        return EventReturnFlags::NoOriginal;
     return 0;
 }

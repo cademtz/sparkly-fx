@@ -5,14 +5,6 @@
 #include <SDK/usercmd.h>
 #include <intrin.h>
 
-CClientHook::CClientHook() : BASEHOOK(CClientHook)
-{
-	RegisterEvent(EVENT_CREATEMOVE);
-	RegisterEvent(EVENT_HLCREATEMOVE);
-	RegisterEvent(EVENT_FRAMESTAGENOTIFY);
-	RegisterEvent(EVENT_OVERRIDEVIEW);
-}
-
 void CClientHook::Hook()
 {
 	m_hlhook.Hook(Interfaces::hlclient->Inst());
@@ -59,34 +51,29 @@ bool CClientHook::OverrideView(CViewSetup* pSetup)
 void __stdcall CClientHook::Hooked_HLCreateMove(UNCRAP int sequence_number, float input_sample_frametime, bool active)
 {
 	bool bSendPacket = true;
-	UINT_PTR* baseptr = (UINT_PTR*)_AddressOfReturnAddress() - 1;
+	uintptr_t* baseptr = static_cast<uintptr_t*>(_AddressOfReturnAddress()) - 1;
 	static int off = -1;
 
 	if constexpr (Base::Win64)
 		bSendPacket = AsmTools::GetR14();
-	else if (Interfaces::engine->GetAppID() != AppId_CSGO)
-		bSendPacket = *(*(bool**)baseptr - 1);
+	else if (Interfaces::engine->GetAppID() != static_cast<int>(EAppID::CSGO))
+		bSendPacket = *(*reinterpret_cast<bool**>(baseptr) - 1);
 
-	auto ctx = &g_hk_client.Context()->hl_create_move;
-	ctx->active = active, ctx->input_sample_frametime = input_sample_frametime, ctx->bSendPacket = bSendPacket;
+	int flags = OnHLCreateMove.DispatchEvent(sequence_number, input_sample_frametime, active, &bSendPacket);
 
-	int flags = g_hk_client.PushEvent(EVENT_HLCREATEMOVE);
-
-	if (!(flags & Return_NoOriginal))
+	if (!(flags & EventReturnFlags::NoOriginal))
 		g_hk_client.HLCreateMove(sequence_number, input_sample_frametime, active);
 
 	if constexpr (Base::Win64)
-		AsmTools::SetR14((void*)ctx->bSendPacket);
-	else if (Interfaces::engine->GetAppID() != AppId_CSGO)
-		*(*(bool**)baseptr + off) = ctx->bSendPacket;
+		AsmTools::SetR14(reinterpret_cast<void*>(bSendPacket));
+	else if (Interfaces::engine->GetAppID() != static_cast<int>(EAppID::CSGO))
+		*(*reinterpret_cast<bool**>(baseptr) + off) = bSendPacket;
 }
 
 void __stdcall CClientHook::Hooked_FrameStageNotify(UNCRAP ClientFrameStage_t curStage)
 {
-	g_hk_client.Context()->curStage = curStage;
-
-	int flags = g_hk_client.PushEvent(EVENT_FRAMESTAGENOTIFY);
-	if (flags & Return_NoOriginal)
+	int flags = OnFrameStageNotify.DispatchEvent(curStage);
+	if (flags & EventReturnFlags::NoOriginal)
 		return;
 
 	g_hk_client.FrameStageNotify(curStage);
@@ -94,31 +81,29 @@ void __stdcall CClientHook::Hooked_FrameStageNotify(UNCRAP ClientFrameStage_t cu
 
 bool __stdcall CClientHook::Hooked_CreateMove(UNCRAP float flInputSampleTime, CUserCmd* cmd)
 {
-	auto ctx = g_hk_client.Context();
-
-	ctx->create_move.result = g_hk_client.CreateMove(flInputSampleTime, cmd);
-	ctx->create_move.flInputSampleTime = flInputSampleTime;
-
-	switch (Interfaces::engine->GetAppID())
+	CUserCmd* eventcmd = cmd;
+	if (Interfaces::engine->GetAppID() == static_cast<int>(EAppID::GMOD))
 	{
-	case AppID_GMod:
-		ctx->create_move.cmd = (CUserCmd*)((void**)cmd - 1); // Offset missing VMT
-		break;
-	default:
-		ctx->create_move.cmd = cmd;
+		eventcmd = reinterpret_cast<CUserCmd*>(reinterpret_cast<void**>(cmd) - 1); // Offset missing VMT
 	}
 
-	g_hk_client.PushEvent(EVENT_CREATEMOVE);
-    return ctx->create_move.result;
+	bool result = true;
+	int flags = OnCreateMove.DispatchEvent(result, flInputSampleTime, eventcmd);
+
+	if (flags & EventReturnFlags::NoOriginal)
+		return result;
+
+    const bool original_return_value = g_hk_client.CreateMove(flInputSampleTime, cmd);
+	if (result)
+		return result;
+
+	return original_return_value;
 }
 
 void __stdcall CClientHook::Hooked_OverrideView(UNCRAP CViewSetup* pSetup)
 {
-	auto ctx = g_hk_client.Context();
-	
-	ctx->pSetup = pSetup;
-
-	if (g_hk_client.PushEvent(EVENT_OVERRIDEVIEW) & Return_NoOriginal)
+	int flags = OnOverrideView.DispatchEvent(pSetup);
+	if (flags & EventReturnFlags::NoOriginal)
 		return;
 	g_hk_client.OverrideView(pSetup);
 }

@@ -12,6 +12,9 @@
 
 class IMaterial;
 enum OverrideType_t;
+struct DrawModelState_t;
+struct ModelRenderInfo_t;
+struct matrix3x4_t;
 
 /**
  * @brief Apply the active stream's settings during rendering.
@@ -35,7 +38,7 @@ public:
     Stream::Ptr Get();
     /// @brief Set the active stream. This calls @ref WriteLock.
     /// @param stream Use `nullptr` to clear the active stream
-    void Set(Stream::Ptr stream);
+    void Set(const Stream::Ptr& stream);
     /**
      * @brief Signal that a stream updated and should be re-applied. This calls @ref WriteLock.
      * 
@@ -43,7 +46,7 @@ public:
      * @param stream The stream that was updated, or `nullptr` to update with the current one.
      * @param UpdateFlags Combined values from @ref UpdateFlags. The default value sets all flags.
      */
-    void SignalUpdate(Stream::Ptr stream = nullptr, uint32_t flags = ~0);
+    void SignalUpdate(const Stream::Ptr& stream = nullptr, uint32_t flags = ~0);
     /**
      * @brief Immediately update material colors.
      * 
@@ -65,10 +68,10 @@ public:
 
 protected:
     int OnDrawStaticProp();
-    int PreDrawModelExecute();
-    int PostDrawModelExecute();
-    int OnFrameStageNotify();
-    int OnOverrideView();
+    int PreDrawModelExecute(const DrawModelState_t& state, const ModelRenderInfo_t& pInfo, matrix3x4_t* pCustomBoneToWorld);
+    int PostDrawModelExecute(const DrawModelState_t& state, const ModelRenderInfo_t& pInfo, matrix3x4_t* pCustomBoneToWorld);
+    int OnFrameStageNotify(enum ClientFrameStage_t stage);
+    int OnOverrideView(class CViewSetup* view_setup);
     int OnViewDrawFade();
     int OnReset();
     int OnPresent();

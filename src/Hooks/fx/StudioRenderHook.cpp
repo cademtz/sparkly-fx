@@ -4,9 +4,7 @@
 
 #define INDEX_DRAWMODELSTATICPROP 30
 
-StudioRenderHook::StudioRenderHook() : BASEHOOK(StudioRenderHook) {
-    RegisterEvent(EVENT_DRAWMODELSTATICPROP);
-}
+StudioRenderHook::StudioRenderHook() : BASEHOOK(StudioRenderHook) {}
 
 void StudioRenderHook::Hook()
 {
@@ -27,8 +25,8 @@ void StudioRenderHook::DrawModelStaticProp(const DrawModelInfo_t& drawInfo, cons
 
 void __stdcall StudioRenderHook::Hooked_DrawModelStaticProp(UNCRAP const DrawModelInfo_t& drawInfo, const matrix3x4_t& modelToWorld, int flags)
 {
-    int event_flags = g_hk_studiorender.PushEvent(EVENT_DRAWMODELSTATICPROP);
-    if (event_flags & Return_NoOriginal)
+    int event_flags = OnDrawModelStaticProp.DispatchEvent();
+    if (event_flags & EventReturnFlags::NoOriginal)
         return;
     g_hk_studiorender.DrawModelStaticProp(drawInfo, modelToWorld, flags);
 }

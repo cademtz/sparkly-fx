@@ -1,8 +1,6 @@
 #include "movie.h"
 #include <Helper/str.h>
 #include <chrono>
-#include <cstdio>
-#include <cstdarg>
 #include <type_traits>
 #include <cassert>
 #include "videowriter.h"
@@ -10,7 +8,7 @@
 
 Movie::Movie(
     uint32_t width, uint32_t height,
-    std::filesystem::path&& root_path, const std::vector<std::shared_ptr<Stream>>& streams,
+    std::filesystem::path root_path, const std::vector<std::shared_ptr<Stream>>& streams,
     size_t framepool_size, const EncoderConfig& default_videoconfig
 )   : m_root_path(std::move(root_path)), m_temp_audio_name(CreateTempAudioName(".wav"))
 {
@@ -47,7 +45,7 @@ Movie::Movie(
         return;
     }
 
-    for (auto stream : streams)
+    for (const auto& stream : streams)
     {
         const EncoderConfig& config = default_videoconfig;
         std::filesystem::path stream_path = m_root_path / stream->GetName();
@@ -63,7 +61,7 @@ Movie::Movie(
 
             std::wstring temp = stream_path.wstring();
             temp += '.';
-            for (char ch : config.ffmpeg_output_ext)
+            for (const char ch : config.ffmpeg_output_ext)
                 temp += ch;
             stream_path = temp;
         }

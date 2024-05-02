@@ -22,14 +22,35 @@ namespace ffmpipe { class Pipe; }
 class VideoLog
 {
 public:
-    using ConsoleQueue = std::vector<std::string>;
+    struct ConsoleQueue
+    {
+        void Append(std::string text)
+        {
+            std::scoped_lock lock(m_mutex);
+            m_queue.push_back(std::move(text));
+        }
 
-    static void Append(std::string&& text);
+        void ExecuteAndClear();
+
+        void Clear()
+        {
+            std::scoped_lock lock(m_mutex);
+            m_queue.clear();
+        }
+    private:
+        friend VideoLog;
+        explicit ConsoleQueue() = default;
+
+        std::vector<std::string> m_queue;
+        std::mutex m_mutex;
+    };
+
+    static void Append(const std::string& text);
 
     /// @brief Append text to the error log. Newlines should be added.
-    static void AppendError(std::string&& text);
+    static void AppendError(const std::string& text);
     /// @brief Append text to the error log. Newlines should be added.
-    static void AppendError(std::string_view text) {
+    static void AppendError(const std::string_view text) {
         return AppendError(std::string(text));
     }
     /// @brief Append text to the error log. Newlines should be added.
@@ -40,8 +61,8 @@ public:
     static void Clear();
     static Helper::LockedRef<std::string> GetLog() { return Helper::LockedRef<std::string>(log, mutex); }
     /// @brief Lines are appended here to be removed and printed by the recorder in the game thread
-    static Helper::LockedRef<ConsoleQueue> GetConsoleQueue() {
-        return Helper::LockedRef<ConsoleQueue>(console_queue, mutex);
+    static ConsoleQueue& GetConsoleQueue() {
+        return console_queue;
     }
     static bool HasErrors() {
         std::scoped_lock lock{mutex};
@@ -308,7 +329,7 @@ public:
     /// @brief Push a frame for a worker thread to pop and use
     /// @param index Index of the frame being written. `frame->index` will be assigned this.
     /// @param writer Method of writing the frame to video. `frame->writer` will be assigned this.
-    void PushFullFrame(FramePtr frame, size_t index, std::shared_ptr<VideoWriter> writer);
+    void PushFullFrame(const FramePtr& frame, size_t index, const std::shared_ptr<VideoWriter>& writer);
 
 private:
     /**

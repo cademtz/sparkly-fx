@@ -74,6 +74,21 @@ bool IEngineClientWrapper013::IsRecordingDemo() {
 bool IEngineClientWrapper013::IsPlayingTimeDemo() {
 	return m_int->IsPlayingTimeDemo();
 }
+int IEngineClientWrapper013::GetDemoRecordingTick(void) {
+	return m_int->GetDemoRecordingTick();
+}
+int IEngineClientWrapper013::GetDemoPlaybackTick(void) {
+	return m_int->GetDemoPlaybackTick();
+}
+int IEngineClientWrapper013::GetDemoPlaybackStartTick(void) {
+	return m_int->GetDemoPlaybackStartTick();
+}
+float IEngineClientWrapper013::GetDemoPlaybackTimeScale(void) {
+	return m_int->GetDemoPlaybackTimeScale();
+}
+int IEngineClientWrapper013::GetDemoPlaybackTotalTicks(void) {
+	return m_int->GetDemoPlaybackTotalTicks();
+}
 bool IEngineClientWrapper013::IsPaused() {
 	return m_int->IsPaused();
 }
@@ -172,6 +187,21 @@ bool IEngineClientWrapper014::IsRecordingDemo() {
 }
 bool IEngineClientWrapper014::IsPlayingTimeDemo() {
 	return m_int->IsPlayingTimeDemo();
+}
+int IEngineClientWrapper014::GetDemoRecordingTick(void) {
+	return m_int->GetDemoRecordingTick();
+}
+int IEngineClientWrapper014::GetDemoPlaybackTick(void) {
+	return m_int->GetDemoPlaybackTick();
+}
+int IEngineClientWrapper014::GetDemoPlaybackStartTick(void) {
+	return m_int->GetDemoPlaybackStartTick();
+}
+float IEngineClientWrapper014::GetDemoPlaybackTimeScale(void) {
+	return m_int->GetDemoPlaybackTimeScale();
+}
+int IEngineClientWrapper014::GetDemoPlaybackTotalTicks(void) {
+	return m_int->GetDemoPlaybackTotalTicks();
 }
 bool IEngineClientWrapper014::IsPaused() {
 	return m_int->IsPaused();

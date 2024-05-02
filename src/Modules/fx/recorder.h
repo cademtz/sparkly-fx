@@ -33,10 +33,11 @@ public:
 private:
     int OnPostImguiInput();
     int OnDraw();
-    int OnMenu();
+    int OnTabBar();
+    int OnWindow();
     int OnConfigSave();
     int OnConfigLoad();
-    int OnFrameStageNotify();
+    int OnFrameStageNotify(enum ClientFrameStage_t stage);
     /// @brief This replaces the game's vanilla recording behavior
     int OnWriteMovieFrame();
     /// @brief This replaces the game's vanilla recording behavior
@@ -47,7 +48,7 @@ private:
     /// @brief Attempt to setup the movie.
     /// @details Only this call from the game thread.
     /// @return True if the movie is created or already exists
-    bool SetupMovie(std::filesystem::path&& path);
+    bool SetupMovie(const std::filesystem::path& path);
     ///@brief Stop the movie, wait for writing to finish, and clean up.
     ///@details Only call this from the game thread.
     void CleanupMovie();

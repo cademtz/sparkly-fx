@@ -16,9 +16,9 @@ public:
 
     /// @brief Construct a stream
     /// @param name A non-empty ASCII name
-    Stream(std::string&& name) : m_name(std::move(name)) {} 
+    explicit Stream(std::string name) : m_name(std::move(name)) {}
 
-    Ptr Clone(std::string&& new_name) const;
+    Ptr Clone(const std::string& new_name) const;
     std::string& GetName() { return m_name; }
     const std::string& GetName() const { return m_name; }
     std::vector<ElementType>& GetRenderTweaks() { return m_tweaks; }

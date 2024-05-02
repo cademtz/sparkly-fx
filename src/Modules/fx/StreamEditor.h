@@ -20,16 +20,16 @@ public:
     void OnEndMovie();
     
 private:
-    int OnMenu();
+    int OnTabBar();
     int OnConfigSave();
     int OnConfigLoad();
     void ShowStreamListEditor();
     /// @brief Rename a stream, or create one if `stream == nullptr`
     void PopupStreamRenamer(Stream::Ptr stream);
     void PopupStreamPresets();
-    void ShowStreamEditor(Stream::Ptr stream);
-    void PopupTweakCreator(Stream::Ptr stream);
-    void ShowTweakEditor(RenderTweak::Ptr render_tweak);
+    void ShowStreamEditor(const Stream::Ptr& stream);
+    void PopupTweakCreator(const Stream::Ptr& stream);
+    void ShowTweakEditor(const RenderTweak::Ptr& render_tweak);
     /// @brief True if the name already exists 
     bool IsDuplicateName(std::string_view name) const;
     /// @brief Create a unique name (by appending a number to it)

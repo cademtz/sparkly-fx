@@ -12,7 +12,7 @@
 #pragma once
 #endif
 
-#define null 0L
+//#define null 0L
 
 #ifndef NULL
 #ifdef __cplusplus
@@ -54,7 +54,7 @@ namespace vgui
 	typedef unsigned int VPANEL;
 #else
 	// FIXME(Cade): This is value is pointer-sized in the 64-bit TF2 update.
-	// This may screw up GMod suppport if merged into xsdk-base.
+	// This may screw up 64-bit GMod suppport.
 	typedef void* VPANEL;
 #endif
 

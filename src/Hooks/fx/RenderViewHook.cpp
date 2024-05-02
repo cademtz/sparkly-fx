@@ -3,9 +3,7 @@
 
 #define INDEX_VIEWDRAWFADE 24
 
-RenderViewHook::RenderViewHook() : BASEHOOK(RenderViewHook) {
-    RegisterEvent(EVENT_VIEW_DRAW_FADE);
-}
+RenderViewHook::RenderViewHook() : BASEHOOK(RenderViewHook) {}
 
 void RenderViewHook::Hook()
 {
@@ -26,8 +24,8 @@ void RenderViewHook::ViewDrawFade(uint8_t* color, IMaterial* pFadeMaterial)
 
 void __stdcall RenderViewHook::Hooked_ViewDrawFade(UNCRAP uint8_t* color, IMaterial* pFadeMaterial)
 {
-    int event_flags = g_hk_renderview.PushEvent(EVENT_VIEW_DRAW_FADE);
-    if (event_flags & Return_NoOriginal)
+    int event_flags = OnViewDrawFade.DispatchEvent(color, pFadeMaterial);
+    if (event_flags & EventReturnFlags::NoOriginal)
         return;
     g_hk_renderview.ViewDrawFade(color, pFadeMaterial);
 }

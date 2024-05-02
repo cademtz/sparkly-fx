@@ -13,6 +13,7 @@
 #define QOI_IMPLEMENTATION
 #define QOI_NO_STDIO
 #include <qoi.h>
+#include <Helper/engine.h>
 
 static const COMDLG_FILTERSPEC COM_EXE_FILTER[] = {{L"Executable", L"*.exe"}, {0}};
 
@@ -27,21 +28,30 @@ const EncoderConfig::TypeDesc* EncoderConfig::TYPE_QOI = &type_descs[0];
 const EncoderConfig::TypeDesc* EncoderConfig::TYPE_PNG = &type_descs[1];
 const EncoderConfig::TypeDesc* EncoderConfig::TYPE_FFMPEG = &type_descs[2];
 
-void VideoLog::Append(std::string&& text) {
-    if (!text.empty() && text.back() == '\n')
-        text.pop_back();
-    GetConsoleQueue()->emplace_back(std::move(text));
+void VideoLog::ConsoleQueue::ExecuteAndClear()
+{
+    std::scoped_lock lock(m_mutex);
+    for (const std::string& text : m_queue)
+        Helper::ClientCmd_Unrestricted("echo %s", text.c_str());
+    m_queue.clear();
 }
 
-void VideoLog::AppendError(std::string&& text) {
+void VideoLog::Append(const std::string& text) {
+    std::string txt = text;
+    if (!txt.empty() && txt.back() == '\n')
+        txt.pop_back();
+    GetConsoleQueue().Append(std::move(txt));
+}
+
+void VideoLog::AppendError(const std::string& text) {
     *GetLog() += text;
-    Append(std::move(text));
+    Append(text);
     has_errors = true;
 }
 
 void VideoLog::Clear() {
     GetLog()->clear();
-    GetConsoleQueue()->clear();
+    GetConsoleQueue().Clear();
 }
 
 static std::vector<EncoderConfig::FFmpegPreset> MakeFFmpegPresets()
@@ -65,7 +75,8 @@ static std::vector<EncoderConfig::FFmpegPreset> MakeFFmpegPresets()
 
     std::string h264 = "-c:v libx264";
     std::string hevc = "-c:v libx265";
-    std::string msg = "";
+
+    std::string msg;
     if (Helper::FFmpeg::nvenc_device_available())
         h264 = "-c:v h264_nvenc", hevc = "-c:v hevc_nvenc";
     else if (Helper::FFmpeg::amf_device_available())
@@ -106,7 +117,7 @@ const EncoderConfig::TypeDesc* EncoderConfig::Types() {
     return type_descs;
 }
 size_t EncoderConfig::NumTypes() {
-    return sizeof(type_descs) / sizeof(type_descs[0]);
+    return std::size(type_descs);
 }
 
 void EncoderConfig::ShowImguiControls()
@@ -207,7 +218,8 @@ void EncoderConfig::ShowImguiControls()
                 ImGui::TextColored(ImVec4(1,.25,.25,1), "[!] Select an FFmpeg executable");
             
             ImGui::Text("FFmpeg executable:");
-            ImGui::InputText("##ffmpeg_path", &ffmpeg_path.u8string(), ImGuiInputTextFlags_ReadOnly);
+            std::string ffmpeg_path_string = ffmpeg_path.string();
+            ImGui::InputText("##ffmpeg_path", &ffmpeg_path_string, ImGuiInputTextFlags_ReadOnly);
             ImGui::SameLine();
             if (ImGui::Button("Browse"))
             {
@@ -220,7 +232,7 @@ void EncoderConfig::ShowImguiControls()
             {
                 for (const auto& path : ffmpeg_path_list)
                 {
-                    if (ImGui::Selectable(path.u8string().c_str(), false))
+                    if (ImGui::Selectable(path.string().c_str(), false))
                         Helper::FFmpeg::SetDefaultPath(path);
                 }
                 ImGui::EndListBox();
@@ -272,7 +284,7 @@ nlohmann::json EncoderConfig::ToJson() const
 
 bool ImageWriter::WriteFrame(const FrameBufferDx9& buffer, size_t frame_index)
 {
-    const wchar_t* file_extension;
+    const wchar_t* file_extension = L"";
     switch (m_file_format)
     {
     case Format::PNG: file_extension = L"png"; break;
@@ -284,7 +296,7 @@ bool ImageWriter::WriteFrame(const FrameBufferDx9& buffer, size_t frame_index)
     auto suffix = std::to_wstring(frame_index) + L'.' + file_extension;
 
     std::filesystem::path path = m_base_path.wstring() + suffix;
-    std::fstream file = std::fstream(path, std::ios::out | std::ios::binary);
+    std::ofstream file(path, std::ios::binary);
     if (!file)
     {
         VideoLog::AppendError("Failed to open file for writing: '%s'\n", path.u8string().c_str());
@@ -367,7 +379,7 @@ bool ImageWriter::WriteQOI(const FrameBufferRgb& buffer, std::ostream& output)
 
 const Helper::D3DFORMAT_info& FrameBufferRgb::GetFormatInfo() const
 {
-    static const Helper::D3DFORMAT_info info = {
+    static constexpr Helper::D3DFORMAT_info info = {
         3,          // stride
         {8,8,8},    // bitdepth
         3,          // num_channels
@@ -535,7 +547,7 @@ FFmpegWriter::~FFmpegWriter()
     {
         // Ensure the termination of FFmpeg without hanging the application.
         std::thread(
-            [](std::shared_ptr<ffmpipe::Pipe> pipe) { pipe->Close(60'000, true); },
+            [](const std::shared_ptr<ffmpipe::Pipe>& pipe) { pipe->Close(60'000, true); },
             m_pipe
         ).detach();
     }
@@ -622,7 +634,7 @@ void FramePool::Close()
     m_full.clear();
 }
 
-void FramePool::PushFullFrame(FramePtr frame, size_t index, std::shared_ptr<VideoWriter> writer)
+void FramePool::PushFullFrame(const FramePtr& frame, size_t index, const std::shared_ptr<VideoWriter>& writer)
 {
     if (IsClosed())
         return;

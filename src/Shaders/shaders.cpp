@@ -56,7 +56,7 @@ std::shared_ptr<PixelShader> PixelShader::CreateFromJson(const nlohmann::json* j
         return nullptr;
     
     auto loaded_shaders = GetLoadedShaders();
-    for (PixelShader::ConstPtr shader : *loaded_shaders)
+    for (const PixelShader::ConstPtr& shader : *loaded_shaders)
     {
         if (!Helper::stricmp(shader->GetFileName(), filename->get_ref<const std::string&>()))
         {
@@ -75,19 +75,16 @@ bool PixelShader::Load(IDirect3DDevice9* device)
         return true;
 
     std::filesystem::path path = Base::GetModuleDir() / "shaders" / m_filename;
-    std::fstream file {path, std::ios::in | std::ios::binary};
+    std::ifstream file(path, std::ios::binary);
     if (!file)
     {
         std::cout << "Failed to open shader: " << path << std::endl;
         return false;
     }
-    
-    file.seekg(0, std::ios::end);
-    size_t file_size = file.tellg();
-    file.seekg(0, std::ios::beg);
 
-    auto file_data = std::unique_ptr<char[]>(new char[file_size]);
-    file.read(file_data.get(), file_size);
+    std::vector<char> file_data(
+        std::istreambuf_iterator(file),
+        {});
 
     if (!file)
     {
@@ -97,10 +94,14 @@ bool PixelShader::Load(IDirect3DDevice9* device)
 
     file.close();
     
-    HRESULT result = device->CreatePixelShader((const DWORD*)file_data.get(), &m_ptr);
+    HRESULT result = device->CreatePixelShader((const DWORD*)file_data.data(), &m_ptr);
     if (FAILED(result))
     {
-        std::cout << "Failed to load pixel shader (" << DXGetErrorStringW(result) << "): " << path << std::endl;
+        std::cout << "Failed to load pixel shader (";
+        const wchar_t* err_string = DXGetErrorStringW(result);
+        for (const wchar_t* ch = err_string; *ch != 0; ++ch)
+            std::cout << (char)*ch;
+        std::cout << "): " << path << std::endl;
         return false;
     }
     
@@ -137,7 +138,7 @@ IDirect3DDevice9* PixelShader::GetDevice()
 
 void DepthLinear::ApplyConstants(const float* inv_projection, IDirect3DTexture9* depth)
 {
-    float consts[4] = {m_near, m_far, (float)m_spherical_correction, 0};
+    const float consts[4] = {m_near, m_far, (float)m_spherical_correction, 0};
     GetDevice()->SetTexture(0, depth);
     GetDevice()->SetPixelShaderConstantF(0, inv_projection, 4);
     GetDevice()->SetPixelShaderConstantF(4, consts, 1);
@@ -145,7 +146,7 @@ void DepthLinear::ApplyConstants(const float* inv_projection, IDirect3DTexture9*
 
 void DepthLogarithm::ApplyConstants(const float* inv_projection, IDirect3DTexture9* depth)
 {
-    float consts[4] = {m_near, m_far, (float)m_spherical_correction, m_near_precision};
+    const float consts[4] = {m_near, m_far, (float)m_spherical_correction, m_near_precision};
     GetDevice()->SetTexture(0, depth);
     GetDevice()->SetPixelShaderConstantF(0, inv_projection, 4);
     GetDevice()->SetPixelShaderConstantF(4, consts, 1);

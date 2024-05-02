@@ -5,9 +5,9 @@
 #include <Base/Interfaces.h>
 #include <SDK/texture_group_names.h>
 
-Stream::Ptr Stream::Clone(std::string&& new_name) const
+Stream::Ptr Stream::Clone(const std::string& new_name) const
 {
-    Stream::Ptr clone = std::make_shared<Stream>(std::move(new_name));
+    Stream::Ptr clone = std::make_shared<Stream>(new_name);
     for (auto& tweak : m_tweaks)
         clone->m_tweaks.emplace_back(std::move(tweak->Clone()));
     return clone;

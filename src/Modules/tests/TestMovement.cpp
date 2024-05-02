@@ -9,7 +9,7 @@
 #include <Base/Entity.h>
 #include <stdio.h>
 #include <stack>
-#include <Modules/Menu.h>
+#include "TestWindow.h"
 #include <Modules/Draw.h>
 
 #define MAX_TRACE 10000
@@ -18,13 +18,13 @@ static CTraceFilterWorldOnly worldTraceFilter;
 
 void TestMovement::StartListening()
 {
-	Listen(EVENT_MENU, [this] { return OnMenu(); });
-	Listen(EVENT_DRAW, [this] { return OnDraw(); });
-	Listen(EVENT_CREATEMOVE, [this] { return OnCreateMove(); });
-	Listen(EVENT_OVERRIDEVIEW, [this] { return OnOverrideView(); });
+	TestWindow::OnWindow.ListenNoArgs(&TestMovement::OnWindow, this);
+	CDraw::OnDraw.ListenNoArgs(&TestMovement::OnDraw, this);
+	CClientHook::OnCreateMove.Listen(&TestMovement::OnCreateMove, this);
+	CClientHook::OnOverrideView.Listen(&TestMovement::OnOverrideView, this);
 }
 
-int TestMovement::OnMenu()
+int TestMovement::OnWindow()
 {
 	if (ImGui::CollapsingHeader("Movement"))
 	{
@@ -74,16 +74,14 @@ int TestMovement::OnDraw()
 	return 0;
 }
 
-int TestMovement::OnCreateMove()
+int TestMovement::OnCreateMove(bool& result, float, CUserCmd* cmd)
 {
-	auto ctx = g_hk_client.Context();
-	CUserCmd* cmd = ctx->create_move.cmd;
 	CBasePlayer* local = Interfaces::entlist->GetClientEntity(Interfaces::engine->GetLocalPlayer())->ToPlayer();
 
 	if (m_fakelag)
 	{
-		if (cmd->tick_count() % 14)
-			ctx->hl_create_move.bSendPacket = false;
+		//if (cmd->tick_count() % 14)
+		//	ctx->hl_create_move.bSendPacket = false;
 	}
 
 	if (m_pathEdit != PathEdit_None && cmd->buttons() & IN_ATTACK)
@@ -142,14 +140,12 @@ int TestMovement::OnCreateMove()
 	return 0;
 }
 
-int TestMovement::OnOverrideView()
+int TestMovement::OnOverrideView(CViewSetup* pSetup)
 {
-	auto ctx = g_hk_client.Context();
-
 	if (m_freecam)
 	{
-		ctx->pSetup->angles = m_freecamAng;
-		ctx->pSetup->origin = m_freecamVec;
+		pSetup->angles = m_freecamAng;
+		pSetup->origin = m_freecamVec;
 	}
 
 	return 0;

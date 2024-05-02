@@ -1,83 +1,114 @@
 #pragma once
-#include "Base.h"
-#include "fnv1a.h"
 #include <unordered_map>
 #include <functional>
+#include <optional>
+#include <atomic>
 
-#define DECL_EVENT(name) constexpr EventHandle name = { #name##_hash }
-
-class CEventCallback;
-typedef std::function<int()> CallbackFunc_t;
-
-struct EventHandle {
-	const uint32_t hash;
-};
-
-enum EEventReturnFlags
+namespace EventReturnFlags
 {
-	Return_Normal = 0,
-	Return_Skip = (1 << 0), // - Skip calling other modules/listeners after the current function returns
-	Return_NoOriginal = (1 << 1), // - For hooks. Prevents calling the original function
-};
+    /// @brief No effect - calls the rest of the listeners
+    static constexpr int Normal = 0;
+    /// @brief Skip calling other modules/listeners after the current function returns
+    static constexpr int Skip = (1 << 0);
+    /// @brief For hooks. Prevents calling the original function
+    static constexpr int NoOriginal = (1 << 1);
+}
 
-class CBaseEvent
-{
-public:
-	CBaseEvent(const EventHandle Event) : m_hash(Event.hash) { m_events[m_hash] = this; }
-	~CBaseEvent() { m_events.erase(m_hash); }
+inline bool _g_event_shutdown = false;
 
-	CEventCallback* AddCallback(const CallbackFunc_t& Func);
-	inline const uint32_t hash() const { return m_hash; }
-	int Push();
+template <typename>
+class EventSource;
 
-	static CBaseEvent* GetEvent(const EventHandle Event) { return m_events[Event.hash]; }
-	/// @brief Permanently stop all (currently-registered) events.
-	/// Part of a hack to help "eject" the cheat.
-	static void ShutdownAll() {
-		for (auto entry : m_events)
-			entry.second->m_is_closed = true;
-	}
-
-protected:
-	friend CEventCallback;
-	inline void RemoveCallback(CEventCallback* Callback) { m_listeners.remove(Callback); }
-
-private:
-	CBaseEvent(CBaseEvent&&);
-
-	uint32_t m_hash;
-	bool m_is_closed = false;
-	std::list<CEventCallback*> m_listeners;
-	inline static std::unordered_map<uint32_t, CBaseEvent*> m_events;
-};
-
-class CEventManager
+/**
+ * @brief Allows callbacks to be added. Callbacks can then be invoked all at once.
+ * 
+ * Callbacks must return a combination of values from @ref EventReturnFlags.
+ * - Use `Listen` to add a static function callback.
+ * - Use `ListenNoArgs` as a shorthand if you want to ignore all the event's parameters.
+ * 
+ * Example:
+ * ```
+ * void MyClass::StartListening()
+ * {
+ *   CoolEvent.Listen(&MyClass::StaticMethod);
+ *   CoolEvent.Listen(&MyClass::InstanceMethod, this);
+ * }
+ * ```
+ */
+template <typename R, typename... Args>
+class EventSource<R(Args...)>
 {
 public:
-	~CEventManager();
+    using CallbackType = std::function<int(Args...)>;
 
-	inline void RegisterEvent(const EventHandle Event) { m_events.push_back(new CBaseEvent(Event)); }
+    void Listen(const CallbackType& callback) {
+        m_Callbacks.push_back(callback);
+    }
 
-	inline int PushEvent(const EventHandle Event) { return CBaseEvent::GetEvent(Event)->Push(); }
+    void Listen(auto callback)
+    {
+        m_Callbacks.push_back(
+            [callback](Args&&... args) -> int {
+                return callback(std::forward<Args>(args)...);
+            }
+        );
+    }
+
+    void ListenNoArgs(auto callback)
+    {
+        m_Callbacks.push_back(
+            [callback](Args&&... args) -> int
+            {
+                (void)std::tuple<Args...>(args...);
+                return callback();
+            }
+        );
+    }
+
+    
+    void Listen(auto callback, auto instance)
+    {
+        m_Callbacks.push_back(
+            [callback, instance](Args&&... args) -> int {
+                return (instance->*callback)(std::forward<Args>(args)...);
+            }
+        );
+    }
+
+    void ListenNoArgs(auto callback, auto instance)
+    {
+        m_Callbacks.push_back(
+            [callback, instance](Args&&... args) -> int
+            {
+                (void)std::tuple<Args...>(args...);
+                return (instance->*callback)();
+            }
+        );
+    }
+
+    /// @brief Invoke all listeners in order
+    /// @return One or more values from @ref EventReturnFlags 
+    template <typename... TArgs>
+    int DispatchEvent(TArgs&&... args) const
+    {
+        if (IsShutdown())
+            return {};
+        
+        int flags = 0;
+        for (const auto& callback : m_Callbacks)
+        {
+            flags |= callback(std::forward<TArgs>(args)...);
+            if (flags & EventReturnFlags::Skip)
+                break;
+        }
+
+        return flags;
+    }
+
+    /// @brief Permanently disable all dispatching. Useful during ejection.
+    static void Shutdown() { _g_event_shutdown = true; }
+    static bool IsShutdown() { return _g_event_shutdown; }
 
 private:
-	unsigned m_evenstate = 0;
-	std::list<CBaseEvent*> m_events;
-};
-
-class CEventCallback
-{
-public:
-	~CEventCallback() { m_event->RemoveCallback(this); }
-
-	const CallbackFunc_t& Func() const { return m_func; }
-
-protected:
-	friend CBaseEvent;
-	CEventCallback(CBaseEvent* Event, const CallbackFunc_t& Function)
-		: m_event(Event), m_func(Function) { }
-
-private:
-	CBaseEvent* m_event;
-	CallbackFunc_t m_func;
+    std::vector<CallbackType> m_Callbacks;
 };

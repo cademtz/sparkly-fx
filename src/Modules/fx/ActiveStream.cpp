@@ -24,14 +24,14 @@
 
 void ActiveStream::StartListening()
 {
-    Listen(EVENT_DRAWMODELSTATICPROP, [this]{ return OnDrawStaticProp(); });
-    Listen(EVENT_PRE_DRAW_MODEL_EXECUTE, [this] { return PreDrawModelExecute(); });
-    Listen(EVENT_POST_DRAW_MODEL_EXECUTE, [this] { return PostDrawModelExecute(); });
-    Listen(EVENT_FRAMESTAGENOTIFY, [this] { return OnFrameStageNotify(); });
-    Listen(EVENT_OVERRIDEVIEW, [this] { return OnOverrideView(); });
-    Listen(EVENT_VIEW_DRAW_FADE, [this] { return OnViewDrawFade(); });
-    Listen(EVENT_DX9PRESENT, [this] { return OnPresent(); });
-    Listen(EVENT_DX9RESET, [this] { return OnReset(); });
+    StudioRenderHook::OnDrawModelStaticProp.Listen(&ActiveStream::OnDrawStaticProp, this);
+    CModelRenderHook::OnPreDrawModelExecute.Listen(&ActiveStream::PreDrawModelExecute, this);
+    CModelRenderHook::OnPostDrawModelExecute.Listen(&ActiveStream::PostDrawModelExecute, this);
+    CClientHook::OnFrameStageNotify.Listen(&ActiveStream::OnFrameStageNotify, this);
+    CClientHook::OnOverrideView.Listen(&ActiveStream::OnOverrideView, this);
+    RenderViewHook::OnViewDrawFade.ListenNoArgs(&ActiveStream::OnViewDrawFade, this);
+    COverlayHook::OnPresent.ListenNoArgs(&ActiveStream::OnPresent, this);
+    COverlayHook::OnReset.ListenNoArgs(&ActiveStream::OnReset, this);
 }
 
 Stream::Ptr ActiveStream::Get()
@@ -40,7 +40,7 @@ Stream::Ptr ActiveStream::Get()
     return m_stream;
 }
 
-void ActiveStream::Set(Stream::Ptr stream)
+void ActiveStream::Set(const Stream::Ptr& stream)
 {
     auto lock = WriteLock();
     m_should_update_materials = m_stream != stream;
@@ -51,7 +51,7 @@ void ActiveStream::Set(Stream::Ptr stream)
     UpdateRenderTarget();
 }
 
-void ActiveStream::SignalUpdate(Stream::Ptr stream, uint32_t flags)
+void ActiveStream::SignalUpdate(const Stream::Ptr& stream, uint32_t flags)
 {
     auto lock = WriteLock();
     if (m_stream == nullptr)
@@ -227,7 +227,7 @@ void ActiveStream::UpdateFog()
     }
     fog_override->SetValue(1);
 
-    std::array<char, 16> textbuf;
+    std::array<char, 16> textbuf{};
     
     sprintf_s(textbuf.data(), textbuf.size(), "%d %d %d",
         (int)(tweak->fog_color[0] * 255), (int)(tweak->fog_color[1] * 255), (int)(tweak->fog_color[2] * 255)
@@ -259,7 +259,7 @@ int ActiveStream::OnDrawStaticProp()
     if (!tweak->props)
         return 0;
     if (tweak->color_multiply[3] == 0)
-        return Return_NoOriginal;
+        return EventReturnFlags::NoOriginal;
     
     // We don't need to restore these values, because the callers always store and restore it.
     Interfaces::studio_render->SetColorModulation(tweak->color_multiply.data());
@@ -267,26 +267,25 @@ int ActiveStream::OnDrawStaticProp()
     return 0;
 }
 
-int ActiveStream::PreDrawModelExecute()
+int ActiveStream::PreDrawModelExecute(const DrawModelState_t& state, const ModelRenderInfo_t& pInfo, matrix3x4_t* pCustomBoneToWorld)
 {
     auto lock = ReadLock();
     if (!m_stream)
         return 0;
     
-    auto* ctx = &g_hk_model_render.Context()->model_execute;
-    CBaseEntity* entity = Interfaces::entlist->GetClientEntity(ctx->pInfo->entity_index);
+    CBaseEntity* entity = Interfaces::entlist->GetClientEntity(pInfo.entity_index);
 
     for (auto tweak = m_stream->begin<ModelTweak>(); tweak != m_stream->end<ModelTweak>(); ++tweak)
     {
         bool is_affected = entity && tweak->IsEntityAffected(entity);
         if (!is_affected)
-            is_affected = tweak->IsModelAffected(ctx->state->m_pStudioHdr->pszName());
+            is_affected = tweak->IsModelAffected(state.m_pStudioHdr->pszName());
 
         if (!is_affected)
             continue;
         
         if (tweak->IsEffectInvisible())
-            return Return_NoOriginal;
+            return EventReturnFlags::NoOriginal;
 
         // Store original draw parameters
         m_is_dme_affected = true;
@@ -304,7 +303,7 @@ int ActiveStream::PreDrawModelExecute()
     return 0;
 }
 
-int ActiveStream::PostDrawModelExecute()
+int ActiveStream::PostDrawModelExecute(const DrawModelState_t& state, const ModelRenderInfo_t& pInfo, matrix3x4_t* pCustomBoneToWorld)
 {
     auto lock = ReadLock();
 
@@ -319,9 +318,8 @@ int ActiveStream::PostDrawModelExecute()
     return 0;
 }
 
-int ActiveStream::OnFrameStageNotify()
+int ActiveStream::OnFrameStageNotify(enum ClientFrameStage_t stage)
 {
-    ClientFrameStage_t stage = g_hk_client.Context()->curStage;
     if (stage != FRAME_RENDER_START)
         return 0;
         
@@ -416,13 +414,12 @@ void ActiveStream::UpdateHud()
         Interfaces::panels->SetVisible(viewport, new_visibility);
 }
 
-int ActiveStream::OnOverrideView()
+int ActiveStream::OnOverrideView(CViewSetup* view_setup)
 {
     auto lock = ReadLock();
     if (!m_stream)
         return 0;
     
-    auto view_setup = g_hk_client.Context()->pSetup;
     for (auto tweak = m_stream->begin<CameraTweak>(); tweak != m_stream->end<CameraTweak>(); ++tweak)
     {
         if (tweak->fov_override)
@@ -440,7 +437,7 @@ int ActiveStream::OnViewDrawFade()
     for (auto tweak = m_stream->begin<CameraTweak>(); tweak != m_stream->end<CameraTweak>(); ++tweak)
     {
         if (tweak->hide_fade)
-            return Return_NoOriginal;
+            return EventReturnFlags::NoOriginal;
     }
     return 0;
 }

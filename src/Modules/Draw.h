@@ -2,21 +2,21 @@
 #include "BaseModule.h"
 #include <SDK/vector.h>
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <mutex>
-
-DECL_EVENT(EVENT_IMGUI);
-DECL_EVENT(EVENT_DRAW);
+#include <Hooks/PaintHook.h>
 
 class Vector;
 
-class CDraw : public CModule, CEventManager
+/**
+ * @brief Runs ImGui and allows separate drawing on the game thread
+ */
+class CDraw : public CModule
 {
 public:
-	CDraw();
-
 	void StartListening() override;
 
-	inline ImDrawList* List() { return m_list; }
+	ImDrawList* List() { return &m_imdrawlist; }
 	bool WorldToScreen(const Vector& World, ImVec2& Screen);
 
 	void DrawText_Outline(const ImVec2& Pos, ImU32 Col, ImU32 Outline_Col, const char* Text_Begin, const char* Text_End = 0);
@@ -28,11 +28,20 @@ public:
 		return DrawBox3D(Point - Vector(Radius), Point + Vector(Radius), Color, Thickness);
 	}
 
+	using ImGuiEvent = EventSource<void()>;
+	using DrawEvent = EventSource<void()>;
+
+	static inline ImGuiEvent OnImGui;
+	static inline DrawEvent OnDraw;
+
 private:
 	int OnPresent();
 	int OnPaint();
 
-	ImDrawList* m_list = nullptr;
+	ImDrawData m_imdrawdata;
+	ImDrawListSharedData m_imdrawlist_shared_data;
+	ImDrawList m_imdrawlist{&m_imdrawlist_shared_data};
+	bool m_is_drawlist_ready = false;
 	int m_frames = 0;
 	std::mutex m_mtx;
 };

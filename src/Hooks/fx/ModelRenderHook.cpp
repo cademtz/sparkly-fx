@@ -2,11 +2,7 @@
 #include <Base/Interfaces.h>
 #include <SDK/ivmodelrender.h>
 
-CModelRenderHook::CModelRenderHook() : BASEHOOK(CModelRenderHook)
-{
-    RegisterEvent(EVENT_PRE_DRAW_MODEL_EXECUTE);
-    RegisterEvent(EVENT_POST_DRAW_MODEL_EXECUTE);
-}
+CModelRenderHook::CModelRenderHook() : BASEHOOK(CModelRenderHook) {}
 
 void CModelRenderHook::Hook()
 {
@@ -37,18 +33,13 @@ void CModelRenderHook::ClearDrawnModelList()
 
 void __stdcall CModelRenderHook::Hooked_DrawModelExecute(UNCRAP const DrawModelState_t& state, const ModelRenderInfo_t& pInfo, matrix3x4_t* pCustomBoneToWorld)
 {
-    auto* ctx = &g_hk_model_render.Context()->model_execute;
-    ctx->state = &state;
-    ctx->pInfo = &pInfo;
-    ctx->pCustomBoneToWorld = pCustomBoneToWorld;
-
     {
         std::lock_guard lock(g_hk_model_render.m_drawn_models_mutex);
         g_hk_model_render.m_drawn_modelnames.emplace(state.m_pStudioHdr->name);
     }
 
-    int flags = g_hk_model_render.PushEvent(EVENT_PRE_DRAW_MODEL_EXECUTE);
-    if (!(flags & Return_NoOriginal))
-        g_hk_model_render.DrawModelExecute(*ctx->state, *ctx->pInfo, ctx->pCustomBoneToWorld);
-    g_hk_model_render.PushEvent(EVENT_POST_DRAW_MODEL_EXECUTE);
+    int flags = OnPreDrawModelExecute.DispatchEvent(state, pInfo, pCustomBoneToWorld);
+    if (!(flags & EventReturnFlags::NoOriginal))
+        g_hk_model_render.DrawModelExecute(state, pInfo, pCustomBoneToWorld);
+    OnPostDrawModelExecute.DispatchEvent(state, pInfo, pCustomBoneToWorld);
 }

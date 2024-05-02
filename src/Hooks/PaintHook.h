@@ -3,31 +3,23 @@
 #include <SDK/VGUI.h>
 #include <SDK/ienginevgui.h>
 
-DECL_EVENT(EVENT_PAINTTRAVERSE);
-DECL_EVENT(EVENT_PAINT);
-
-struct PaintHook_Ctx
-{
-	vgui::VPANEL panel;
-	bool forceRepaint, allowForce;
-	PaintMode_t mode;
-};
-
 class CPaintHook : public CBaseHook
 {
 public:
-	CPaintHook();
-
-	inline PaintHook_Ctx* Context() { return &m_ctx; }
+	CPaintHook() : BASEHOOK(CPaintHook) {}
 
 	void Hook() override;
 	void Unhook() override;
 	void PaintTraverse(vgui::VPANEL vguiPanel, bool forceRepaint, bool allowForce);
 	void Paint(PaintMode_t mode);
 
+	using PaintTraverseEvent = EventSource<void(vgui::VPANEL, bool, bool)>;
+	using PaintEvent = EventSource<void(PaintMode_t)>;
+
+	static inline PaintTraverseEvent OnPaintTraverse;
+	static inline PaintEvent OnPaint;
 private:
 	CVMTHook m_vguihook;
-	PaintHook_Ctx m_ctx;
 
 	static void __stdcall Hooked_PaintTraverse(UNCRAP vgui::VPANEL vguiPanel, bool forceRepaint, bool allowForce = true);
 	static void __stdcall Hooked_Paint(UNCRAP PaintMode_t mode);

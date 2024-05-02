@@ -22,9 +22,9 @@ private:
         int team;
     };
 
-    int OnMenu();
-    int OnFrameStageNotify();
-    int OnOverrideView();
+    int OnTabBar();
+    int OnFrameStageNotify(ClientFrameStage_t stage);
+    int OnOverrideView(CViewSetup* view_setup);
     void AppendLog(std::string_view text) {
         std::scoped_lock lock(m_log_mutex);
         m_log += text;

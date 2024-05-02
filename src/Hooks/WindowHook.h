@@ -2,28 +2,16 @@
 #include <Windows.h>
 #include "Hooks.h"
 
-DECL_EVENT(EVENT_WINDOWPROC);
-
-struct WndProcArgs
-{
-	HWND hwnd;
-	UINT msg;
-	WPARAM wparam;
-	LPARAM lparam;
-	LRESULT result;
-};
-
 class CWindowHook : public CBaseHook
 {
 public:
-	CWindowHook();
+	CWindowHook() : BASEHOOK(CWindowHook), m_hwnd(nullptr), m_oldproc(nullptr) {}
 
 	void Hook() override;
 	void Unhook() override;
 
-	inline HWND Window() const { return m_hwnd; }
-	inline WNDPROC OldProc() const { return m_oldproc; }
-	inline WndProcArgs* Context() { return &m_ctx; }
+	HWND Window() const { return m_hwnd; }
+	WNDPROC OldProc() const { return m_oldproc; }
 
 	BOOL SetCurPos(int X, int Y);
 	int ShowCur(BOOL bShow);
@@ -32,8 +20,11 @@ public:
 	BOOL GetCurInfo(PCURSORINFO pci);
 
 	void SetInputEnabled(bool Enabled);
-	bool GetInputEnabled() { return !m_passInput; }
+	bool GetInputEnabled() const { return !m_passInput; }
 
+	using WndProcEvent = EventSource<LRESULT(LRESULT& result, HWND, UINT, WPARAM, LPARAM)>;
+	static inline WndProcEvent OnWndProc;
+	
 private:
 	CJumpHook m_hkcurpos, m_hkshowcur, m_hksetcur, m_hkgetcurpos, m_hk_getcurinfo;
 
@@ -46,8 +37,6 @@ private:
 		CURSORINFO cursor_info;
 		int show_count;
 	} m_lastInput = { 0 };
-
-	static WndProcArgs m_ctx;
 
 	static LRESULT WINAPI Hooked_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static BOOL WINAPI Hooked_SetCursorPos(int X, int Y);
