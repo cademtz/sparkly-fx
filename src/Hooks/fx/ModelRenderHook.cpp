@@ -33,18 +33,13 @@ void CModelRenderHook::ClearDrawnModelList()
 
 void __stdcall CModelRenderHook::Hooked_DrawModelExecute(UNCRAP const DrawModelState_t& state, const ModelRenderInfo_t& pInfo, matrix3x4_t* pCustomBoneToWorld)
 {
-    auto* ctx = &g_hk_model_render.Context()->model_execute;
-    ctx->state = &state;
-    ctx->pInfo = &pInfo;
-    ctx->pCustomBoneToWorld = pCustomBoneToWorld;
-
     {
         std::lock_guard lock(g_hk_model_render.m_drawn_models_mutex);
         g_hk_model_render.m_drawn_modelnames.emplace(state.m_pStudioHdr->name);
     }
 
-    int flags = OnPreDrawModelExecute.DispatchEvent();
+    int flags = OnPreDrawModelExecute.DispatchEvent(state, pInfo, pCustomBoneToWorld);
     if (!(flags & EventReturnFlags::NoOriginal))
-        g_hk_model_render.DrawModelExecute(*ctx->state, *ctx->pInfo, ctx->pCustomBoneToWorld);
-    OnPostDrawModelExecute.DispatchEvent();
+        g_hk_model_render.DrawModelExecute(state, pInfo, pCustomBoneToWorld);
+    OnPostDrawModelExecute.DispatchEvent(state, pInfo, pCustomBoneToWorld);
 }

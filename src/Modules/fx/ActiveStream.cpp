@@ -267,20 +267,19 @@ int ActiveStream::OnDrawStaticProp()
     return 0;
 }
 
-int ActiveStream::PreDrawModelExecute()
+int ActiveStream::PreDrawModelExecute(const DrawModelState_t& state, const ModelRenderInfo_t& pInfo, matrix3x4_t* pCustomBoneToWorld)
 {
     auto lock = ReadLock();
     if (!m_stream)
         return 0;
     
-    auto* ctx = &g_hk_model_render.Context()->model_execute;
-    CBaseEntity* entity = Interfaces::entlist->GetClientEntity(ctx->pInfo->entity_index);
+    CBaseEntity* entity = Interfaces::entlist->GetClientEntity(pInfo.entity_index);
 
     for (auto tweak = m_stream->begin<ModelTweak>(); tweak != m_stream->end<ModelTweak>(); ++tweak)
     {
         bool is_affected = entity && tweak->IsEntityAffected(entity);
         if (!is_affected)
-            is_affected = tweak->IsModelAffected(ctx->state->m_pStudioHdr->pszName());
+            is_affected = tweak->IsModelAffected(state.m_pStudioHdr->pszName());
 
         if (!is_affected)
             continue;
@@ -304,7 +303,7 @@ int ActiveStream::PreDrawModelExecute()
     return 0;
 }
 
-int ActiveStream::PostDrawModelExecute()
+int ActiveStream::PostDrawModelExecute(const DrawModelState_t& state, const ModelRenderInfo_t& pInfo, matrix3x4_t* pCustomBoneToWorld)
 {
     auto lock = ReadLock();
 

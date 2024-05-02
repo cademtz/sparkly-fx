@@ -12,6 +12,9 @@
 
 class IMaterial;
 enum OverrideType_t;
+struct DrawModelState_t;
+struct ModelRenderInfo_t;
+struct matrix3x4_t;
 
 /**
  * @brief Apply the active stream's settings during rendering.
@@ -65,8 +68,8 @@ public:
 
 protected:
     int OnDrawStaticProp();
-    int PreDrawModelExecute();
-    int PostDrawModelExecute();
+    int PreDrawModelExecute(const DrawModelState_t& state, const ModelRenderInfo_t& pInfo, matrix3x4_t* pCustomBoneToWorld);
+    int PostDrawModelExecute(const DrawModelState_t& state, const ModelRenderInfo_t& pInfo, matrix3x4_t* pCustomBoneToWorld);
     int OnFrameStageNotify(enum ClientFrameStage_t stage);
     int OnOverrideView(class CViewSetup* view_setup);
     int OnViewDrawFade();
