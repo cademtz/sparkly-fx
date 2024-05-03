@@ -136,6 +136,26 @@ bool ActiveStream::DrawDepth()
     return true;
 }
 
+void ActiveStream::RenderView()
+{
+    auto lock = ReadLock();
+
+    CViewSetup view_setup;
+    Interfaces::hlclient->GetPlayerView(view_setup);
+
+    if (m_stream != nullptr) 
+    {
+        // Override FOV in view_setup
+        for (auto tweak = m_stream->begin<CameraTweak>(); tweak != m_stream->end<CameraTweak>(); ++tweak)
+        {
+            if (tweak->fov_override)
+                view_setup.fov = tweak->fov;
+        }
+    }
+
+    Interfaces::hlclient->RenderView(view_setup, VIEW_CLEAR_COLOR, RENDERVIEW_DRAWVIEWMODEL | RENDERVIEW_DRAWHUD);
+}
+
 void ActiveStream::UpdateMaterials()
 {
     auto lock = ReadLock();

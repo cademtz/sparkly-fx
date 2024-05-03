@@ -65,6 +65,8 @@ public:
     /// @details This also re-draws ImGui. Otherwise, the menu will disappear.
     /// @return `true` if anything was drawn.
     bool DrawDepth();
+    /// @brief Replaces the call to hlclient->RenderView
+    void RenderView();
 
 protected:
     int OnDrawStaticProp();
