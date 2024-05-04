@@ -83,6 +83,15 @@ int DevModule::OnMenuBar()
 
     if (ImGui::Selectable("Eject"))
         GameEjector::Eject();
+
+#ifdef _DEBUG
+    ImGui::Spacing();
+    ImGui::Spacing();
+    ImGui::Spacing();
+    ImGui::Spacing();
+    if (ImGui::Selectable("Crash Game"))
+        *(int*)0xdead = 0xbeef;
+#endif
     
     ImGui::EndMenu();
     return 0;
