@@ -537,8 +537,13 @@ FFmpegWriter::FFmpegWriter(uint32_t width, uint32_t height, uint32_t framerate, 
     // Output flags
     ffmpeg_args << output_args.c_str() << " \"" << output_path.c_str() << '"';
 
-    m_pipe = ffmpipe::Pipe::Create(Helper::FFmpeg::GetDefaultPath(), ffmpeg_args.str());
-    m_pipe->SetPrintFunc([](std::string_view text) { VideoLog::AppendError(text); });
+    ffmpipe::PipeStatus status = ffmpipe::PipeStatus::OK;
+    m_pipe = ffmpipe::Pipe::Create(Helper::FFmpeg::GetDefaultPath(), ffmpeg_args.str(), 10'000, &status);
+
+    VideoLog::Append("FFmpeg pipe status: " + ffmpipe::Pipe::GetStatusMessage(status) + "\n");
+
+    if (m_pipe)
+        m_pipe->SetPrintFunc([](std::string_view text) { VideoLog::AppendError(text); });
 }
 
 FFmpegWriter::~FFmpegWriter()
@@ -573,9 +578,11 @@ bool FFmpegWriter::WriteFrame(const FrameBufferDx9& buffer, size_t frame_index)
     for (uint32_t row = 0; row < buffer.GetHeight(); ++row)
     {
         const uint8_t* data = (const uint8_t*)locked_rect.pBits + row * locked_rect.Pitch;
-        if (!m_pipe->Write(data, buffer.GetPixelStride() * buffer.GetWidth()))
+        ffmpipe::PipeStatus status = m_pipe->Write(data, buffer.GetPixelStride() * buffer.GetWidth());
+        if (status != ffmpipe::PipeStatus::OK)
         {
-            VideoLog::AppendError("Failed to write pixels to FFmpeg. It may have closed.\n");
+            std::string message = ffmpipe::Pipe::GetStatusMessage(status);
+            VideoLog::AppendError("Failed to write pixels to FFmpeg: %s\n", message.c_str());
             return false;
         }
     }
