@@ -75,7 +75,6 @@ int StreamEditor::OnConfigSave()
        j_streams.emplace_back(stream->ToJson());
     
     nlohmann::json j = {
-        {"m_preview", m_preview},
         {"m_streams", std::move(j_streams)}
     };
     ConfigModule::GetOutput().emplace("Streams", std::move(j));
@@ -85,7 +84,6 @@ int StreamEditor::OnConfigSave()
 int StreamEditor::OnConfigLoad()
 {
     const nlohmann::json* j = Helper::FromJson(ConfigModule::GetInput(), "Streams");
-    Helper::FromJson(j, "m_preview", m_preview);
     const nlohmann::json* j_streams = Helper::FromJson(j, "m_streams");
 
     if (!j_streams || !j_streams->is_array() || j_streams->empty())
