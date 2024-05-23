@@ -301,14 +301,8 @@ int ActiveStream::PreDrawModelExecute(const DrawModelState_t& state, const Model
         bool is_affected = entity && tweak->IsEntityAffected(entity);
         if (!is_affected)
         {
-            if (state.m_pStudioHdr->pszName())
-                is_affected = tweak->IsModelAffected(state.m_pStudioHdr->pszName());
-            else
-            {
-                #ifdef DEBUG
-                    printf("state.m_pStudioHdr->pszName() == nullptr!!!\n");
-                #endif
-            }
+            // NOTE: DO NOT use `m_pStudioHdr->pszName()`. This crashes in 64-bit TF2.
+            is_affected = tweak->IsModelAffected(state.m_pStudioHdr->name);
         }
 
         if (!is_affected)
