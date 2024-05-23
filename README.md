@@ -16,6 +16,8 @@ Usage:
 
 Console commands: Read [console-commands.md](console-commands.md).
 
+Launch arguments: Read [launch-args.md](launch-args.md).
+
 Please read [known-bugs.md](known-bugs.md). This software is in early development.
 
 You can chat with fellow TF2 video editors (including me) in the Castellum Discord server:

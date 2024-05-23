@@ -13,6 +13,7 @@
 #include "mainwindow.h"
 #include <Modules/fx/recorder.h>
 #include <Hooks/OverlayHook.h>
+#include <shellapi.h> // CommandLineToArgvW
 
 #define CURRENT_CONFIG "config.json"
 #define CONFIG_VERSION_MAJOR 1
@@ -62,7 +63,25 @@ static void AppendError(const std::string_view text) {
 
 void ConfigModule::StartListening()
 {
-    CONFIG_PATH = Base::GetModuleDir() / "sparklyfx" / CURRENT_CONFIG;
+    // Search for -sf_config_file
+    // TODO: Add a commandline utility in xsdk-base.
+    LPWSTR cmdline = GetCommandLineW();
+    int argc;
+    LPWSTR* argv = CommandLineToArgvW(cmdline, &argc);
+    if (argv != nullptr) {
+        defer { LocalFree(argv); };
+        for (int i = 0; i < argc; ++i) {
+            if (!wcscmp(argv[i], L"-sf_config_file")) {
+                if (i + 1 >= argc)
+                    break;
+                CONFIG_PATH = argv[i+1];
+                break;
+            }
+        }
+    }
+
+    if (CONFIG_PATH.empty()) // Create default config path
+        CONFIG_PATH = Base::GetModuleDir() / "sparklyfx" / CURRENT_CONFIG;
 
     MainWindow::OnMenuBar.Listen(&ConfigModule::OnMenuBar, this);
     MainWindow::OnTabBar.Listen(&ConfigModule::OnTabBar, this);
