@@ -3,7 +3,7 @@
 #include <Base/AsmTools.h>
 #include <cstdio>
 
-#ifdef WIN64
+#ifdef _M_AMD64
 #define SIG_CD3DHAL "48 8D 05 ? ? ? ? 48 89 03 33 C0"
 #define OFFSET_CD3DHAL 3
 #else
@@ -29,6 +29,7 @@ void COverlayHook::Hook()
 	{
 		FATAL(
 			"Failed to hook D3D9.\n"
+			"Try launching the game in windowed mode (with -windowed).\n\n"
 			"GetDeviceVtable_CreateDevice: %s\n"
 			"GetDeviceVtable_SigScan: %s",
 			error_create.c_str(), error_scan.c_str()
