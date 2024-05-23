@@ -181,10 +181,10 @@ struct CrashWriter
 
         HANDLE hFile = CreateFileW(
             path,
-            GENERIC_READ | GENERIC_WRITE,
+            GENERIC_READ | FILE_APPEND_DATA,
             0,
             nullptr,
-            CREATE_ALWAYS,
+            OPEN_ALWAYS, // Open or create
             FILE_ATTRIBUTE_NORMAL,
             nullptr
         );
@@ -206,6 +206,16 @@ struct CrashWriter
 
         if (!PutFile(header))
             return false;
+
+        SYSTEMTIME time;
+        GetSystemTime(&time);
+
+        if (!PutFile(
+            "Date (y-m-d h:m:s): %d-%d-%d %dh:%dm:%ds\n",
+            time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond)
+        ) {
+            return false;
+        }
 
         void* addr = info->ExceptionRecord->ExceptionAddress;
         DWORD code = info->ExceptionRecord->ExceptionCode;
@@ -389,12 +399,10 @@ private:
 
 static LONG NTAPI MyVectoredHandler(_EXCEPTION_POINTERS* info)
 {
-    static bool first = true;
-
-    if (!first)
+    // Ignore informal exceptions. They are spammy and don't seem to cause any real crashes.
+    // https://stackoverflow.com/questions/12298406/how-to-treat-0x40010006-exception-in-vectored-exception-handler
+    if (info->ExceptionRecord->ExceptionCode < 0x80000000u)
         return EXCEPTION_CONTINUE_SEARCH;
-
-    first = false;
 
     CrashWriter writer;
     if (!writer.Open() || !writer.WriteException(info))
