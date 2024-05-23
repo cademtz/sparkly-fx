@@ -99,10 +99,11 @@ Movie::Movie(
         }
 
         m_streams.emplace_back(StreamPair{stream, writer});
-        VideoLog::Append("Recording will begin after the console is closed\n");
-        VideoLog::Append(Helper::sprintf("Recording to '%s'\n", m_root_path.string().c_str()));
     }
 
+    VideoLog::Append("Recording will begin after the console is closed\n");
+    VideoLog::Append(Helper::sprintf("Recording to '%s'\n", m_root_path.string().c_str()));
+    
     auto num_threads = std::thread::hardware_concurrency();
     if (num_threads <= 0)
         num_threads = 1;
