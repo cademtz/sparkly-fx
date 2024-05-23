@@ -181,10 +181,10 @@ struct CrashWriter
 
         HANDLE hFile = CreateFileW(
             path,
-            GENERIC_READ | GENERIC_WRITE,
+            GENERIC_READ | FILE_APPEND_DATA,
             0,
             nullptr,
-            CREATE_ALWAYS,
+            OPEN_ALWAYS, // Open or create
             FILE_ATTRIBUTE_NORMAL,
             nullptr
         );
@@ -389,13 +389,6 @@ private:
 
 static LONG NTAPI MyVectoredHandler(_EXCEPTION_POINTERS* info)
 {
-    static bool first = true;
-
-    if (!first)
-        return EXCEPTION_CONTINUE_SEARCH;
-
-    first = false;
-
     CrashWriter writer;
     if (!writer.Open() || !writer.WriteException(info))
     {
