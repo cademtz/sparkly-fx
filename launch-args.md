@@ -7,6 +7,6 @@
 
 ### sf_config_file
 ```
-Usage: -sf_config_file [file]
+Usage: -sf_config_file file
 The sparklyfx config will load and save using this file.
 ```
