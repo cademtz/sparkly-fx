@@ -150,6 +150,7 @@ int CRecorder::OnTabBar()
             ImGui::SameLine();
             clear_error_log = ImGui::Button("Clear"); // NOTE: Clear() is deferred because VideoLog is locked right now
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
+            ImGui::SetNextItemWidth(-1.f); // Ensure that text spans the full width where the label usually appears
             ImGui::InputTextMultiline("##error_log",
                 locked_error_log->data(), locked_error_log->length(), ImVec2(0,0), ImGuiInputTextFlags_ReadOnly
             );
