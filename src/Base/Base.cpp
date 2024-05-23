@@ -83,8 +83,8 @@ DWORD WINAPI Base::HookThread(LPVOID Args)
     my_vectored_handler = AddVectoredExceptionHandler(TRUE, MyVectoredHandler);
 
     Netvars::GetNetvars();
-    CBaseHook::HookAll();
     CModule::StartAll();
+    CBaseHook::HookAll();
 
     return 0;
 }
