@@ -21,6 +21,7 @@
 #include <SDK/icvar.h>
 #include <SDK/convar.h>
 #include <SDK/IPanel.h>
+#include <cstdio>
 
 void ActiveStream::StartListening()
 {
@@ -299,7 +300,16 @@ int ActiveStream::PreDrawModelExecute(const DrawModelState_t& state, const Model
     {
         bool is_affected = entity && tweak->IsEntityAffected(entity);
         if (!is_affected)
-            is_affected = tweak->IsModelAffected(state.m_pStudioHdr->pszName());
+        {
+            if (state.m_pStudioHdr->pszName())
+                is_affected = tweak->IsModelAffected(state.m_pStudioHdr->pszName());
+            else
+            {
+                #ifdef DEBUG
+                    printf("state.m_pStudioHdr->pszName() == nullptr!!!\n");
+                #endif
+            }
+        }
 
         if (!is_affected)
             continue;
