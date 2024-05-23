@@ -40,11 +40,11 @@ void VideoLog::Append(const std::string& text) {
     std::string txt = text;
     if (!txt.empty() && txt.back() == '\n')
         txt.pop_back();
+    *GetLog() += text;
     GetConsoleQueue().Append(std::move(txt));
 }
 
 void VideoLog::AppendError(const std::string& text) {
-    *GetLog() += text;
     Append(text);
     has_errors = true;
 }
@@ -537,10 +537,11 @@ FFmpegWriter::FFmpegWriter(uint32_t width, uint32_t height, uint32_t framerate, 
     // Output flags
     ffmpeg_args << output_args.c_str() << " \"" << output_path.c_str() << '"';
 
-    ffmpipe::PipeStatus status = ffmpipe::PipeStatus::OK;
+    ffmpipe::PipeStatus status{ffmpipe::PipeStatus::Type::OK};
     m_pipe = ffmpipe::Pipe::Create(Helper::FFmpeg::GetDefaultPath(), ffmpeg_args.str(), 10'000, &status);
 
-    VideoLog::Append("FFmpeg pipe status: " + ffmpipe::Pipe::GetStatusMessage(status) + "\n");
+    if (!status.IsOk())
+        VideoLog::AppendError("FFmpeg pipe status: " + status.ToString() + "\n");
 
     if (m_pipe)
         m_pipe->SetPrintFunc([](std::string_view text) { VideoLog::AppendError(text); });
@@ -579,9 +580,9 @@ bool FFmpegWriter::WriteFrame(const FrameBufferDx9& buffer, size_t frame_index)
     {
         const uint8_t* data = (const uint8_t*)locked_rect.pBits + row * locked_rect.Pitch;
         ffmpipe::PipeStatus status = m_pipe->Write(data, buffer.GetPixelStride() * buffer.GetWidth());
-        if (status != ffmpipe::PipeStatus::OK)
+        if (!status.IsOk())
         {
-            std::string message = ffmpipe::Pipe::GetStatusMessage(status);
+            std::string message = status.ToString();
             VideoLog::AppendError("Failed to write pixels to FFmpeg: %s\n", message.c_str());
             return false;
         }
