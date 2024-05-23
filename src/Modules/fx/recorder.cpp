@@ -140,21 +140,25 @@ int CRecorder::OnTabBar()
 {   
     if (!ImGui::BeginTabItem("Recorder"))
         return 0;
-        
-    bool has_errors = VideoLog::HasErrors();
-    if (has_errors)
+
+    bool clear_error_log = false;
     {
-        ImGui::Text("Error log:"); ImGui::SameLine();
-        if (ImGui::Button("Clear"))
-            VideoLog::Clear();
-        
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
         auto locked_error_log = VideoLog::GetLog();
-        ImGui::InputTextMultiline("##error_log",
-            locked_error_log->data(), locked_error_log->length(), ImVec2(0,0), ImGuiInputTextFlags_ReadOnly
-        );
-        ImGui::PopStyleColor();
+        if (!locked_error_log->empty())
+        {
+            ImGui::Text("Error log:");
+            ImGui::SameLine();
+            clear_error_log = ImGui::Button("Clear"); // NOTE: Clear() is deferred because VideoLog is locked right now
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,1,0,1));
+            ImGui::InputTextMultiline("##error_log",
+                locked_error_log->data(), locked_error_log->length(), ImVec2(0,0), ImGuiInputTextFlags_ReadOnly
+            );
+            ImGui::PopStyleColor();
+        }
     }
+
+    if (clear_error_log)
+        VideoLog::Clear();
 
     if (ImGui::Button(IsRecordingMovie() ? "Stop" : "Start"))
         ToggleRecording(m_movie_path);
