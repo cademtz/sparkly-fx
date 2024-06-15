@@ -47,6 +47,9 @@ Movie::Movie(
 
     for (const auto& stream : streams)
     {
+        if (!stream->IsEnabled())
+            continue;
+        
         const EncoderConfig& config = default_videoconfig;
         std::filesystem::path stream_path = m_root_path / stream->GetName();
 

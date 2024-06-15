@@ -16,7 +16,8 @@ Stream::Ptr Stream::Clone(const std::string& new_name) const
 nlohmann::json Stream::ToJson() const
 {
     nlohmann::json j = {
-        {"name", GetName()}
+        {"name", GetName()},
+        {"enabled", m_enabled}
     };
 
     nlohmann::json j_tweak_arr = nlohmann::json::array();
@@ -48,6 +49,11 @@ void Stream::FromJson(const nlohmann::json* j)
             safe_name.resize(MAX_PATH);
         m_name = std::move(safe_name);
     }
+
+    // For backwards compatibility and common sense:
+    // If "enabled" is unspecified, then it is assumed true by default.
+    if (!Helper::FromJson(j, "enabled", m_enabled))
+        m_enabled = true;
 
     const nlohmann::json* j_tweak_arr = Helper::FromJson(j, "tweaks");
     if (j_tweak_arr && j_tweak_arr->is_array())

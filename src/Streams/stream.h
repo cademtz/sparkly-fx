@@ -19,9 +19,14 @@ public:
     explicit Stream(std::string name) : m_name(std::move(name)) {}
 
     Ptr Clone(const std::string& new_name) const;
+    
     std::string& GetName() { return m_name; }
     const std::string& GetName() const { return m_name; }
     std::vector<ElementType>& GetRenderTweaks() { return m_tweaks; }
+
+    bool IsEnabled() const { return m_enabled; }
+    void SetEnabled(bool enabled) { m_enabled = enabled; }
+
     nlohmann::json ToJson() const override;
     void FromJson(const nlohmann::json* json) override;
     /// @brief Create a new instance from JSON
@@ -96,6 +101,7 @@ protected:
     
     std::string m_name;
     std::vector<ElementType> m_tweaks;
+    bool m_enabled = true; ///< Whether the stream will be used
 
 private:
     static std::vector<ConstPtr> MakePresets();

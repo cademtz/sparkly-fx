@@ -98,7 +98,7 @@ int StreamEditor::OnConfigLoad()
     }
 
     Stream::Ptr new_preview = nullptr;
-    if (m_preview && m_stream_index >= 0 && m_stream_index < m_streams.size())
+    if (m_preview && m_stream_index < m_streams.size())
         new_preview = m_streams[m_stream_index];
     g_active_stream.Set(new_preview);
     return 0;
@@ -106,15 +106,6 @@ int StreamEditor::OnConfigLoad()
 
 void StreamEditor::ShowStreamListEditor()
 {
-    static auto stream_getter = [](void* data, int index, const char** out_text)
-    {
-        auto& stream_vec = *(const std::vector<Stream::Ptr>*)data;
-        if (index >= stream_vec.size())
-            return false;
-        *out_text = stream_vec[index]->GetName().c_str();
-        return true;
-    };
-
     Stream::Ptr selected = nullptr;
     if (m_stream_index < m_streams.size())
         selected = m_streams[m_stream_index];
@@ -138,11 +129,42 @@ void StreamEditor::ShowStreamListEditor()
     if (ImGui::Button("Rename##stream"))
         ImGui::OpenPopup(POPUP_STREAM_RENAMER);
 
-    bool changed_selection = ImGui::ListBox("##streams_list", &m_stream_index, stream_getter, &m_streams, m_streams.size());
+    size_t prev_stream_index = m_stream_index;
     bool changed_preview = ImGui::Checkbox("Preview the selected stream", &m_preview);
+    
+    // Draw the stream list and its controls:
+    // The top buttons (add, remove, edit, preview, ...) must remain fixed at the top.
+    // To do this, wrap the table in a window so it has an independent scroll.
+    ImGui::BeginChild("##table_window");
+    // Remove vertical padding
+    ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2{ImGui::GetStyle().CellPadding.x,0});
+    if (ImGui::BeginTable("##table", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV))
+    {
+        ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_NoHide);
+        ImGui::TableSetupColumn("##visible", ImGuiTableColumnFlags_WidthFixed, 24.0f);
+
+        for (size_t i = 0; i < m_streams.size(); ++i)
+        {
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            if (ImGui::Selectable(m_streams[i]->GetName().c_str(), i == m_stream_index))
+                m_stream_index = i;
+            
+            ImGui::TableNextColumn();
+            char temp_label[16];
+            std::snprintf(temp_label, sizeof(temp_label), "##%zu", i);
+            bool enabled = m_streams[i]->IsEnabled();
+            if (ImGui::Checkbox(temp_label, &enabled))
+                m_streams[i]->SetEnabled(enabled);
+        }
+
+        ImGui::EndTable();
+    }
+    ImGui::PopStyleVar();
+    ImGui::EndChild();
 
     selected = m_stream_index < m_streams.size() ? m_streams[m_stream_index] : nullptr;
-    changed_selection |= prev_selected != selected;
+    bool changed_selection = prev_selected != selected;
     prev_selected = selected;
     if (changed_selection || changed_preview)
         g_active_stream.Set(m_preview ? selected : nullptr);
