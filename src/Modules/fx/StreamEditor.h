@@ -47,7 +47,7 @@ private:
     /// @brief A list of every stream. No duplicate names are allowed.
     std::vector<Stream::Ptr> m_streams;
     /// @brief The selected stream index, or a value >= `m_streams.size()`
-    int m_stream_index;
+    size_t m_stream_index = (size_t)-1;
     bool m_preview = true;
 };
 
