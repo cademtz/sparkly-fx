@@ -517,8 +517,14 @@ void FrameBufferDx9::BlitBgra(FrameBufferRgb* dst, D3DLOCKED_RECT src)
     }
 }
 
-FFmpegWriter::FFmpegWriter(uint32_t width, uint32_t height, uint32_t framerate, const std::string& output_args, const std::filesystem::path& output_path)
+FFmpegWriter::FFmpegWriter(uint32_t width, uint32_t height, const EncoderConfig& cfg, const std::filesystem::path& output_path)
 {
+    if (cfg.ffmpeg_path.empty())
+    {
+        VideoLog::AppendError("No FFmpeg path. The user must provide one.\n");
+        return;
+    }
+
     IDirect3DSurface9* render_target;
     D3DSURFACE_DESC desc;
     g_hk_overlay.Device()->GetRenderTarget(0, &render_target);
@@ -528,17 +534,36 @@ FFmpegWriter::FFmpegWriter(uint32_t width, uint32_t height, uint32_t framerate, 
     const char* pix_fmt = Helper::GetD3DFormatAsFFmpegPixFmt(desc.Format, true);
     assert(pix_fmt && "No equivalent FFmpeg pix_fmt for given D3DFORMAT");
 
-    std::wstringstream ffmpeg_args;
-    // Global flags
-    ffmpeg_args << "-y -loglevel warning ";
-    // Input flags
-    ffmpeg_args << "-c:v rawvideo -f rawvideo -pix_fmt " << pix_fmt << " -s:v " << width << 'x' << height << " -framerate " << framerate << ' ';
-    ffmpeg_args << "-i - ";
-    // Output flags
-    ffmpeg_args << output_args.c_str() << " \"" << output_path.c_str() << '"';
+    std::wstring ffmpeg_args;
+
+    {
+        std::wstringstream args_stream;
+        // Global flags
+        args_stream << "-y -loglevel warning ";
+        // Input flags
+        args_stream << "-c:v rawvideo -f rawvideo -pix_fmt " << pix_fmt << " -s:v " << width << 'x' << height << " -framerate " << cfg.framerate << ' ';
+        args_stream << "-i - ";
+        // Output flags
+        args_stream << cfg.ffmpeg_output_args.c_str() << " \"" << output_path.c_str() << '"';
+        ffmpeg_args = args_stream.str();
+    }
+
+    VideoLog::Append("FFmpeg args: ");
+    {
+        std::string ascii;
+        ascii.reserve(ffmpeg_args.length() + 1);
+        for (wchar_t c : ffmpeg_args)
+        {
+            if (c < 0 || c > 0x7F)
+                c = '?';
+            ascii += c;
+        }
+        ascii += '\n';
+        VideoLog::Append(ascii);
+    }
 
     ffmpipe::PipeStatus status{ffmpipe::PipeStatus::Type::OK};
-    m_pipe = ffmpipe::Pipe::Create(Helper::FFmpeg::GetDefaultPath(), ffmpeg_args.str(), 10'000, &status);
+    m_pipe = ffmpipe::Pipe::Create(cfg.ffmpeg_path, ffmpeg_args, 10'000, &status);
 
     if (!status.IsOk())
         VideoLog::AppendError("FFmpeg pipe status: " + status.ToString() + "\n");
