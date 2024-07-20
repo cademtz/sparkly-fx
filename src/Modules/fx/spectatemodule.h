@@ -38,6 +38,7 @@ private:
     bool m_was_reset = true;
     bool m_scan_airshots = false;
     bool m_spectating = false;
+    bool m_spec_fixed_angle = false;
     float m_spec_cam_dist = 150;
     float m_spec_cam_angle_off[3] = {0,0,0};
     float m_spec_cam_origin_off[3] = {0,0,0};

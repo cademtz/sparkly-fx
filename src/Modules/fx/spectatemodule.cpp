@@ -36,6 +36,7 @@ int SpectateModule::OnTabBar()
     ImGui::SliderFloat("Cam distance", &m_spec_cam_dist, 0, 300);
     ImGui::SliderFloat3("Cam angle", m_spec_cam_angle_off, -180, 180);
     ImGui::SliderFloat3("Cam offset", m_spec_cam_origin_off, -150, 150);
+    ImGui::Checkbox("Fixed angle", &m_spec_fixed_angle);
     //ImGui::InputInt("Spectate mode", &m_observer_mode);
 
     constexpr size_t NUM_COLUMNS = 3;
@@ -208,9 +209,12 @@ int SpectateModule::OnOverrideView(CViewSetup* view_setup)
     IClientRenderable* renderable = (IClientRenderable*)base_entity->Renderable();
     Vector cam_pos = renderable->GetRenderOrigin() + Vector(0,0,75);
     QAngle angle = renderable->GetRenderAngles();
-    QAngle view_angle = renderable->GetRenderAngles() + *(QAngle*)&m_spec_cam_angle_off[0];
+    QAngle view_angle = *(QAngle*)&m_spec_cam_angle_off[0];
     QAngle forward_angle = QAngle(0, angle.y, 0);
     QAngle side_angle = QAngle(0, angle.y - 90, 0);
+
+    if (!m_spec_fixed_angle)
+        view_angle += angle;
 
     Vector view_dir;
     Vector transform_forward;
