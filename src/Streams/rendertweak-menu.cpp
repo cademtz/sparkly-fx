@@ -298,6 +298,7 @@ void ModelTweak::OnMenu()
         classes.clear();
     }
 
+    ImGui::SetNextItemWidth(-1.f);
     if (ImGui::BeginListBox("##class_list", Helper::CalcListBoxSize(classes.size())))
     {
         for (ClientClass* client_class : classes)
@@ -337,6 +338,7 @@ void ModelTweak::OnMenu()
         model_paths.clear();
     }
 
+    ImGui::SetNextItemWidth(-1.f);
     if (ImGui::BeginListBox("##model_list", Helper::CalcListBoxSize(model_paths.size())))
     {
         size_t i = 0;
