@@ -14,6 +14,8 @@
 #include <Modules/fx/recorder.h>
 #include <Hooks/OverlayHook.h>
 #include <shellapi.h> // CommandLineToArgvW
+#include <SDK/convar.h>
+#include <Base/Interfaces.h>
 
 #define CURRENT_CONFIG "config.json"
 #define CONFIG_VERSION_MAJOR 1
@@ -26,6 +28,62 @@ static std::string cfg_errors;
 static std::mutex cfg_mutex;
 static const COMDLG_FILTERSPEC COM_CONFIG_FILTER[] = {{L"JSON file", L"*.json"}, {L"All files", L"*.*"}, {0}};
 static std::filesystem::path CONFIG_PATH;
+
+static ConCommand sf_config_load("sf_config_load",
+    [](const CCommand& cmd) {
+        std::filesystem::path config_path;
+
+        if (cmd.ArgC() == 2) { // Path was most likely passed in quotes, without spaces
+            config_path = cmd.Arg(1);
+        }
+        else if (cmd.ArgC() > 2) { // Path was most likely passed without quotes
+            config_path = cmd.ArgS();
+        }
+        else { // Default
+            config_path = CONFIG_PATH;
+        }
+
+        if (ConfigModule::Load(config_path)) {
+            // Set the auto-save path if the path is good
+            CONFIG_PATH = config_path; 
+
+            Interfaces::engine->ClientCmd_Unrestricted("echo Successfully loaded config.");
+        }
+        else {
+            Interfaces::engine->ClientCmd_Unrestricted("echo Failed to load config.");
+        }
+    },
+    "Usage: sf_config_load [path]\n"
+    "Sets the auto save path and loads the config provided.\n"
+    "If no path is provided, loads from the auto save path.\n"
+);
+static ConCommand sf_config_save("sf_config_save",
+    [](const CCommand& cmd) {
+        std::filesystem::path config_path;
+
+        if (cmd.ArgC() == 2) { // Path was most likely passed in quotes, without spaces
+            config_path = cmd.Arg(1);
+        }
+        else if (cmd.ArgC() > 2) { // Path was most likely passed without quotes
+            config_path = cmd.ArgS();
+        }
+        else { // Default
+            config_path = CONFIG_PATH; 
+        }
+
+        if (ConfigModule::Save(config_path)) {
+            CONFIG_PATH = config_path; // Set the auto-save path if the path is good
+            Interfaces::engine->ClientCmd_Unrestricted("echo Successfully saved config.");
+        }
+        else {
+            Interfaces::engine->ClientCmd_Unrestricted("echo Failed to save config.");
+        }
+    },
+    "Usage: sf_config_load [path]\n"
+    "Sets the auto save path and saves the config provided.\n"
+    "If no path is provided, saves to the auto save path.\n"
+);
+
 
 /**
  * @brief Get text position based on offset

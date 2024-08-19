@@ -233,7 +233,10 @@ void EncoderConfig::ShowImguiControls()
                 for (const auto& path : ffmpeg_path_list)
                 {
                     if (ImGui::Selectable(path.string().c_str(), false))
+                    {
                         Helper::FFmpeg::SetDefaultPath(path);
+                        ffmpeg_path = path;
+                    }
                 }
                 ImGui::EndListBox();
             }
