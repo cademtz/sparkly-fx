@@ -126,8 +126,19 @@ void StreamEditor::ShowStreamListEditor()
         if (m_stream_index < m_streams.size())
             m_streams.erase(m_streams.begin() + m_stream_index);
     } ImGui::SameLine();
-    if (ImGui::Button("Rename##stream"))
+    if (ImGui::Button("Rename##stream")) {
         ImGui::OpenPopup(POPUP_STREAM_RENAMER);
+    } ImGui::SameLine();
+    if (ImGui::Button("/\\") && m_stream_index < m_streams.size() && m_stream_index > 0) {
+        m_streams.erase(m_streams.begin() + m_stream_index);
+        --m_stream_index;
+        m_streams.insert(m_streams.begin() + m_stream_index, selected);
+    } ImGui::SameLine();
+    if (ImGui::Button("\\/") && m_stream_index < m_streams.size() - 1 && m_streams.size() > 0) {
+        m_streams.erase(m_streams.begin() + m_stream_index);
+        ++m_stream_index;
+        m_streams.insert(m_streams.begin() + m_stream_index, selected);
+    }
 
     size_t prev_stream_index = m_stream_index;
     bool changed_preview = ImGui::Checkbox("Preview the selected stream", &m_preview);
