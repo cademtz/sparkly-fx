@@ -114,7 +114,8 @@ std::vector<Stream::ConstPtr> Stream::MakePresets()
             "r_skybox 0\n"
             "r_3dsky 0\n"
             "glow_outline_effect_enable 0\n"
-            "r_screenoverlay off";
+            "r_screenoverlay off\n"
+            "fog_maxdensity 1";
         // Particles are intentionally left enabled, so they may obscure the player matte
         matte->m_tweaks.emplace_back(std::move(misc));
 
