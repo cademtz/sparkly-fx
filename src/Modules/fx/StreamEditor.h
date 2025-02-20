@@ -20,6 +20,7 @@ public:
     void OnEndMovie();
     
 private:
+    int OnPostImguiInput();
     int OnTabBar();
     int OnConfigSave();
     int OnConfigLoad();

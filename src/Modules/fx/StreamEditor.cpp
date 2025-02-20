@@ -12,6 +12,7 @@
 #include <Streams/materials.h>
 #include <SDK/KeyValues.h>
 #include <Base/Interfaces.h>
+#include <Modules/InputModule.h>
 
 #define POPUP_STREAM_RENAMER "##popup_stream_renamer"
 #define POPUP_STREAM_PRESETS "##popup_stream_presets"
@@ -25,6 +26,19 @@ void StreamEditor::StartListening()
     MainWindow::OnTabBar.Listen(&StreamEditor::OnTabBar, this);
     ConfigModule::OnConfigLoad.Listen(&StreamEditor::OnConfigLoad, this);
     ConfigModule::OnConfigSave.Listen(&StreamEditor::OnConfigSave, this);
+    InputModule::OnPostImguiInput.Listen(&StreamEditor::OnPostImguiInput, this);
+}
+
+int StreamEditor::OnPostImguiInput() {
+    if (ImGui::GetCurrentContext() == nullptr) {
+        return 0;
+    }
+    
+    if (ImGui::IsKeyDown(ImGuiKey_Escape)) {
+        m_stream_index = (size_t)-1;
+        g_active_stream.Set(nullptr);
+    }
+    return 0;
 }
 
 void StreamEditor::OnEndMovie()
