@@ -46,6 +46,12 @@ namespace Base
 	inline HMODULE hInst;
 	inline HWND hWnd;
 
+	inline std::wstring CommandLineW;
+	inline std::vector<std::wstring> CommandLineArgsW;
+
+	bool CommandLineContains(std::wstring_view needle);
+	const std::wstring* GetCommandLineParam(std::wstring_view paramName);
+
 #ifdef _WIN64
 	constexpr bool Win64 = true;
 #else
