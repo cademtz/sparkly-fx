@@ -13,7 +13,6 @@
 #include "mainwindow.h"
 #include <Modules/fx/recorder.h>
 #include <Hooks/OverlayHook.h>
-#include <shellapi.h> // CommandLineToArgvW
 #include <SDK/convar.h>
 #include <Base/Interfaces.h>
 
@@ -122,20 +121,10 @@ static void AppendError(const std::string_view text) {
 void ConfigModule::StartListening()
 {
     // Search for -sf_config_file
-    // TODO: Add a commandline utility in xsdk-base.
-    LPWSTR cmdline = GetCommandLineW();
-    int argc;
-    LPWSTR* argv = CommandLineToArgvW(cmdline, &argc);
-    if (argv != nullptr) {
-        defer { LocalFree(argv); };
-        for (int i = 0; i < argc; ++i) {
-            if (!wcscmp(argv[i], L"-sf_config_file")) {
-                if (i + 1 >= argc)
-                    break;
-                CONFIG_PATH = argv[i+1];
-                break;
-            }
-        }
+    if (const std::wstring* configPath = Base::GetCommandLineParam(L"-sf_config_file"); configPath)
+    {
+        wprintf(L"Using config path from command line: %s\n", configPath->c_str());
+        CONFIG_PATH = *configPath;
     }
 
     if (CONFIG_PATH.empty()) // Create default config path

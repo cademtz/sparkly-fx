@@ -7,4 +7,5 @@ target_sources(xsdk-base PRIVATE
     spectatemodule.cpp
     configmodule.cpp
     mainwindow.cpp
+    miscmodule.cpp
 )
