@@ -89,6 +89,7 @@ std::vector<std::filesystem::path> ScanForExecutables()
     // Check the install directories of common software.
     const WCHAR* const common_programs[] = {
         L"HLAE\\ffmpeg\\bin\\ffmpeg.exe",
+        L"HLAE FFMPEG\\ffmpeg\\bin\\ffmpeg.exe",
         L"ShareX\\ffmpeg.exe"
     };
 

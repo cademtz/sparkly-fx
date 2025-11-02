@@ -151,8 +151,6 @@ void EncoderConfig::ShowImguiControls()
     {
         static const std::vector<FFmpegPreset> ffmpeg_presets = MakeFFmpegPresets();
         const auto& ffmpeg_path_list = Helper::FFmpeg::GetDefaultPaths();
-
-        //std::filesystem::path ffmpeg_path = Helper::FFmpeg::GetDefaultPath();
         bool has_ffmpeg = !ffmpeg_path.empty();
 
         if (has_ffmpeg)
@@ -207,40 +205,36 @@ void EncoderConfig::ShowImguiControls()
             );
         }
 
-        const char* settings_label = has_ffmpeg ? "FFmpeg settings###ffmpeg_settings" : "[!] FFmpeg settings###ffmpeg_settings";
-        if (!has_ffmpeg) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,.25,.25,1));
-        bool settings_tree = ImGui::TreeNode(settings_label);
-        if (!has_ffmpeg) ImGui::PopStyleColor();
+        //const char* settings_label = has_ffmpeg ? "FFmpeg settings###ffmpeg_settings" : "[!] FFmpeg settings###ffmpeg_settings";
+        //if (!has_ffmpeg) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1,.25,.25,1));
+        //bool settings_tree = ImGui::TreeNode(settings_label);
+        //if (!has_ffmpeg) ImGui::PopStyleColor();
 
-        if (settings_tree)
+        if (!has_ffmpeg)
+            ImGui::TextColored(ImVec4(1,.25,.25,1), "[!] Select an FFmpeg executable");
+        
+        ImGui::Text("FFmpeg executable:");
+        std::string ffmpeg_path_string = ffmpeg_path.string();
+        ImGui::InputText("##ffmpeg_path", &ffmpeg_path_string, ImGuiInputTextFlags_ReadOnly);
+        ImGui::SameLine();
+        if (ImGui::Button("Browse"))
         {
-            if (!has_ffmpeg)
-                ImGui::TextColored(ImVec4(1,.25,.25,1), "[!] Select an FFmpeg executable");
-            
-            ImGui::Text("FFmpeg executable:");
-            std::string ffmpeg_path_string = ffmpeg_path.string();
-            ImGui::InputText("##ffmpeg_path", &ffmpeg_path_string, ImGuiInputTextFlags_ReadOnly);
-            ImGui::SameLine();
-            if (ImGui::Button("Browse"))
-            {
-                auto optional_path = Helper::OpenFileDialog(L"Select an FFmpeg executable", nullptr, COM_EXE_FILTER);
-                if (optional_path)
-                    ffmpeg_path = std::move(*optional_path);
-            }
+            auto optional_path = Helper::OpenFileDialog(L"Select an FFmpeg executable", nullptr, COM_EXE_FILTER);
+            if (optional_path)
+                ffmpeg_path = std::move(*optional_path);
+        }
 
-            if (ImGui::BeginListBox("Executables", Helper::CalcListBoxSize(ffmpeg_path_list.size())))
+        if (ImGui::BeginListBox("Executables", Helper::CalcListBoxSize(ffmpeg_path_list.size())))
+        {
+            for (const auto& path : ffmpeg_path_list)
             {
-                for (const auto& path : ffmpeg_path_list)
+                if (ImGui::Selectable(path.string().c_str(), false))
                 {
-                    if (ImGui::Selectable(path.string().c_str(), false))
-                    {
-                        Helper::FFmpeg::SetDefaultPath(path);
-                        ffmpeg_path = path;
-                    }
+                    Helper::FFmpeg::SetDefaultPath(path);
+                    ffmpeg_path = path;
                 }
-                ImGui::EndListBox();
             }
-            ImGui::TreePop();
+            ImGui::EndListBox();
         }
     }
 }
@@ -522,9 +516,14 @@ void FrameBufferDx9::BlitBgra(FrameBufferRgb* dst, D3DLOCKED_RECT src)
 
 FFmpegWriter::FFmpegWriter(uint32_t width, uint32_t height, const EncoderConfig& cfg, const std::filesystem::path& output_path)
 {
-    if (cfg.ffmpeg_path.empty())
-    {
-        VideoLog::AppendError("No FFmpeg path. The user must provide one.\n");
+    const auto file_status = std::filesystem::status(cfg.ffmpeg_path);
+    if (file_status.type() == std::filesystem::file_type::not_found ||
+        file_status.type() == std::filesystem::file_type::directory
+    ) {
+        VideoLog::AppendError(
+            "ffmpeg.exe is missing.\n"
+            "Go to the Recorder tab and browse for ffmpeg.exe under \"FFmpeg executable\".\n"
+        );
         return;
     }
 
