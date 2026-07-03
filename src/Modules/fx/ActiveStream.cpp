@@ -154,7 +154,7 @@ void ActiveStream::RenderView()
         }
     }
 
-    Interfaces::hlclient->RenderView(view_setup, VIEW_CLEAR_COLOR, RENDERVIEW_DRAWVIEWMODEL | RENDERVIEW_DRAWHUD);
+    Interfaces::hlclient->RenderView(view_setup, VIEW_CLEAR_COLOR | VIEW_CLEAR_DEPTH | VIEW_CLEAR_FULL_TARGET, RENDERVIEW_DRAWVIEWMODEL | RENDERVIEW_DRAWHUD);
 }
 
 void ActiveStream::UpdateMaterials()
